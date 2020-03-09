@@ -17,6 +17,9 @@ class Vector {  // A structure that holds position data or direction and magnitu
     static Subtract(a, b) {
         return new Vector(a.x - b.x, a.y - b.y, a.z - b.z);
     }
+    static Multiply(a, b) { // A is a vector, b should be a scalar number
+        return new Vector(a.x*b, a.y*b, a.z*b);
+    }
 
     // Returns a copy of the given vector with the same direction but a length of one
     static UnitVector(a) {
@@ -24,3 +27,5 @@ class Vector {  // A structure that holds position data or direction and magnitu
         return new Vector(a.x/len, a.y/len, a.z/len);
     }
 }
+
+module.exports.Vector = Vector;
