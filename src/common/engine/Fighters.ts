@@ -1,8 +1,26 @@
 // Includes Vector.js
+import {Vector} from "./Vector";
 
 // A standard fighter with basic properties shared by all characters
-class Fighter {
-    constructor(hp, mass, maxMomentum, radius, height, character, id, position) {
+export class Fighter {
+    public MaxHP: number;
+    public HP: number;
+
+    public Class: string;
+    public ID: number;
+
+    public Mass: number;
+    public MaxMomentum: number;
+
+    public Radius: number;
+    public Height: number;
+
+    public Position: Vector;
+    public Velocity: Vector;
+    public Acceleration: Vector;
+
+
+    constructor(hp: number, mass: number, maxMomentum: number, radius: number, height: number, character: string, id: number, position: Vector) {
         this.MaxHP = hp;
         this.HP = hp;
 
@@ -22,9 +40,9 @@ class Fighter {
 }
 
 // La Oveja Grande - A tanky character that deals damage primarily off of momentum exchange (running into people at high velocities)
-class Sheep extends Fighter {
-    constructor(id, position) {
-        super(500, 200, 500, 0.5, 0.5, "Sheep", id, position);
+export class Sheep extends Fighter {
+    constructor(id: number, position: Vector) {
+        super(500, 200, 500, 0.5, 1, "Sheep", id, position);
 
     }
 }
