@@ -4,7 +4,7 @@ import {Fighter} from "./Fighters";
 import {Map} from "./Map";
 
 // Tick the physics of a list of fighters by X seconds
-function TickPhysics(DeltaTime: number, fighters: Fighter[], map: Map) {
+export function TickPhysics(DeltaTime: number, fighters: Fighter[], map: Map) {
     for (var i = 0; i < fighters.length; i++) {
         const obj = fighters[i];
         var deltaX = Vector.Add(Vector.Multiply(obj.Acceleration, Math.pow(DeltaTime,2)/2), Vector.Multiply(obj.Velocity,DeltaTime));
