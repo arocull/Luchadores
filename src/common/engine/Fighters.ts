@@ -37,6 +37,18 @@ export class Fighter {
         this.Velocity = new Vector(0,0,0);      //Magnitude of velocity * mass should never be > MaxMomentum
         this.Acceleration = new Vector(0,0,0);  //Done for physics calculation, derived by player input and set by server
     }
+
+
+    public TakeDamage(dmg: number) {
+        this.HP-=dmg;
+
+        if (this.HP < 0) this.HP = 0;
+    }
+    
+    public CollideWithFighter(hit: Fighter, momentum: number) {
+        if (this.Class == "Sheep" && momentum > this.MaxMomentum/2)
+            hit.TakeDamage(momentum/this.MaxMomentum * 50);
+    }
 }
 
 // La Oveja Grande - A tanky character that deals damage primarily off of momentum exchange (running into people at high velocities)

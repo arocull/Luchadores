@@ -29,4 +29,7 @@ export class Vector {  // A structure that holds position data or direction and 
         const len = a.length();
         return new Vector(a.x/len, a.y/len, a.z/len);
     }
+    static Distance(a: Vector, b:Vector):number {
+        return Vector.Subtract(b, a).length();
+    }
 }
