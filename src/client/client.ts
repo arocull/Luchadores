@@ -13,33 +13,58 @@ const viewport = <HTMLCanvasElement>document.getElementById("render");
 var canvas = viewport.getContext("2d"); 
 
 // Create objects for basic testing
-var cam = new CameraData(100, 100, 1);
+var cam = new CameraData(viewport.width, viewport.height, 25);
 var map = new Map(100, 100, 0.05);
-var player = new Sheep(1, new Vector(0,0,0));
+var player = new Sheep(1, new Vector(50,50,0));
+
+var enemy = new Sheep(2, new Vector(51,51,0));
 
 document.addEventListener("keydown", function (event) {
     if (event.key == 'a')
-        player.Acceleration.x = -1;
+        player.Acceleration.x = -10;
     else if (event.key == 'd')
-        player.Acceleration.x = 1;
-    else
-        player.Acceleration.x = 0;
-    
-    if (event.key == 'w')
-        player.Acceleration.y = 1;
+        player.Acceleration.x = 10;
+    else if (event.key == 'w')
+        player.Acceleration.y = 10;
     else if (event.key == 's')
-        player.Acceleration.y = -1;
-    else
+        player.Acceleration.y = -10;
+});
+document.addEventListener("keyup", function (event) {
+    if (event.key == 'a' || event.key == 'd')
+        player.Acceleration.x = 0;
+    else if (event.key == 'w' || event.key == 's')
         player.Acceleration.y = 0;
 });
 
-function DoFrame(DeltaTime: number) {
-    DeltaTime/=1000;    // Convert milliseconds to seconds
-    TickPhysics(DeltaTime, [player], map);
 
-    DrawScreen(canvas, cam, map, [player]);
+var LastFrame = 0;
+function DoFrame(tick: number) {
+    tick/=1000;    // Convert milliseconds to seconds
+    const DeltaTime = tick - LastFrame;
+    LastFrame = tick;
+
+    TickPhysics(DeltaTime, [player, enemy], map);
+
+    if (player)
+        cam.SetFocus(player);
+
+    viewport.width = window.innerWidth;
+    viewport.height = window.innerHeight;
+    cam.Width = viewport.width;
+    cam.Height = viewport.height;
+
+    cam.UpdateFocus();
+    DrawScreen(canvas, cam, map, [player, enemy]);
     //canvas.fillRect(100, 100, 200, 200);
 
     return window.requestAnimationFrame(DoFrame);
 }
-window.requestAnimationFrame(DoFrame);
+
+
+
+
+
+function Setup() {
+    window.requestAnimationFrame(DoFrame);
+}
+Setup();

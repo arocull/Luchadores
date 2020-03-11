@@ -30,23 +30,41 @@ export class CameraData {
     public PositionOffset(pos: Vector): Vector {
         /*const x = this.FocusPosition.x - pos.x; //Do we need to do this to account for height offset?
         const y =*/ 
-        return Vector.Multiply(Vector.Subtract(pos, this.FocusPosition), this.Zoom);
+        return Vector.Subtract(this.FocusPosition, pos);
     }
 }
 
 
 export function DrawScreen(canvas: CanvasRenderingContext2D, camera: CameraData, map: Map, fighters: Fighter[]) {
     canvas.clearRect(0, 0, camera.Width, camera.Height);
+    //canvas.transform(camera.Zoom, 0, 0, camera.Zoom, 0, 0);
 
+    const offsetX = camera.Width/2;
+    const offsetY = camera.Height/2;
+    const zoom = camera.Zoom;
+
+    // Draw arena boundaries
+    const corner0 = Vector.Multiply(camera.PositionOffset(new Vector(0,0,0)), camera.Zoom);
+    const corner1 = Vector.Multiply(camera.PositionOffset(new Vector(map.Width,0,0)), camera.Zoom);
+    const corner2 = Vector.Multiply(camera.PositionOffset(new Vector(map.Width,map.Height,0)), camera.Zoom);
+    const corner3 = Vector.Multiply(camera.PositionOffset(new Vector(0,map.Height,0)), camera.Zoom);
+    canvas.strokeStyle = "FF0000";
+    canvas.lineWidth = camera.Zoom * 0.01;
+    canvas.moveTo(corner0.x, corner0.y);
+    canvas.beginPath();
+    canvas.lineTo(corner1.x, corner1.y);
+    canvas.lineTo(corner2.x, corner2.y);
+    canvas.lineTo(corner3.x, corner3.y);
+    canvas.lineTo(corner0.x, corner0.y);
+    canvas.closePath();
+    canvas.stroke();
+
+    // Draw in fighters
     for (var i = 0; i < fighters.length; i++) {
         const a = fighters[i];
         const pos = camera.PositionOffset(a.Position);
 
         canvas.fillStyle = "#000000";
- 
-        const x = pos.x;
-        const y = pos.y*.9 + pos.z;    // Actual depth + artificial height
-        const rad = a.Radius*camera.Zoom;
-        canvas.rect(x - rad, y, x + rad, y + a.Height*camera.Zoom);
+        canvas.fillRect((-pos.x - a.Radius) * zoom + offsetX, (pos.y)*zoom + offsetY, 2*a.Radius*zoom, a.Height*zoom);
     }
 }

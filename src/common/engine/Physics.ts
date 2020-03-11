@@ -8,24 +8,19 @@ export function TickPhysics(DeltaTime: number, fighters: Fighter[], map: Map) {
     for (var i = 0; i < fighters.length; i++) {
         const obj = fighters[i];
 
-        var accel = new Vector(0,0,0);  // Acceleration of object based off of map physics
+        // First, apply any potential accelerations due to physics, start with friction as base for optimization
+        // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
+        var accel = Vector.Multiply(Vector.UnitVector(obj.Velocity), map.Friction);
 
-        // First, apply any potential accelerations due to physics, start with gravity
-        if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z = -1;
-        else accel.z = 0;
+        // Gravity
+        if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -1;
         
         // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls)
-        if (obj.Position.x < 0) accel.x = 3;
-        else if (obj.Position.x > map.Width) accel.x = -3;
-        else accel.x = 0;
+        if (obj.Position.x < 0) accel.x += 30;
+        else if (obj.Position.x > map.Width) accel.x -= 30;
 
-        if (obj.Position.y < 0) accel.y = 3;
-        else if (obj.Position.y > map.Height) accel.y = -3;
-        else accel.y = 0;
-
-        // Apply friction, note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
-        if (obj.Position.z <= 0)
-            accel = Vector.Add(accel, Vector.Multiply(Vector.UnitVector(obj.Velocity), map.Friction));
+        if (obj.Position.y < 0) accel.y += 30;
+        else if (obj.Position.y > map.Height) accel.y -= 30;
 
         // Add physics-based acceleration and player input acceleration, and then calculate position change
         accel = Vector.Add(obj.Acceleration, accel);

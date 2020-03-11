@@ -27,6 +27,8 @@ export class Vector {  // A structure that holds position data or direction and 
     // Returns a copy of the given vector with the same direction but a length of one
     static UnitVector(a: Vector):Vector {
         const len = a.length();
+        if (len <= 0)
+            return new Vector(0,0,0);
         return new Vector(a.x/len, a.y/len, a.z/len);
     }
     static Distance(a: Vector, b:Vector):number {

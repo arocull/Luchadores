@@ -3,12 +3,20 @@
     <head>
         <title>Luchadores</title>
         <meta charset="utf-8">
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+            }
+            @-o-viewport{
+                orientation: landscape;
+            }
+        </style>
     </head>
     <body>
-        <p>
-            Hello world! Check your console for a message.
-        </p>
-        <canvas id="render" height="1000" width="800"></canvas>
+        <canvas id="render" width="1000" height="800"></canvas>
         <script src="client.js"></script>
     </body>
 </html>
