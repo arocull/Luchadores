@@ -7,21 +7,36 @@ import {Map} from "./Map";
 export function TickPhysics(DeltaTime: number, fighters: Fighter[], map: Map) {
     for (var i = 0; i < fighters.length; i++) {
         const obj = fighters[i];
-        var deltaX = Vector.Add(Vector.Multiply(obj.Acceleration, Math.pow(DeltaTime,2)/2), Vector.Multiply(obj.Velocity,DeltaTime));
 
+        var accel = new Vector(0,0,0);  // Acceleration of object based off of map physics
+
+        // First, apply any potential accelerations due to physics, start with gravity
+        if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z = -1;
+        else accel.z = 0;
+        
+        // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls)
+        if (obj.Position.x < 0) accel.x = 3;
+        else if (obj.Position.x > map.Width) accel.x = -3;
+        else accel.x = 0;
+
+        if (obj.Position.y < 0) accel.y = 3;
+        else if (obj.Position.y > map.Height) accel.y = -3;
+        else accel.y = 0;
+
+        // Apply friction, note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
+        if (obj.Position.z <= 0)
+            accel = Vector.Add(accel, Vector.Multiply(Vector.UnitVector(obj.Velocity), map.Friction));
+
+        // Add physics-based acceleration and player input acceleration, and then calculate position change
+        accel = Vector.Add(obj.Acceleration, accel);
+        var deltaX = Vector.Add(Vector.Multiply(accel, Math.pow(DeltaTime,2)/2), Vector.Multiply(obj.Velocity,DeltaTime));
+
+        // If they attempted to move faster than their max momentum, clamp their movement (should do this?)
         if (deltaX.length() > obj.MaxMomentum / obj.Mass)
             deltaX = Vector.Multiply(Vector.UnitVector(deltaX), (obj.MaxMomentum / obj.Mass));
         
         obj.Position = Vector.Add(obj.Position, deltaX);
-        obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(obj.Acceleration, DeltaTime));
-
-        // If fighter is out of bounds, bounce them back (wrestling arena style)
-        if (obj.Position.x < 0 || obj.Position.x > map.Width) {
-            obj.Velocity.x*=-1;
-        }
-        if (obj.Position.y < 0 || obj.Position.y > map.Height) {
-            obj.Velocity.y*=-1;
-        }
+        obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
     }
 
     // Compute collisions last after everything has moved (makes it slightly more "fair?")
