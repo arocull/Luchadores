@@ -43,7 +43,10 @@ export function DrawScreen(canvas: CanvasRenderingContext2D, camera: CameraData,
         const pos = camera.PositionOffset(a.Position);
 
         canvas.fillStyle = "#000000";
-        
-        canvas.rect(pos.x - a.Radius*camera.Zoom, pos.y - a.Radius*camera.Zoom, pos.x + a.Radius*camera.Zoom, pos.y + a.Radius*camera.Zoom);
+ 
+        const x = pos.x;
+        const y = pos.y*.9 + pos.z;    // Actual depth + artificial height
+        const rad = a.Radius*camera.Zoom;
+        canvas.rect(x - rad, y, x + rad, y + a.Height*camera.Zoom);
     }
 }
