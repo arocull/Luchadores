@@ -10,7 +10,7 @@ export function TickPhysics(DeltaTime: number, fighters: Fighter[], map: Map) {
 
         // First, apply any potential accelerations due to physics, start with friction as base for optimization
         // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
-        var accel = Vector.Multiply(Vector.UnitVector(obj.Velocity), map.Friction);
+        var accel = Vector.Multiply(Vector.UnitVector(obj.Velocity), -Math.min(map.Friction, obj.Mass/10));
 
         // Gravity
         if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -1;

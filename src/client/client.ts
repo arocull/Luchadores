@@ -13,11 +13,11 @@ const viewport = <HTMLCanvasElement>document.getElementById("render");
 var canvas = viewport.getContext("2d"); 
 
 // Create objects for basic testing
-var cam = new CameraData(viewport.width, viewport.height, 25);
-var map = new Map(100, 100, 0.05);
-var player = new Sheep(1, new Vector(50,50,0));
+var cam = new CameraData(viewport.width, viewport.height, 40);
+var map = new Map(50, 50, 100);
+var player = new Sheep(1, new Vector(25,25,0));
 
-var enemy = new Sheep(2, new Vector(51,51,0));
+var enemy = new Sheep(2, new Vector(28,28,0));
 
 document.addEventListener("keydown", function (event) {
     if (event.key == 'a')

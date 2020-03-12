@@ -32,6 +32,9 @@ export class CameraData {
         const y =*/ 
         return Vector.Subtract(this.FocusPosition, pos);
     }
+    public PositionOffsetMap(pos: Vector): Vector {
+        return Vector.Subtract(pos, this.FocusPosition);
+    }
 }
 
 
@@ -44,12 +47,12 @@ export function DrawScreen(canvas: CanvasRenderingContext2D, camera: CameraData,
     const zoom = camera.Zoom;
 
     // Draw arena boundaries
-    const corner0 = Vector.Multiply(camera.PositionOffset(new Vector(0,0,0)), camera.Zoom);
-    const corner1 = Vector.Multiply(camera.PositionOffset(new Vector(map.Width,0,0)), camera.Zoom);
-    const corner2 = Vector.Multiply(camera.PositionOffset(new Vector(map.Width,map.Height,0)), camera.Zoom);
-    const corner3 = Vector.Multiply(camera.PositionOffset(new Vector(0,map.Height,0)), camera.Zoom);
+    const corner0 = Vector.Multiply(camera.PositionOffsetMap(new Vector(0,0,0)), zoom);
+    const corner1 = Vector.Multiply(camera.PositionOffsetMap(new Vector(map.Width,0,0)), zoom);
+    const corner2 = Vector.Multiply(camera.PositionOffsetMap(new Vector(map.Width,map.Height,0)), zoom);
+    const corner3 = Vector.Multiply(camera.PositionOffsetMap(new Vector(0,map.Height,0)), zoom);
     canvas.strokeStyle = "FF0000";
-    canvas.lineWidth = camera.Zoom * 0.01;
+    canvas.lineWidth = zoom *1;
     canvas.moveTo(corner0.x, corner0.y);
     canvas.beginPath();
     canvas.lineTo(corner1.x, corner1.y);
