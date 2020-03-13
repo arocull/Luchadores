@@ -5,7 +5,8 @@
   "private": true,
   "main": "dist/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "pretest": "tsc",
+    "test": "jest ./dist/test",
     "build": "webpack --config ./webpack/production.js",
     "watch": "webpack --config ./webpack/development.js",
     "web": "xdg-open ./dist/index.html",
