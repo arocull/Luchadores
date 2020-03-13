@@ -13,12 +13,8 @@ webpack:
   script:
     - npm install
     - npm run build
-  tags:
-    - docker
 
 jest:
   stage: test
   script:
    - npm run test
-  tags:
-    - docker
