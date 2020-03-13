@@ -1,5 +1,4 @@
-dist/client.js
-dist/server.js
+dist/**
 
 ### Standard:
 # Logs
@@ -108,4 +107,5 @@ web_modules/
 .tern-port
 
 # Stores VSCode versions used for testing VSCode extensions
+.vscode
 .vscode-test
