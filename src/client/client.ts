@@ -13,21 +13,23 @@ const viewport = <HTMLCanvasElement>document.getElementById("render");
 var canvas = viewport.getContext("2d"); 
 
 // Create objects for basic testing
-var cam = new CameraData(viewport.width, viewport.height, 40);
-var map = new Map(50, 50, 100);
+var cam = new CameraData(viewport.width, viewport.height, 20);
+var map = new Map(50, 50, 10);
 var player = new Sheep(1, new Vector(25,25,0));
 
 var enemy = new Sheep(2, new Vector(28,28,0));
 
 document.addEventListener("keydown", function (event) {
     if (event.key == 'a')
-        player.Acceleration.x = -10;
+        player.Acceleration.x = -20;
     else if (event.key == 'd')
-        player.Acceleration.x = 10;
+        player.Acceleration.x = 20;
     else if (event.key == 'w')
-        player.Acceleration.y = 10;
+        player.Acceleration.y = 20;
     else if (event.key == 's')
-        player.Acceleration.y = -10;
+        player.Acceleration.y = -20;
+    else if (event.key == ' ')
+        player.Velocity.z = 10;
 });
 document.addEventListener("keyup", function (event) {
     if (event.key == 'a' || event.key == 'd')

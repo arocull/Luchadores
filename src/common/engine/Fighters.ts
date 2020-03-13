@@ -11,16 +11,18 @@ export class Fighter {
 
     public Mass: number;
     public MaxMomentum: number;
+    public JumpVelocity: number;
 
     public Radius: number;
     public Height: number;
+    public Flipped: boolean;
 
     public Position: Vector;
     public Velocity: Vector;
     public Acceleration: Vector;
 
 
-    constructor(hp: number, mass: number, maxMomentum: number, radius: number, height: number, character: string, id: number, position: Vector) {
+    constructor(hp: number, mass: number, maxMomentum: number, radius: number, height: number, jumpVelo: number, character: string, id: number, position: Vector) {
         this.MaxHP = hp;
         this.HP = hp;
 
@@ -29,9 +31,11 @@ export class Fighter {
 
         this.Mass = mass;     //How much mass this fighter has, used in momentum calculations
         this.MaxMomentum = maxMomentum; //Essentially max speed of character
+        this.JumpVelocity = jumpVelo;
 
         this.Radius = radius;   //Collision radius
         this.Height = height;   //Collision height, may be unecessary unless we want the ability to jump over others
+        this.Flipped = false;   //Do we draw them facing leftward or rightward?
 
         this.Position = position;
         this.Velocity = new Vector(0,0,0);      //Magnitude of velocity * mass should never be > MaxMomentum
@@ -54,7 +58,7 @@ export class Fighter {
 // La Oveja Grande - A tanky character that deals damage primarily off of momentum exchange (running into people at high velocities)
 export class Sheep extends Fighter {
     constructor(id: number, position: Vector) {
-        super(500, 200, 500, 0.5, 1, "Sheep", id, position);
+        super(500, 200, 500, 0.5, 1, 8, "Sheep", id, position);
 
     }
 }

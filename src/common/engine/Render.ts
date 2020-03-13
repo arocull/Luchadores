@@ -20,7 +20,8 @@ export class CameraData {
         if (newFocus) this.Focus = newFocus;
     }
     public UpdateFocus() {      // Internal, lerps camera to focus
-        if (this.Focus) this.FocusPosition = this.Focus.Position;
+        if (this.Focus)
+            this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y, 0);
     }
     public ClearFocus(newFocus: Vector) {   // Choose position to focus on and clear focused fighter
         this.Focus = null;
@@ -28,18 +29,21 @@ export class CameraData {
     }
 
     public PositionOffset(pos: Vector): Vector {
-        /*const x = this.FocusPosition.x - pos.x; //Do we need to do this to account for height offset?
-        const y =*/ 
         return Vector.Subtract(this.FocusPosition, pos);
     }
-    public PositionOffsetMap(pos: Vector): Vector {
-        return Vector.Subtract(pos, this.FocusPosition);
+    public PositionOffsetMap(pos: Vector, offsetX: number, offsetY: number): Vector {
+        var vect = Vector.Multiply(this.PositionOffset(pos), this.Zoom);
+        vect.x*=-1;
+        vect.x+=offsetX;
+        vect.y+=offsetY;
+        return vect;
     }
 }
 
 
 export function DrawScreen(canvas: CanvasRenderingContext2D, camera: CameraData, map: Map, fighters: Fighter[]) {
-    canvas.clearRect(0, 0, camera.Width, camera.Height);
+    canvas.resetTransform();
+    //canvas.clearRect(0, 0, camera.Width, camera.Height);
     //canvas.transform(camera.Zoom, 0, 0, camera.Zoom, 0, 0);
 
     const offsetX = camera.Width/2;
@@ -47,14 +51,15 @@ export function DrawScreen(canvas: CanvasRenderingContext2D, camera: CameraData,
     const zoom = camera.Zoom;
 
     // Draw arena boundaries
-    const corner0 = Vector.Multiply(camera.PositionOffsetMap(new Vector(0,0,0)), zoom);
-    const corner1 = Vector.Multiply(camera.PositionOffsetMap(new Vector(map.Width,0,0)), zoom);
-    const corner2 = Vector.Multiply(camera.PositionOffsetMap(new Vector(map.Width,map.Height,0)), zoom);
-    const corner3 = Vector.Multiply(camera.PositionOffsetMap(new Vector(0,map.Height,0)), zoom);
-    canvas.strokeStyle = "FF0000";
-    canvas.lineWidth = zoom *1;
-    canvas.moveTo(corner0.x, corner0.y);
+    const corner0 = camera.PositionOffsetMap(new Vector(0,0,0), offsetX, offsetY);
+    const corner1 = camera.PositionOffsetMap(new Vector(map.Width,0,0), offsetX, offsetY);
+    const corner2 = camera.PositionOffsetMap(new Vector(map.Width,map.Height,0), offsetX, offsetY);
+    const corner3 = camera.PositionOffsetMap(new Vector(0,map.Height,0), offsetX, offsetY);
+    canvas.strokeStyle = "#ff0000";
+    canvas.globalAlpha = 1;
+    canvas.lineWidth = zoom * 0.1;
     canvas.beginPath();
+    canvas.moveTo(corner0.x, corner0.y);
     canvas.lineTo(corner1.x, corner1.y);
     canvas.lineTo(corner2.x, corner2.y);
     canvas.lineTo(corner3.x, corner3.y);
@@ -67,7 +72,19 @@ export function DrawScreen(canvas: CanvasRenderingContext2D, camera: CameraData,
         const a = fighters[i];
         const pos = camera.PositionOffset(a.Position);
 
+        // First, draw shadow
         canvas.fillStyle = "#000000";
-        canvas.fillRect((-pos.x - a.Radius) * zoom + offsetX, (pos.y)*zoom + offsetY, 2*a.Radius*zoom, a.Height*zoom);
+        canvas.globalAlpha = .5;
+        canvas.fillRect((-pos.x - a.Radius*1.1) * zoom + offsetX, (pos.y + a.Height/1.5)*zoom + offsetY, 2*a.Radius*1.1*zoom, a.Height*zoom/2);
+
+
+        /*if (a.Flipped)
+            canvas.scale(-1,1);
+        else
+            canvas.scale(1,1);*/
+
+        canvas.fillStyle = "#000000";
+        canvas.globalAlpha = 1;
+        canvas.fillRect((-pos.x - a.Radius) * zoom + offsetX, (pos.y + pos.z)*zoom + offsetY, 2*a.Radius*zoom, a.Height*zoom);
     }
 }

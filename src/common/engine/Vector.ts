@@ -12,6 +12,18 @@ export class Vector {  // A structure that holds position data or direction and 
     public length():number {
         return Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2) + Math.pow(this.z, 2));
     }
+    // Limits length of this vector to a set field 
+    public clamp(minLen: number, maxLen: number) {
+        const len = this.length();
+        const lenF = Math.min(Math.max(len, minLen), maxLen);
+        
+        if (lenF !== len) {
+            const unit = Vector.UnitVector(this);
+            this.x = unit.x*lenF;
+            this.y = unit.y*lenF;
+            this.z = unit.y*lenF;
+        }
+    }
 
     // Static methods--generates new vectors to avoid overriding old properties
     static Add(a: Vector, b: Vector):Vector {
