@@ -37,7 +37,7 @@ npm run server
 ## TODO
 
 - Add Webpack dev server (auto run/update the server when file is edited).
-- Jest unit testing
+- ~~Jest unit testing~~
 - SASS/Stylus style rendering (necessary?)
 - Embed Roboto font
 - Add ESLint rules (necessary with TSLint?)
