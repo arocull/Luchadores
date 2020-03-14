@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "pretest": "tsc",
-    "test": "jest ./dist/test --coverage",
+    "test": "JEST_JUNIT_OUTPUT_DIR='./coverage' jest ./dist/test --coverage",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "build": "webpack --config ./webpack/production.js",
@@ -50,6 +50,7 @@
     "eslint-plugin-import": "^2.20.1",
     "husky": "^4.2.3",
     "jest": "^25.1.0",
+    "jest-junit": "^10.0.0",
     "lint-staged": "^10.0.8",
     "ts-loader": "^6.2.1",
     "typescript": "^3.8.3",

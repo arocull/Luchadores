@@ -18,12 +18,19 @@ webpack:
   script:
     - npm install
     - npm run build
+  artifacts:
+    paths:
+      - dist/client.js
+      - dist/server.js
 
 jest:
   stage: test
   script:
    - npm run test
   coverage: /All\sfiles.*?\s+(\d+.\d+)/
+  artifacts:
+    reports:
+      junit: coverage/junit.xml
 
 eslint:
   stage: test
