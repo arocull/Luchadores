@@ -16,13 +16,12 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "lint-staged && npm test"
     }
   },
   "lint-staged": {
     "**/*.{ts,js,tsx,jsx}": [
-      "./node_modules/.bin/eslint --fix",
-      "npm run test"
+      "./node_modules/.bin/eslint --fix"
     ]
   },
   "repository": {

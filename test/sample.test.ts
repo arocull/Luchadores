@@ -17,10 +17,10 @@ test('simple async test', async () => {
 }, 2000);
 
 test('defaults deep test', () => {
-  let opt : MyInterface = _.defaultsDeep({}, {
+  const opt : MyInterface = _.defaultsDeep({}, {
     Host: '127.0.0.1',
     Port: 1337,
-    Enabled: false
+    Enabled: false,
   });
 
   expect(opt.Host).toBe('127.0.0.1');
