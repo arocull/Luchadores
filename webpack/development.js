@@ -5,13 +5,12 @@ const path = require('path');
 module.exports = {
   mode: 'development',
   devtool: 'eval-source-map', // inline-source-map
-  // watch: true,
   entry: {
     client: './src/client/client.ts',
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, '../dist'),
+    path: path.resolve(__dirname, '../dist/public'),
   },
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],

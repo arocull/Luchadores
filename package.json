@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "clean": "rm -rf dist/",
-    "build": "mkdir -p dist/ && cp -R assets/* dist/ && tsc && webpack --config ./webpack/development.js",
+    "build": "mkdir -p dist/public/ && cp -R assets/* dist/public/ && tsc && webpack --config ./webpack/development.js",
     "rebuild": "npm run clean && npm run build",
     "postinstall": "npm run build",
     "build-prod": "webpack --config ./webpack/production.js",
