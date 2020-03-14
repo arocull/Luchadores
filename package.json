@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "pretest": "npm run build",
-    "test": "JEST_JUNIT_OUTPUT_DIR='./coverage' jest ./dist/test --coverage",
+    "test": "JEST_JUNIT_OUTPUT_DIR='coverage' jest dist/test --coverage --reporters=default --reporters=jest-junit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "clean": "rm -rf dist/",
