@@ -15,6 +15,9 @@ class Vector { // A structure that holds position data or direction and magnitud
   public length():number {
     return Math.sqrt((this.x ** 2) + (this.y ** 2) + (this.z ** 2));
   }
+  public lengthXY():number {
+    return Math.sqrt((this.x ** 2) + (this.y ** 2));
+  }
 
   // Limits length of this vector to a set field
   public clamp(minLen: number, maxLen: number) {
@@ -48,9 +51,17 @@ class Vector { // A structure that holds position data or direction and magnitud
     if (len <= 0) return new Vector(0, 0, 0);
     return new Vector(a.x / len, a.y / len, a.z / len);
   }
+  static UnitVectorXY(a: Vector):Vector {
+    const len = a.lengthXY();
+    if (len <= 0) return new Vector(0, 0, 0);
+    return new Vector(a.x / len, a.y / len, 0);
+  }
 
   static Distance(a: Vector, b:Vector):number {
     return Vector.Subtract(b, a).length();
+  }
+  static DistanceXY(a: Vector, b:Vector):number {
+    return Vector.Subtract(b, a).lengthXY();
   }
 }
 
