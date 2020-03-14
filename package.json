@@ -5,14 +5,19 @@
   "private": true,
   "main": "dist/server.js",
   "scripts": {
-    "pretest": "tsc",
-    "test": "JEST_JUNIT_OUTPUT_DIR='./coverage' jest ./dist/test --coverage",
+    "pretest": "npm run build",
+    "test": "JEST_JUNIT_OUTPUT_DIR='coverage' jest dist/test --coverage --reporters=default --reporters=jest-junit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "build": "webpack --config ./webpack/production.js",
-    "watch": "webpack --config ./webpack/development.js",
+    "clean": "rm -rf dist/",
+    "build": "mkdir -p dist/public/ && cp -R assets/* dist/public/ && tsc && webpack --config ./webpack/development.js",
+    "rebuild": "npm run clean && npm run build",
+    "postinstall": "npm run build",
+    "build-prod": "webpack --config ./webpack/production.js",
+    "rebuild-prod": "npm run clean && npm run build-prod",
     "web": "xdg-open ./dist/index.html",
-    "server": "node ./dist/server.js"
+    "prestart": "npm run build",
+    "start": "node ./dist/src/server/server.js"
   },
   "husky": {
     "hooks": {

@@ -1,5 +1,8 @@
 image: node:12
 
+variables:
+  GIT_DEPTH: 10
+
 # https://docs.gitlab.com/ee/ci/caching/#caching-nodejs-dependencies
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -20,8 +23,7 @@ webpack:
     - npm run build
   artifacts:
     paths:
-      - dist/client.js
-      - dist/server.js
+      - dist/
 
 jest:
   stage: test
