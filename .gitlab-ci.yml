@@ -1,0 +1,20 @@
+image: node:12
+
+cache:
+  paths:
+    - node_modules/
+
+stages:
+  - build
+  - test
+
+webpack:
+  stage: build
+  script:
+    - npm install
+    - npm run build
+
+jest:
+  stage: test
+  script:
+   - npm run test
