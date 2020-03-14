@@ -5,7 +5,14 @@ class Camera {
   protected Focus: Fighter;
   protected FocusPosition: Vector;
 
-  constructor(public Width: number, public Height: number, public Zoom: number) {
+  public Zoom: number;
+
+  constructor(
+    public Width: number,
+    public Height: number,
+    public MaxDrawWidth: number,
+    public MaxDrawHeight: number,
+  ) {
     this.Focus = null;
     this.FocusPosition = new Vector(0, 0, 0);
   }
@@ -18,6 +25,9 @@ class Camera {
     if (this.Focus) {
       this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y, 0);
     }
+
+    // Use constant aspect ratio
+    this.Zoom = Math.min(this.Width / this.MaxDrawWidth, this.Height / this.MaxDrawHeight);
   }
 
   public ClearFocus(newFocus: Vector) { // Choose position to focus on and clear focused fighter

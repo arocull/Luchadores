@@ -13,10 +13,10 @@ const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
 
 // Create objects for basic testing
-const cam = new Camera(viewport.width, viewport.height, 20);
+const cam = new Camera(viewport.width, viewport.height, 40, 30);
 const map = new Map(50, 50, 10);
-const player = new Sheep(1, new Vector(25, 25, 0));
 
+const player = new Sheep(1, new Vector(25, 25, 0));
 const enemy = new Sheep(2, new Vector(28, 28, 0));
 
 document.addEventListener('keydown', (event) => {
@@ -49,7 +49,6 @@ function DoFrame(tick: number) {
 
   cam.UpdateFocus();
   Renderer.DrawScreen(canvas, cam, map, [player, enemy]);
-  // canvas.fillRect(100, 100, 200, 200);
 
   return window.requestAnimationFrame(DoFrame);
 }
