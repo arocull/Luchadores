@@ -1,4 +1,4 @@
-const path = require('path');
+// eslint-disable-next-line
 const webpackMerge = require('webpack-merge');
 const development = require('./development');
 

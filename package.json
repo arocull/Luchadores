@@ -21,7 +21,7 @@
   },
   "lint-staged": {
     "**/*.{ts,js,tsx,jsx}": [
-      "npm run fix",
+      "./node_modules/.bin/eslint --fix",
       "npm run test"
     ]
   },

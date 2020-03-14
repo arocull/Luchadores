@@ -28,10 +28,26 @@ npm run watch
 npm run build
 ```
 
-Start the server and watch your browser.
+Run tests and keep your code quality high:
+```
+npm run test
+npm run lint   # Just shows you the warnings/errors.
+npm run fix    # Will try it's best to fix all warnings/errors.
+```
+
+Start the server and watch your browser:
 ```
 npm run web
 npm run server
+```
+
+## Contributing
+
+Pre-commit hooks have been added to keep code clean and passing unit tests. You
+can forcibly ignore these by adding the `--no-verify` flag like so:
+
+```
+git commit -a -m "Your message" --no-verify
 ```
 
 ## TODO
