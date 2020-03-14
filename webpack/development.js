@@ -8,14 +8,14 @@ module.exports = {
   watch: true,
   entry: {
     server: './src/server/server.ts',
-    client: './src/client/client.ts'
+    client: './src/client/client.ts',
   },
   output: {
     filename: '[name].js',
     path: path.resolve(__dirname, '../dist'),
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js']
+    extensions: ['.tsx', '.ts', '.js'],
   },
   module: {
     rules: [
@@ -29,7 +29,7 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       CANVAS_RENDERER: JSON.stringify(true),
-      WEBGL_RENDERER: JSON.stringify(true)
-    })
-  ]
+      WEBGL_RENDERER: JSON.stringify(true),
+    }),
+  ],
 };
