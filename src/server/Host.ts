@@ -24,14 +24,18 @@ class Host extends EventEmitter {
             winston.format.printf((info) => `${info.timestamp} ${info.label} ${info.level}:\t${util.format(info.message)}`),
           ),
         }),
-        new winston.transports.File({ filename: 'crypto-commerce.log', level: 'silly', format: winston.format.logstash() }),
+        new winston.transports.File({
+          filename: 'luchadores.log',
+          level: 'silly',
+          format: winston.format.logstash(),
+        }),
       ],
       exitOnError: false,
     });
   }
 
   Initialize() {
-    this.Logger.info(`Server started ${_.now()}`);
+    this.Logger.info(`Server started on port ${this.Port} @ ${_.now()}`);
   }
 }
 

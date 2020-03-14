@@ -10,4 +10,10 @@ module.exports = {
   extends: [
     'airbnb-typescript/base'
   ],
+  rules: {
+    'max-len': 'off',
+    'lines-between-class-members': 'off',
+    'no-plusplus': 'off',
+    'object-property-newline': 'error'
+  }
 };
