@@ -20,7 +20,7 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
 
   // Limits length of this vector to a set field
-  public clamp(minLen: number, maxLen: number) {
+  public clamp(minLen: number, maxLen: number):Vector {
     const len = this.length();
     const lenF = Math.min(Math.max(len, minLen), maxLen);
 
@@ -30,17 +30,17 @@ class Vector { // A structure that holds position data or direction and magnitud
       this.y = unit.y * lenF;
       this.z = unit.y * lenF;
     }
+
+    return this;
   }
 
   // Static methods--generates new vectors to avoid overriding old properties
   static Add(a: Vector, b: Vector):Vector {
     return new Vector(a.x + b.x, a.y + b.y, a.z + b.z);
   }
-
   static Subtract(a: Vector, b: Vector):Vector {
     return new Vector(a.x - b.x, a.y - b.y, a.z - b.z);
   }
-
   static Multiply(a: Vector, b: number):Vector { // A is a vector, b should be a scalar number
     return new Vector(a.x * b, a.y * b, a.z * b);
   }
@@ -65,6 +65,10 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
   static DistanceXY(a: Vector, b:Vector):number {
     return Vector.Subtract(b, a).lengthXY();
+  }
+
+  static Clone(a: Vector):Vector {
+    return new Vector(a.x, a.y, a.z);
   }
 }
 

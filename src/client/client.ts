@@ -1,10 +1,16 @@
 // import * as _ from 'lodash';
 
 import Vector from '../common/engine/Vector';
-// import Fighter from '../common/engine/Fighter';
+
+import Fighter from '../common/engine/Fighter';
 import Sheep from '../common/engine/fighters/Sheep';
+
+import Particle from '../common/engine/Particle';
+// import PLightning from '../common/engine/particles/Lightning';
+
 import Map from '../common/engine/Map';
 import Physics from '../common/engine/Physics';
+
 import Camera from '../common/engine/Camera';
 import Renderer from '../common/engine/Render';
 
@@ -13,11 +19,14 @@ const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
 
 // Create objects for basic testing
-const cam = new Camera(viewport.width, viewport.height, 40, 30);
+const cam = new Camera(viewport.width, viewport.height, 20, 15);
 const map = new Map(50, 50, 10);
 
 const player = new Sheep(1, new Vector(25, 25, 0));
-const enemy = new Sheep(2, new Vector(28, 28, 0));
+// eslint-disable-next-line
+let fighters: Fighter[] = [player, new Sheep(2, new Vector(28, 28, 0))];
+// eslint-disable-next-line
+let particles: Particle[] = [];
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'a') player.Acceleration.x = -20;
@@ -38,7 +47,7 @@ function DoFrame(tick: number) {
   const DeltaTime = (tick / 1000) - LastFrame;
   LastFrame = tick / 1000;
 
-  Physics.Tick(DeltaTime, [player, enemy], map);
+  Physics.Tick(DeltaTime, fighters, map);
 
   if (player) cam.SetFocus(player);
 
@@ -47,8 +56,20 @@ function DoFrame(tick: number) {
   cam.Width = viewport.width;
   cam.Height = viewport.height;
 
+  for (let i = 0; i < particles.length; i++) {
+    particles[i].Tick(DeltaTime);
+
+    if (particles[i].Finished === true) {
+      particles.splice(i, 1);
+      i--;
+    }
+  }
+
   cam.UpdateFocus();
-  Renderer.DrawScreen(canvas, cam, map, [player, enemy]);
+  Renderer.DrawScreen(canvas, cam, map, fighters, particles);
+
+  // Particle testing
+  // particles.push(new PLightning(0.5, new Vector(25, 25, 0), new Vector(30, 30, 0)));
 
   return window.requestAnimationFrame(DoFrame);
 }
