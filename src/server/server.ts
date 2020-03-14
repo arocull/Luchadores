@@ -1,3 +1,4 @@
-import * as _ from 'lodash';
+import Host from './Host';
 
-console.log('Server started.');
+const Server = new Host(10811);
+Server.Initialize();
