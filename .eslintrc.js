@@ -14,6 +14,7 @@ module.exports = {
     'max-len': 'off',
     'lines-between-class-members': 'off',
     'no-plusplus': 'off',
-    'object-property-newline': 'error'
+    'object-property-newline': 'error',
+    'eol-last': 'off'
   }
 };

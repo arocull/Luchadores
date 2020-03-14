@@ -5,9 +5,8 @@ const path = require('path');
 module.exports = {
   mode: 'development',
   devtool: 'eval-source-map', // inline-source-map
-  watch: true,
+  // watch: true,
   entry: {
-    server: './src/server/server.ts',
     client: './src/client/client.ts',
   },
   output: {
