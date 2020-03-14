@@ -11,11 +11,9 @@ module.exports = {
     'airbnb-typescript/base'
   ],
   rules: {
-    'max-len': ['error', {
-      ignoreComments:true,
-      code: 100
-    }],
+    'max-len': 'off',
     'lines-between-class-members': 'off',
     'no-plusplus': 'off',
+    'object-property-newline': 'error'
   }
 };
