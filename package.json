@@ -9,7 +9,6 @@
     "test": "jest ./dist/test --coverage",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
-    "code-quality": "eslint . --ext .js,.jsx,.ts,.tsx --output-file ./reports/codequality",
     "build": "webpack --config ./webpack/production.js",
     "watch": "webpack --config ./webpack/development.js",
     "web": "xdg-open ./dist/index.html",
@@ -23,7 +22,7 @@
   "lint-staged": {
     "**/*.{ts,js,tsx,jsx}": [
       "npm run fix",
-      "git add"
+      "npm run test"
     ]
   },
   "repository": {
