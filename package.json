@@ -15,6 +15,17 @@
     "web": "xdg-open ./dist/index.html",
     "server": "node ./dist/server.js"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "**/*.{ts,js,tsx,jsx}": [
+      "npm run fix",
+      "git add"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "http://git.maxocull.com/ocull/brothers/luchadores.git"
@@ -35,10 +46,12 @@
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
     "clean-webpack-plugin": "^3.0.0",
-    "jest": "^25.1.0",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-typescript": "^7.0.0",
     "eslint-plugin-import": "^2.20.1",
+    "husky": "^4.2.3",
+    "jest": "^25.1.0",
+    "lint-staged": "^10.0.8",
     "ts-loader": "^6.2.1",
     "typescript": "^3.8.3",
     "webpack": "^4.42.0",
