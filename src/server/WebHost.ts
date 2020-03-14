@@ -18,7 +18,7 @@ class WebHost {
     // Serve files
     this.app.use(express.static(path.join(__dirname, '../../public/')));
 
-    this.app.listen(this.port);
+    this.http.listen(this.port);
     logger.info(`Server started on port ${this.port}`);
   }
 }

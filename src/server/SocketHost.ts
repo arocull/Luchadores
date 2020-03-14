@@ -11,6 +11,9 @@ class SocketHost {
 
     this.ws.on('connection', (socket) => {
       logger.info(`New websocket connection! ${socket.id}`);
+      socket.on('disconnect', () => {
+        logger.info(`Disconnected: ${socket.id}`);
+      });
     });
   }
 }
