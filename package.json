@@ -6,7 +6,7 @@
   "main": "dist/server.js",
   "scripts": {
     "pretest": "tsc",
-    "test": "jest ./dist/test",
+    "test": "jest ./dist/test --coverage",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "code-quality": "eslint . --ext .js,.jsx,.ts,.tsx --output-file ./reports/codequality",
