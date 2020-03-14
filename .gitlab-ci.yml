@@ -1,8 +1,13 @@
 image: node:12
 
+# https://docs.gitlab.com/ee/ci/caching/#caching-nodejs-dependencies
 cache:
+  key: ${CI_COMMIT_REF_SLUG}
   paths:
-    - node_modules/
+    - .npm/
+
+before_script:
+  - npm ci --cache .npm --prefer-offline
 
 stages:
   - build
