@@ -1,7 +1,7 @@
 image: node:12
 
 variables:
-  GIT_DEPTH: 10
+  GIT_DEPTH: 1
 
 # https://docs.gitlab.com/ee/ci/caching/#caching-nodejs-dependencies
 cache:
