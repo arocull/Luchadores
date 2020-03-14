@@ -1,5 +1,5 @@
 // Includes Vector.js
-import { Vector } from './Vector';
+import Vector from './Vector';
 
 // A standard fighter with basic properties shared by all characters
 export class Fighter {

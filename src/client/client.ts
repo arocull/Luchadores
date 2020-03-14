@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 
-import { Vector } from '../common/engine/Vector';
+import Vector from '../common/engine/Vector';
 import { Fighter, Sheep } from '../common/engine/Fighters';
 import { Map } from '../common/engine/Map';
 import { TickPhysics } from '../common/engine/Physics';

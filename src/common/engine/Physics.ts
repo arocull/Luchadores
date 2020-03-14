@@ -1,5 +1,5 @@
 // Inludes Vector.js and Fighters.js
-import { Vector } from './Vector';
+import Vector from './Vector';
 import { Fighter } from './Fighters';
 import { Map } from './Map';
 

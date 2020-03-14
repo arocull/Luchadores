@@ -1,5 +1,5 @@
 // Client only -- Renders stuff to the screen
-import { Vector } from './Vector';
+import Vector from './Vector';
 import { Fighter } from './Fighters';
 import { Map } from './Map';
 // Needs particle module
