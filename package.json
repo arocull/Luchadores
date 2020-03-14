@@ -7,6 +7,9 @@
   "scripts": {
     "pretest": "tsc",
     "test": "jest ./dist/test",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "code-quality": "eslint . --ext .js,.jsx,.ts,.tsx --output-file ./reports/codequality",
     "build": "webpack --config ./webpack/production.js",
     "watch": "webpack --config ./webpack/development.js",
     "web": "xdg-open ./dist/index.html",
@@ -29,8 +32,13 @@
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "@types/lodash": "^4.14.149",
+    "@typescript-eslint/eslint-plugin": "^2.23.0",
+    "@typescript-eslint/parser": "^2.23.0",
     "clean-webpack-plugin": "^3.0.0",
     "jest": "^25.1.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-typescript": "^7.0.0",
+    "eslint-plugin-import": "^2.20.1",
     "ts-loader": "^6.2.1",
     "typescript": "^3.8.3",
     "webpack": "^4.42.0",
