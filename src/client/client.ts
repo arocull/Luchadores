@@ -1,4 +1,5 @@
 // import * as _ from 'lodash';
+import * as socketIo from 'socket.io-client';
 
 import Vector from '../common/engine/Vector';
 
@@ -74,8 +75,9 @@ function DoFrame(tick: number) {
   return window.requestAnimationFrame(DoFrame);
 }
 
-
-function Setup() {
+(function setup() {
   window.requestAnimationFrame(DoFrame);
-}
-Setup();
+
+  // TODO: Use connection
+  socketIo.connect();
+}());
