@@ -24,10 +24,11 @@ class Physics {
       else if (obj.Position.y > map.Height) accel.y -= 100;
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
-      const leveled = new Vector(obj.Velocity.x, obj.Velocity.y, 0);
-      const frict = Vector.Multiply(Vector.UnitVector(leveled), -map.Friction);
-      frict.clamp(0, 50);
-      accel = Vector.Add(accel, frict);
+      if (obj.Position.z <= 0) {
+        const leveled = new Vector(obj.Velocity.x, obj.Velocity.y, 0);
+        const frict = Vector.Multiply(Vector.UnitVector(leveled), -map.Friction).clamp(0, obj.Velocity.length() * 3);
+        accel = Vector.Add(accel, frict);
+      }
 
 
       // Add physics-based acceleration and player input acceleration, and then calculate position change
@@ -45,8 +46,8 @@ class Physics {
       obj.Position = Vector.Add(obj.Position, deltaX);
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
 
-      if (obj.Velocity.x < 1) obj.Flipped = true;
-      else if (obj.Velocity.x > 1) obj.Flipped = false;
+      if (obj.Acceleration.x < -1) obj.Flipped = true;
+      else if (obj.Acceleration.x > 1) obj.Flipped = false;
 
       if (obj.Position.z < 0) {
         obj.Position.z = 0;
@@ -76,11 +77,9 @@ class Physics {
           b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / b.Mass);
           a.Velocity = aVelo;
 
-          // if (b.Velocity.length() < 10 && a.Velocity.length() < 10) {
           const seperate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
           a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -3));
           b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 3));
-          // }
         }
       }
     }

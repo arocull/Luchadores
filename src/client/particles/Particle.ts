@@ -1,4 +1,4 @@
-import Vector from './Vector';
+import Vector from '../../common/engine/Vector';
 
 class Particle {
   protected Lifetime: number;
@@ -30,6 +30,13 @@ class Particle {
   Tick(DeltaTime: number) {
     this.Lifetime += DeltaTime;
 
+    if (this.Lifetime > this.MaxLifetime) {
+      this.Finished = true;
+      return;
+    }
+
+    this.Alpha = 1 - (this.Lifetime / this.MaxLifetime);
+
     if (this.Velocity.length() > 0) {
       const dif = Vector.Add(
         Vector.Multiply(this.Acceleration, (DeltaTime ** 2) / 2),
@@ -41,10 +48,6 @@ class Particle {
     if (this.Acceleration.length() > 0) {
       this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(this.Acceleration, DeltaTime));
     }
-
-    this.Alpha = 1 - (this.Lifetime / this.MaxLifetime);
-
-    if (this.Lifetime > this.MaxLifetime) this.Finished = true;
   }
 }
 
