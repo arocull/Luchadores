@@ -21,6 +21,9 @@ class Fighter {
   public Velocity: Vector;
   public Acceleration: Vector;
 
+  public JustHitPosition: Vector;
+  public JustHitMomentum: number;
+
   constructor(
     hp: number,
     mass: number,
@@ -49,6 +52,9 @@ class Fighter {
     this.Position = position;
     this.Velocity = new Vector(0, 0, 0); // Magnitude of velocity * mass should never be > MaxMomentum
     this.Acceleration = new Vector(0, 0, 0); // Done for physics calculation, derived by player input and set by server
+
+    this.JustHitPosition = new Vector(0, 0, 0);
+    this.JustHitMomentum = 0;
   }
 
 
@@ -59,9 +65,8 @@ class Fighter {
   }
 
   public CollideWithFighter(hit: Fighter, momentum: number) {
-    if (this.Class === 'Sheep' && momentum > this.MaxMomentum / 2) {
-      hit.TakeDamage((momentum / this.MaxMomentum) * 50);
-    }
+    this.JustHitPosition = Vector.Average(this.Position, hit.Position);
+    this.JustHitMomentum = momentum;
   }
 
   // Create a string containing only necessary information about this fighter for use for sending to clients

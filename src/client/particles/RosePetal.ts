@@ -22,6 +22,11 @@ class PRosePetal extends Particle {
     this.Velocity.z = burstIntensity * Math.random();
     this.Acceleration.z = -3;
   }
+
+  // Creates X many petals
+  static Burst(particleList: Particle[], position: Vector, petalSize: number, intensity: number, petals: number) {
+    for (let i = 0; i < petals; i++) particleList.push(new PRosePetal(position, petalSize, intensity));
+  }
 }
 
 export { PRosePetal as default };

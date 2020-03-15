@@ -46,6 +46,11 @@ class Physics {
       obj.Position = Vector.Add(obj.Position, deltaX);
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
 
+      // Terminal velocity
+      if (obj.Velocity.length() > obj.MaxMomentum / obj.Mass) {
+        obj.Velocity = Vector.Multiply(Vector.UnitVector(obj.Velocity), obj.MaxMomentum / obj.Mass);
+      }
+
       if (obj.Acceleration.x < -1) obj.Flipped = true;
       else if (obj.Acceleration.x > 1) obj.Flipped = false;
 
@@ -78,8 +83,8 @@ class Physics {
           a.Velocity = aVelo;
 
           const seperate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
-          a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -30 / a.Mass));
-          b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 30 / b.Mass));
+          a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -150 / a.Mass));
+          b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 150 / b.Mass));
         }
       }
     }

@@ -5,8 +5,12 @@ test('vector arithematic test', () => {
   const vect2 = new Vector(1, 0, 0);
   const vect3 = new Vector(1, 0, 1);
 
+  expect(vect2.length()).toBe(1);
+  expect(vect2.lengthXY()).toBe(1);
   expect(Vector.Add(vect1, vect2).x).toBe(1);
   expect(Vector.Subtract(vect1, vect2).x).toBe(-1);
+  expect(Vector.Multiply(vect2, 3).x).toBe(3);
+  expect(Vector.MultiplyVectors(vect1, vect2).x).toBe(0);
   expect(Vector.Distance(vect1, vect2)).toBe(1);
   expect(Vector.DistanceXY(vect1, vect3)).toBe(1);
 

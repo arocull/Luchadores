@@ -24,7 +24,7 @@ class Particle {
     this.Lifetime = 0;
     this.Finished = false;
     this.Alpha = 0;
-    this.Width = 1;
+    this.Width = 0.1;
 
     this.UsePhysics = false;
     this.Velocity = new Vector(0, 0, 0);

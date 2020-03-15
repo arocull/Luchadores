@@ -11,6 +11,7 @@ import Animator from './animation/Animator';
 import Particle from './particles/Particle';
 // import PLightning from './particles/Lightning';
 // import PRosePetal from './particles/RosePetal';
+import PSmashEffect from './particles/SmashEffect';
 
 import Map from '../common/engine/Map';
 import Physics from '../common/engine/Physics';
@@ -53,6 +54,14 @@ function DoFrame(tick: number) {
   // Tick physics
   Physics.Tick(DeltaTime, fighters, map);
 
+  // Update Camera
+  viewport.width = window.innerWidth;
+  viewport.height = window.innerHeight;
+  cam.Width = viewport.width;
+  cam.Height = viewport.height;
+  if (player) cam.SetFocus(player);
+  cam.UpdateFocus();
+
 
   // Tick animators, prune and generate new ones based off of need
   for (let i = 0; i < fighters.length; i++) {
@@ -75,20 +84,20 @@ function DoFrame(tick: number) {
     }
   }
 
-  // Update Camera
-  viewport.width = window.innerWidth;
-  viewport.height = window.innerHeight;
-  cam.Width = viewport.width;
-  cam.Height = viewport.height;
-  if (player) cam.SetFocus(player);
-  cam.UpdateFocus();
+  for (let i = 0; i < fighters.length; i++) {
+    // eslint-disable-next-line
+    console.log("Fighters ", i, " with HP ", fighters[i].HP, " and Momentum ", fighters[i].Velocity.length()*fighters[i].Mass);
+    if (fighters[i].JustHitMomentum > 0) {
+      for (let j = 0; j < 3; j++) {
+        particles.push(new PSmashEffect(fighters[i].JustHitPosition, fighters[i].JustHitMomentum / 5000));
+      }
+
+      fighters[i].JustHitMomentum = 0;
+    }
+  }
+
 
   Renderer.DrawScreen(canvas, cam, map, fighters, animators, particles);
-
-  // Particle testing
-  /* for (let i = 0; i < 3; i++) {
-    particles.push(new PRosePetal(player.Position, 0.2, 5));
-  } */
 
   return window.requestAnimationFrame(DoFrame);
 }
