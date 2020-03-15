@@ -78,8 +78,8 @@ class Physics {
           a.Velocity = aVelo;
 
           const seperate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
-          a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -3));
-          b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 3));
+          a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -30 / a.Mass));
+          b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 30 / b.Mass));
         }
       }
     }
