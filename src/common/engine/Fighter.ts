@@ -63,6 +63,17 @@ class Fighter {
       hit.TakeDamage((momentum / this.MaxMomentum) * 50);
     }
   }
+
+  // Create a string containing only necessary information about this fighter for use for sending to clients
+  public ToPacket():string {
+    let str = `{I:${this.ID},C:${this.Class},`;
+    str += `P:[${this.Position.x},${this.Position.y},${this.Position.z}],`;
+    str += `V:[${this.Velocity.x},${this.Velocity.y},${this.Velocity.z}],`;
+    str += `A:[${this.Acceleration.x},${this.Acceleration.y},${this.Acceleration.z}],`;
+    str += `F:${this.Flipped}}`;
+
+    return str;
+  }
 }
 
 export { Fighter as default };

@@ -1,12 +1,14 @@
 // Client only -- Renders stuff to the screen
-import Vector from './Vector';
-import Fighter from './Fighter';
+import Vector from '../common/engine/Vector';
+import Fighter from '../common/engine/Fighter';
 
-import Particle from './Particle';
+import Animator from './animation/Animator';
+
+import Particle from './particles/Particle';
 import PLightning from './particles/Lightning';
 
 import Camera from './Camera';
-import Map from './Map';
+import Map from '../common/engine/Map';
 // Needs particle module
 // Needs camera module??
 
@@ -21,6 +23,7 @@ class Renderer {
     camera: Camera,
     map: Map,
     fighters: Fighter[],
+    animators: Animator[],
     particles: Particle[],
   ) {
     canvas.resetTransform();
@@ -37,6 +40,9 @@ class Renderer {
       offsetX, offsetY,
     );
     const corner3 = camera.PositionOffsetMap(new Vector(0, map.Height, 0), offsetX, offsetY);
+
+    canvas.drawImage(map.Texture, 0, 0, 2048, 2048, corner0.x, corner0.y - map.Height * zoom, map.Width * zoom, map.Height * zoom);
+
     canvas.strokeStyle = '#ff0000';
     canvas.globalAlpha = 1;
     canvas.lineWidth = zoom * 0.1;
@@ -46,7 +52,6 @@ class Renderer {
     canvas.lineTo(corner1.x, corner1.y);
     canvas.lineTo(corner2.x, corner2.y);
     canvas.lineTo(corner3.x, corner3.y);
-    canvas.lineTo(corner0.x, corner0.y);
     canvas.closePath();
     canvas.stroke();
 
@@ -63,19 +68,35 @@ class Renderer {
         (pos.y + a.Height / 1.5) * zoom + offsetY,
         2 * a.Radius * 1.1 * zoom, (a.Height * zoom) / 2,
       );
-
-      /* if (a.Flipped)
-              canvas.scale(-1,1);
-          else
-              canvas.scale(1,1); */
-
-      canvas.fillStyle = '#000000';
       canvas.globalAlpha = 1;
-      canvas.fillRect(
-        (-pos.x - a.Radius) * zoom + offsetX,
-        (pos.y + pos.z) * zoom + offsetY, 2 * a.Radius * zoom,
-        a.Height * zoom,
-      );
+
+      if (animators[i]) { // If we can find an animator for this fighter, use it
+        const b = animators[i];
+
+        let row = b.row * 2;
+        if (a.Flipped) row++;
+
+        canvas.drawImage(
+          b.SpriteSheet,
+          b.FrameWidth * b.frame,
+          b.FrameHeight * row,
+          b.FrameWidth,
+          b.FrameHeight,
+          (-pos.x - a.Radius * b.Upscale) * zoom + offsetX,
+          (pos.y + pos.z - (a.Height * (b.Upscale - 1))) * zoom + offsetY,
+          2 * a.Radius * b.Upscale * zoom,
+          a.Height * b.Upscale * zoom,
+        );
+        canvas.resetTransform();
+      } else { // Otherwise, draw a box
+        canvas.fillStyle = '#000000';
+        canvas.fillRect(
+          (-pos.x - a.Radius) * zoom + offsetX,
+          (pos.y + pos.z) * zoom + offsetY,
+          2 * a.Radius * zoom,
+          a.Height * zoom,
+        );
+      }
     }
     for (let i = 0; i < particles.length; i++) {
       const a = particles[i];
@@ -99,7 +120,7 @@ class Renderer {
 
       canvas.lineTo(pos2.x, pos2.y);
       canvas.stroke();
-      canvas.closePath();
+      // canvas.closePath();
     }
   }
   /* eslint-enable no-param-reassign */

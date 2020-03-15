@@ -1,5 +1,5 @@
-import Vector from '../Vector';
-import Particle from '../Particle';
+import Vector from '../../common/engine/Vector';
+import Particle from './Particle';
 
 class PLightning extends Particle {
   public Segments: Vector[];

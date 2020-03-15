@@ -1,5 +1,5 @@
-import Vector from './Vector';
-import Fighter from './Fighter';
+import Vector from '../common/engine/Vector';
+import Fighter from '../common/engine/Fighter';
 
 class Camera {
   protected Focus: Fighter;
@@ -43,7 +43,7 @@ class Camera {
     const vect = Vector.Multiply(this.PositionOffset(pos), this.Zoom);
     vect.x *= -1;
     vect.x += offsetX;
-    vect.y += offsetY;
+    vect.y += vect.z + offsetY;
     return vect;
   }
 }
