@@ -1,6 +1,10 @@
 // Client only -- Renders stuff to the screen
 import Vector from './Vector';
 import Fighter from './Fighter';
+
+import Particle from './Particle';
+import PLightning from './particles/Lightning';
+
 import Camera from './Camera';
 import Map from './Map';
 // Needs particle module
@@ -17,10 +21,9 @@ class Renderer {
     camera: Camera,
     map: Map,
     fighters: Fighter[],
+    particles: Particle[],
   ) {
     canvas.resetTransform();
-    // canvas.clearRect(0, 0, camera.Width, camera.Height);
-    // canvas.transform(camera.Zoom, 0, 0, camera.Zoom, 0, 0);
 
     const offsetX = camera.Width / 2;
     const offsetY = camera.Height / 2;
@@ -37,6 +40,7 @@ class Renderer {
     canvas.strokeStyle = '#ff0000';
     canvas.globalAlpha = 1;
     canvas.lineWidth = zoom * 0.1;
+    canvas.lineCap = 'round';
     canvas.beginPath();
     canvas.moveTo(corner0.x, corner0.y);
     canvas.lineTo(corner1.x, corner1.y);
@@ -72,6 +76,30 @@ class Renderer {
         (pos.y + pos.z) * zoom + offsetY, 2 * a.Radius * zoom,
         a.Height * zoom,
       );
+    }
+    for (let i = 0; i < particles.length; i++) {
+      const a = particles[i];
+      canvas.strokeStyle = a.RenderStyle;
+      canvas.globalAlpha = a.Alpha;
+      canvas.lineWidth = zoom * a.Width;
+
+      const pos1 = camera.PositionOffsetMap(a.Beginning, offsetX, offsetY);
+      const pos2 = camera.PositionOffsetMap(a.End, offsetX, offsetY);
+
+      canvas.beginPath();
+      canvas.moveTo(pos1.x, pos1.y);
+
+      if (a.Type === 'Lightning') {
+        const l = <PLightning>(a);
+        for (let j = 0; j < l.Segments.length; j++) {
+          const seg = camera.PositionOffsetMap(l.Segments[j], offsetX, offsetY);
+          canvas.lineTo(seg.x, seg.y);
+        }
+      }
+
+      canvas.lineTo(pos2.x, pos2.y);
+      canvas.stroke();
+      canvas.closePath();
     }
   }
   /* eslint-enable no-param-reassign */
