@@ -5,7 +5,7 @@
   "private": true,
   "main": "dist/src/server/server.js",
   "scripts": {
-    "pretest": "npm run build",
+    "pretest": "npm run prebuild && tsc",
     "test": "JEST_JUNIT_OUTPUT_DIR='coverage' jest dist/test --coverage --reporters=default --reporters=jest-junit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",

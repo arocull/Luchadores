@@ -18,11 +18,11 @@ const commonConfig = {
   },
 };
 
-const clientConfig = webpackMerge(development[0], _.defaultsDeep(commonConfig, {
+const clientConfig = webpackMerge(development[0], _.defaultsDeep(_.cloneDeep(commonConfig), {
 
 }));
 
-const serverConfig = webpackMerge(development[1], _.defaultsDeep(commonConfig, {
+const serverConfig = webpackMerge(development[1], _.defaultsDeep(_.cloneDeep(commonConfig), {
 
 }));
 

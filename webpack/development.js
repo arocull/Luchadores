@@ -2,6 +2,7 @@ const _ = require('lodash');
 // eslint-disable-next-line
 const webpack = require('webpack');
 const path = require('path');
+// eslint-disable-next-line
 const nodeExternals = require('webpack-node-externals');
 
 // https://webpack.js.org/concepts/targets/
@@ -9,9 +10,8 @@ const nodeExternals = require('webpack-node-externals');
 
 const commonConfig = {
   mode: 'development',
-  devtool: 'eval-source-map', // inline-source-map
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.jsx'],
   },
   module: {
     rules: [
@@ -24,7 +24,8 @@ const commonConfig = {
   },
 };
 
-const clientConfig = _.defaultsDeep(commonConfig, {
+const clientConfig = _.defaultsDeep(_.cloneDeep(commonConfig), {
+  target: 'web',
   entry: {
     client: './src/client/client.ts',
   },
@@ -32,16 +33,17 @@ const clientConfig = _.defaultsDeep(commonConfig, {
     filename: '[name].js',
     path: path.resolve(__dirname, '../dist/public'),
   },
-  target: 'web',
   plugins: [
     new webpack.DefinePlugin({
       CANVAS_RENDERER: JSON.stringify(true),
       WEBGL_RENDERER: JSON.stringify(true),
     }),
   ],
+  devtool: 'eval-source-map', // inline-source-map
 });
 
-const serverConfig = _.defaultsDeep(commonConfig, {
+const serverConfig = _.defaultsDeep(_.cloneDeep(commonConfig), {
+  target: 'node',
   entry: {
     server: './src/server/server.ts',
   },
@@ -50,7 +52,6 @@ const serverConfig = _.defaultsDeep(commonConfig, {
     path: path.resolve(__dirname, '../dist'),
   },
   externals: [nodeExternals()],
-  target: 'node',
 });
 
 module.exports = [clientConfig, serverConfig];
