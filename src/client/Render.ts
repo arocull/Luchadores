@@ -7,7 +7,7 @@ import Animator from './animation/Animator';
 import Particle from './particles/Particle';
 import PLightning from './particles/Lightning';
 
-import Camera from '../common/engine/Camera';
+import Camera from './Camera';
 import Map from '../common/engine/Map';
 // Needs particle module
 // Needs camera module??

@@ -9,12 +9,13 @@ import Sheep from '../common/engine/fighters/Sheep';
 import Animator from './animation/Animator';
 
 import Particle from './particles/Particle';
-// import PLightning from '../common/engine/particles/Lightning';
+// import PLightning from './particles/Lightning';
+// import PRosePetal from './particles/RosePetal';
 
 import Map from '../common/engine/Map';
 import Physics from '../common/engine/Physics';
 
-import Camera from '../common/engine/Camera';
+import Camera from './Camera';
 import Renderer from './Render';
 
 // Get rendering viewport--browser only
@@ -85,7 +86,9 @@ function DoFrame(tick: number) {
   Renderer.DrawScreen(canvas, cam, map, fighters, animators, particles);
 
   // Particle testing
-  // particles.push(new PLightning(0.5, new Vector(25, 25, 0), new Vector(30, 30, 0)));
+  /* for (let i = 0; i < 3; i++) {
+    particles.push(new PRosePetal(player.Position, 0.2, 5));
+  } */
 
   return window.requestAnimationFrame(DoFrame);
 }
