@@ -1,8 +1,9 @@
+const _ = require('lodash');
 // eslint-disable-next-line
 const webpackMerge = require('webpack-merge');
 const development = require('./development');
 
-module.exports = webpackMerge(development, {
+const commonConfig = {
   mode: 'production',
   devtool: false,
   watch: false,
@@ -15,4 +16,14 @@ module.exports = webpackMerge(development, {
       chunks: 'all',
     },
   },
-});
+};
+
+const clientConfig = webpackMerge(development[0], _.defaultsDeep(commonConfig, {
+
+}));
+
+const serverConfig = webpackMerge(development[1], _.defaultsDeep(commonConfig, {
+
+}));
+
+module.exports = [clientConfig, serverConfig];
