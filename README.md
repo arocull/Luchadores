@@ -21,7 +21,7 @@ npm install
 We use Webpack to build everything:
 
 ```
-npm run watch           # Generally the fastest.
+npm run watch           # Generally the fastest, also auto-starts the server.
 npm run build           # Builds everything once.
 npm run build           # Builds everything once.
 npm run clean           # Clears the dist folder.
@@ -38,7 +38,8 @@ npm run fix             # Will try it's best to fix all warnings/errors.
 
 Start the server and watch your browser:
 ```
-npm run web             # Opens the webpage in your browser. Does not connect to a server yet.
+npm run web             # Opens index.html in your browser. Does not connect to a server.
+npm run join            # Opens a link to the server in your browser. DOES connect to the locally hosted server.
 npm run server          # Runs the server without building.
 npm run start           # Builds and runs the server.
 ```
@@ -51,7 +52,3 @@ can forcibly ignore these by adding the `--no-verify` flag like so:
 ```
 git commit -a -m "Your message" --no-verify
 ```
-
-## TODO
-
-- Add Webpack dev server (auto run/update the server when file is edited).

@@ -18,9 +18,10 @@
     "build-prod": "npm run prebuild && webpack --config ./webpack/production.js",
     "rebuild-prod": "npm run clean && npm run build-prod",
     "prestart": "npm run build",
-    "start": "node ./dist/src/server/server.js",
+    "start": "node ./dist/server.js",
     "web": "xdg-open ./dist/public/index.html",
-    "server": "node ./dist/src/server/server.js"
+    "server": "node ./dist/server.js",
+    "join": "xdg-open http://localhost:3000"
   },
   "husky": {
     "hooks": {
