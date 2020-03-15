@@ -2,6 +2,7 @@ const _ = require('lodash');
 // eslint-disable-next-line
 const webpack = require('webpack');
 const path = require('path');
+const nodeExternals = require('webpack-node-externals');
 
 // https://webpack.js.org/concepts/targets/
 // Also suggests splitting up the config into two pieces... Better for us anyway.
@@ -48,6 +49,7 @@ const serverConfig = _.defaultsDeep(commonConfig, {
     filename: '[name].js',
     path: path.resolve(__dirname, '../dist'),
   },
+  externals: [nodeExternals()],
   target: 'node',
 });
 
