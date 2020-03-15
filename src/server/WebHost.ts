@@ -1,5 +1,3 @@
-import * as path from 'path';
-
 import * as express from 'express';
 import * as http from 'http';
 
@@ -16,7 +14,9 @@ class WebHost {
 
   initialize() {
     // Serve files
-    this.app.use(express.static(path.join(__dirname, '../../public/')));
+    const webRoot = './dist/public';
+    logger.info(`Web root is ${webRoot}`);
+    this.app.use(express.static(webRoot));
 
     this.http.listen(this.port);
     logger.info(`Server started on port ${this.port}`);

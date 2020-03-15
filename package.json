@@ -5,21 +5,23 @@
   "private": true,
   "main": "dist/src/server/server.js",
   "scripts": {
-    "pretest": "npm run build",
+    "pretest": "npm run prebuild && tsc",
     "test": "JEST_JUNIT_OUTPUT_DIR='coverage' jest dist/test --coverage --reporters=default --reporters=jest-junit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "clean": "rm -rf dist/",
     "prebuild": "mkdir -p dist/public/ && cp -R assets/* dist/public/",
-    "build": "npm run prebuild && tsc && webpack --config ./webpack/development.js",
+    "build": "npm run prebuild && webpack --config ./webpack/development.js",
     "rebuild": "npm run clean && npm run build",
-    "watch": "webpack --config ./webpack/development.js --watch",
+    "watch": "npm run prebuild && webpack --config ./webpack/development.js --watch",
     "postinstall": "npm run build",
-    "build-prod": "webpack --config ./webpack/production.js",
+    "build-prod": "npm run prebuild && webpack --config ./webpack/production.js",
     "rebuild-prod": "npm run clean && npm run build-prod",
-    "web": "xdg-open ./dist/public/index.html",
     "prestart": "npm run build",
-    "start": "node ./dist/src/server/server.js"
+    "start": "node ./dist/server.js",
+    "web": "xdg-open ./dist/public/index.html",
+    "server": "node ./dist/server.js",
+    "join": "xdg-open http://localhost:3000"
   },
   "husky": {
     "hooks": {
@@ -66,7 +68,8 @@
     "typescript": "^3.8.3",
     "webpack": "^4.42.0",
     "webpack-cli": "^3.3.11",
-    "webpack-merge": "^4.2.2"
+    "webpack-merge": "^4.2.2",
+    "webpack-node-externals": "^1.7.2"
   },
   "dependencies": {
     "express": "^4.17.1",
