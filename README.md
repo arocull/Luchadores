@@ -12,7 +12,7 @@ This is a Node v12 (LTS, as of writing) project. If you use Node Version Manager
 nvm install --lts
 ```
 
-Then install the packages:
+Then install the packages. It should automatically trigger a build afterward:
 
 ```
 npm install
@@ -21,24 +21,26 @@ npm install
 We use Webpack to build everything:
 
 ```
-# For development:
-npm run watch
-
-# For production:
-npm run build
+npm run watch           # Generally the fastest.
+npm run build           # Builds everything once.
+npm run build           # Builds everything once.
+npm run clean           # Clears the dist folder.
+npm run rebuild-prod    # Cleans and builds everything once with production settings.
+npm run rebuild-prod    # Cleans and builds everything once with production settings.
 ```
 
 Run tests and keep your code quality high:
 ```
 npm run test
-npm run lint   # Just shows you the warnings/errors.
-npm run fix    # Will try it's best to fix all warnings/errors.
+npm run lint            # Just shows you the warnings/errors.
+npm run fix             # Will try it's best to fix all warnings/errors.
 ```
 
 Start the server and watch your browser:
 ```
-npm run web
-npm run server
+npm run web             # Opens the webpage in your browser. Does not connect to a server yet.
+npm run server          # Runs the server without building.
+npm run start           # Builds and runs the server.
 ```
 
 ## Contributing
@@ -53,5 +55,3 @@ git commit -a -m "Your message" --no-verify
 ## TODO
 
 - Add Webpack dev server (auto run/update the server when file is edited).
-- SASS/Stylus style rendering (necessary?)
-- Embed Roboto font

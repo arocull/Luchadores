@@ -17,9 +17,10 @@
     "postinstall": "npm run build",
     "build-prod": "npm run prebuild && webpack --config ./webpack/production.js",
     "rebuild-prod": "npm run clean && npm run build-prod",
-    "web": "xdg-open ./dist/public/index.html",
     "prestart": "npm run build",
-    "start": "node ./dist/src/server/server.js"
+    "start": "node ./dist/src/server/server.js",
+    "web": "xdg-open ./dist/public/index.html",
+    "server": "node ./dist/src/server/server.js"
   },
   "husky": {
     "hooks": {
