@@ -1,0 +1,5 @@
+syntax = "proto3";
+ 
+message LobbyRequest {
+  string search = 1;
+}

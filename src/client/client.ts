@@ -1,6 +1,8 @@
 // import * as _ from 'lodash';
 import * as socketIo from 'socket.io-client';
 
+import * as events from '../common/events/events';
+
 import Vector from '../common/engine/Vector';
 
 import Fighter from '../common/engine/Fighter';
@@ -96,6 +98,14 @@ function DoFrame(tick: number) {
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
-  // TODO: Use connection
-  socketIo.connect();
+  const socket = socketIo.connect();
+  socket.on('lobby-response', (from: any, msg: any) => {
+    console.log('lobby response', from, msg);
+  });
+  console.log('sending lobby request');
+
+  // TODO: This is not the right encoding.
+  //       Socket.io needs to be switched to using binary encoding.
+  //       Otherwise, just forget the whole thing and use JSON already!
+  socket.emit('lobby-request', events.LobbyRequest.encode({ search: 'hello' }).finish());
 }());

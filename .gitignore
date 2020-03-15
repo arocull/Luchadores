@@ -1,4 +1,7 @@
+# Compiled outputs
 dist/**
+src/common/events/events.js
+src/common/events/events.d.ts
 
 ### Standard:
 # Logs
