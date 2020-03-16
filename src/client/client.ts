@@ -8,6 +8,8 @@ import Sheep from '../common/engine/fighters/Sheep';
 
 import Animator from './animation/Animator';
 
+import Projectile from '../common/engine/projectiles/Projectile';
+
 import Particle from './particles/Particle';
 // import PLightning from './particles/Lightning';
 import PRosePetal from './particles/RosePetal';
@@ -30,6 +32,7 @@ const map = new Map(50, 50, 10, 'Maps/Arena.png');
 const player = new Sheep(1, new Vector(25, 25, 0));
 const fighters: Fighter[] = [player, new Sheep(2, new Vector(28, 28, 0))];
 const animators: Animator[] = [];
+const projectiles: Projectile[] = [];
 const particles: Particle[] = [];
 
 
@@ -67,7 +70,7 @@ function DoFrame(tick: number) {
   LastFrame = tick / 1000;
 
   // Tick physics
-  Physics.Tick(DeltaTime, fighters, map);
+  Physics.Tick(DeltaTime, fighters, projectiles, map);
 
   // Update Camera
   viewport.width = window.innerWidth;
@@ -123,7 +126,7 @@ function DoFrame(tick: number) {
   }
 
 
-  Renderer.DrawScreen(canvas, cam, map, fighters, animators, particles);
+  Renderer.DrawScreen(canvas, cam, map, fighters, animators, projectiles, particles);
 
   return window.requestAnimationFrame(DoFrame);
 }
