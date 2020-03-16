@@ -10,7 +10,7 @@ import Animator from './animation/Animator';
 
 import Particle from './particles/Particle';
 // import PLightning from './particles/Lightning';
-// import PRosePetal from './particles/RosePetal';
+import PRosePetal from './particles/RosePetal';
 import PSmashEffect from './particles/SmashEffect';
 
 import Map from '../common/engine/Map';
@@ -31,6 +31,21 @@ const player = new Sheep(1, new Vector(25, 25, 0));
 const fighters: Fighter[] = [player, new Sheep(2, new Vector(28, 28, 0))];
 const animators: Animator[] = [];
 const particles: Particle[] = [];
+
+
+// Call when server says a fighter died, hand it player ID's
+function OnDeath(died: number, killer: number) {
+  for (let i = 0; i < fighters.length; i++) {
+    if (fighters[i].ID === died) {
+      PRosePetal.Burst(particles, fighters[i].Position, 0.2, 5, 100);
+      fighters.splice(i, 1);
+      i--;
+    } else if (fighters[i].ID === killer) {
+      fighters[i].EarnKill();
+    }
+  }
+}
+
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'a') player.Acceleration.x = -20;
@@ -60,7 +75,7 @@ function DoFrame(tick: number) {
   cam.Width = viewport.width;
   cam.Height = viewport.height;
   if (player) cam.SetFocus(player);
-  cam.UpdateFocus();
+  cam.UpdateFocus(DeltaTime);
 
 
   // Tick animators, prune and generate new ones based off of need
@@ -92,7 +107,18 @@ function DoFrame(tick: number) {
         particles.push(new PSmashEffect(fighters[i].JustHitPosition, fighters[i].JustHitMomentum / 5000));
       }
 
+      if (Vector.Distance(fighters[i].Position, player.Position) <= 2) {
+        cam.Shake += fighters[i].JustHitMomentum / 1000;
+      }
+
       fighters[i].JustHitMomentum = 0;
+    }
+
+    // Normally shouldn't do this on client incase client simulates a kill but it does not occur on server
+    // Currently here for visuals and testing, however
+    if (fighters[i].HP <= 0) {
+      OnDeath(fighters[i].ID, fighters[i].LastHitBy);
+      i--;
     }
   }
 
@@ -101,6 +127,7 @@ function DoFrame(tick: number) {
 
   return window.requestAnimationFrame(DoFrame);
 }
+
 
 (function setup() {
   window.requestAnimationFrame(DoFrame);

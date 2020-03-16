@@ -29,12 +29,12 @@ class Animator {
 
   Tick(DeltaTime: number) {
     let state = 0;
-    if (this.owner.Position.z > 0) state = 1;
-    else if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = 2;
+    if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = 2;
+    else if (this.owner.Position.z > 0) state = 1;
 
     if (state !== this.lastState) this.timer = 0;
 
-    if (state === 2) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
+    if (state === 2 && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
     else this.timer += DeltaTime;
 
     switch (state) {
