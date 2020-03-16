@@ -86,7 +86,7 @@ function DoFrame(tick: number) {
 
   for (let i = 0; i < fighters.length; i++) {
     // eslint-disable-next-line
-    console.log("Fighters ", i, " with HP ", fighters[i].HP, " and Momentum ", fighters[i].Velocity.length()*fighters[i].Mass);
+    // console.log("Fighters ", i, " with HP ", fighters[i].HP, " and Momentum ", fighters[i].Velocity.length()*fighters[i].Mass);
     if (fighters[i].JustHitMomentum > 0) {
       for (let j = 0; j < 3; j++) {
         particles.push(new PSmashEffect(fighters[i].JustHitPosition, fighters[i].JustHitMomentum / 5000));
