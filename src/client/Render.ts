@@ -4,6 +4,8 @@ import Fighter from '../common/engine/Fighter';
 
 import Animator from './animation/Animator';
 
+import Projectile from '../common/engine/projectiles/Projectile';
+
 import Particle from './particles/Particle';
 import PLightning from './particles/Lightning';
 
@@ -24,6 +26,7 @@ class Renderer {
     map: Map,
     fighters: Fighter[],
     animators: Animator[],
+    projectiles: Projectile[],
     particles: Particle[],
   ) {
     canvas.resetTransform();
@@ -98,6 +101,26 @@ class Renderer {
         );
       }
     }
+
+
+    // Draw Projectiles
+    canvas.globalAlpha = 1;
+    for (let i = 0; i < projectiles.length; i++) {
+      const a = projectiles[i];
+      canvas.strokeStyle = a.RenderStyle;
+      canvas.lineWidth = zoom * a.Width;
+
+      const pos1 = camera.PositionOffsetMap(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)), offsetX, offsetY);
+      const pos2 = camera.PositionOffsetMap(a.Position, offsetX, offsetY);
+
+      canvas.beginPath();
+      canvas.moveTo(pos1.x, pos1.y);
+      canvas.lineTo(pos2.x, pos2.y);
+      canvas.stroke();
+    }
+
+
+    // Draw Particles
     for (let i = 0; i < particles.length; i++) {
       const a = particles[i];
       canvas.strokeStyle = a.RenderStyle;
@@ -120,7 +143,6 @@ class Renderer {
 
       canvas.lineTo(pos2.x, pos2.y);
       canvas.stroke();
-      // canvas.closePath();
     }
   }
   /* eslint-enable no-param-reassign */

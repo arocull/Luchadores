@@ -6,6 +6,7 @@ class Camera {
   protected FocusPosition: Vector;
 
   public Zoom: number;
+  public Shake: number;
 
   constructor(
     public Width: number,
@@ -15,15 +16,26 @@ class Camera {
   ) {
     this.Focus = null;
     this.FocusPosition = new Vector(0, 0, 0);
+
+    this.Zoom = 20;
+    this.Shake = 0;
   }
 
   public SetFocus(newFocus: Fighter) { // Should we lerp to new focus or simply snap to them?
     if (newFocus) this.Focus = newFocus;
   }
 
-  public UpdateFocus() { // Internal, lerps camera to focus
+  public UpdateFocus(DeltaTime: number) { // Internal, lerps camera to focus
     if (this.Focus) {
       this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y, 0);
+
+      if (this.Shake > 0) {
+        this.Shake -= DeltaTime * 10;
+        if (this.Shake < 0) this.Shake = 0;
+
+        const shake = (new Vector(Math.random() - 0.5, Math.random() - 0.5, 0)).clamp(1, 1);
+        this.FocusPosition = Vector.Add(this.FocusPosition, Vector.Multiply(shake, (Math.random() * this.Shake) / 100));
+      }
     }
 
     // Use constant aspect ratio

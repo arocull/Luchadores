@@ -9,6 +9,9 @@ class Fighter {
   public Class: string;
   public ID: number;
 
+  public Kills: number;
+  public LastHitBy: number;
+
   public Mass: number;
   public MaxMomentum: number;
   public JumpVelocity: number;
@@ -20,6 +23,9 @@ class Fighter {
   public Position: Vector;
   public Velocity: Vector;
   public Acceleration: Vector;
+
+  public JustHitPosition: Vector;
+  public JustHitMomentum: number;
 
   constructor(
     hp: number,
@@ -38,6 +44,9 @@ class Fighter {
     this.Class = character; // What class this fighter is so we can differentiate between characters
     this.ID = id; // Player/entity ID of this fighter so we can tell who's who
 
+    this.Kills = 0; // How many kills this fighter has racked up this life
+    this.LastHitBy = -1; // Player ID of last attacker
+
     this.Mass = mass; // How much mass this fighter has, used in momentum calculations
     this.MaxMomentum = maxMomentum; // Essentially max speed of character
     this.JumpVelocity = jumpVelo;
@@ -49,28 +58,33 @@ class Fighter {
     this.Position = position;
     this.Velocity = new Vector(0, 0, 0); // Magnitude of velocity * mass should never be > MaxMomentum
     this.Acceleration = new Vector(0, 0, 0); // Done for physics calculation, derived by player input and set by server
+
+    this.JustHitPosition = new Vector(0, 0, 0);
+    this.JustHitMomentum = 0;
   }
 
 
-  public TakeDamage(dmg: number) {
+  public TakeDamage(dmg: number, attacker: Fighter) {
     this.HP -= dmg;
 
+    if (attacker) this.LastHitBy = attacker.ID;
     if (this.HP < 0) this.HP = 0;
+  }
+  public EarnKill() {
+    this.Kills++;
   }
 
   public CollideWithFighter(hit: Fighter, momentum: number) {
-    if (this.Class === 'Sheep' && momentum > this.MaxMomentum / 2) {
-      hit.TakeDamage((momentum / this.MaxMomentum) * 50);
-    }
+    this.JustHitPosition = Vector.Average(this.Position, hit.Position);
+    this.JustHitMomentum = momentum;
   }
 
   // Create a string containing only necessary information about this fighter for use for sending to clients
   public ToPacket():string {
-    let str = `{I:${this.ID},C:${this.Class},`;
-    str += `P:[${this.Position.x},${this.Position.y},${this.Position.z}],`;
-    str += `V:[${this.Velocity.x},${this.Velocity.y},${this.Velocity.z}],`;
-    str += `A:[${this.Acceleration.x},${this.Acceleration.y},${this.Acceleration.z}],`;
-    str += `F:${this.Flipped}}`;
+    let str = `{id:${this.ID},c:${this.Class},`;
+    str += `p:[${this.Position.x},${this.Position.y},${this.Position.z}],`;
+    str += `v:[${this.Velocity.x},${this.Velocity.y},${this.Velocity.z}],`;
+    str += `a:[${this.Acceleration.x},${this.Acceleration.y},${this.Acceleration.z}]}`;
 
     return str;
   }

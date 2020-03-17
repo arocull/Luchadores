@@ -11,8 +11,8 @@ class Particle {
   public UsePhysics: boolean;
   public Velocity: Vector;
   public Acceleration: Vector;
-  public BounceReturn: number;
-  public Drag: number;
+  protected BounceReturn: number;
+  protected Drag: number;
 
   constructor(
     public Type: string,
@@ -24,12 +24,12 @@ class Particle {
     this.Lifetime = 0;
     this.Finished = false;
     this.Alpha = 0;
-    this.Width = 1;
+    this.Width = 0.1;
 
     this.UsePhysics = false;
     this.Velocity = new Vector(0, 0, 0);
     this.Acceleration = new Vector(0, 0, 0);
-    this.BounceReturn = 0.3;
+    this.BounceReturn = 0.5;
     this.Drag = 0.1;
   }
 
@@ -52,7 +52,7 @@ class Particle {
       this.End = Vector.Add(this.End, dif);
 
       // Bounce
-      if (this.Beginning.z <= 0 || this.End.z <= 0) this.Velocity = Vector.Multiply(this.Velocity, -this.BounceReturn);
+      if (this.Beginning.z <= 0 || this.End.z <= 0) this.Velocity.z *= -this.BounceReturn;
       // Apply drag
       if (this.Drag > 0) this.Velocity = Vector.Multiply(this.Velocity, 1 - this.Drag);
 

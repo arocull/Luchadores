@@ -61,10 +61,14 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
 
   static Distance(a: Vector, b:Vector):number {
-    return Vector.Subtract(b, a).length();
+    return Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2) + ((a.z - b.z) ** 2));
   }
   static DistanceXY(a: Vector, b:Vector):number {
-    return Vector.Subtract(b, a).lengthXY();
+    return Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2));
+  }
+
+  static Average(a: Vector, b: Vector):Vector {
+    return new Vector((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
   }
 
   static Clone(a: Vector):Vector {
