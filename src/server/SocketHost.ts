@@ -1,33 +1,36 @@
 import * as http from 'http';
-import * as socketIo from 'socket.io';
+
+import * as WebSocket from 'ws';
 
 import logger from './Logger';
 import * as events from '../common/events/events';
 
 class SocketHost {
-  public ws: socketIo.Server;
+  public ws: WebSocket.Server;
 
   constructor(server: http.Server) {
-    this.ws = socketIo(server);
+    this.ws = new WebSocket.Server({ server, path: '/socket' });
 
-    this.ws.on('connection', (socket) => {
-      logger.info(`New websocket connection! ${socket.id}`);
+    this.ws.on('connection', (socket, req) => {
+      logger.info('New websocket connection: %j',
+        [socket.readyState, socket.binaryType, socket.protocol, req]);
 
-      socket.on('lobby-request', (msg: Buffer) => {
-        // TODO: Decoding here is not working.
-        //       Issues with binary type handling and no type defs for `from`, `msg`
-        //       Conflicting with EventEmitter?
-        console.log(msg, typeof msg);
-        const response = events.LobbyRequest.decode(msg);
-        logger.info('Lobby request: %j', response);
-        logger.info('Lobby search: %j', response.search);
-        logger.info('response instanceof events.LobbyResponse %o', response instanceof events.LobbyResponse);
+      socket.on('message', ((data) => {
+        logger.info('Incoming data %j', data);
 
-        socket.emit('lobby-response', events.LobbyResponse.encode({ lobbyNames: ['one', 'two', 'three'] }).finish());
-      });
+        const request = events.LobbyRequest.decode(data as Buffer);
+        logger.info('Lobby request %j', request);
 
-      socket.on('disconnect', () => {
-        logger.info(`Disconnected: ${socket.id}`);
+        const response = events.LobbyResponse
+          .encode({ lobbyNames: ['one', 'two', 'three'] })
+          .finish();
+
+        logger.info('Sending new data %j', response);
+        socket.send(response);
+      }));
+
+      socket.on('close', (code, reason) => {
+        logger.info('Connection closed %j, %j', code, reason);
       });
     });
   }

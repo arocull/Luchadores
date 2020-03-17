@@ -1,6 +1,4 @@
 // import * as _ from 'lodash';
-import * as socketIo from 'socket.io-client';
-
 import * as events from '../common/events/events';
 
 import Vector from '../common/engine/Vector';
@@ -98,18 +96,33 @@ function DoFrame(tick: number) {
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
-  const socket: any = socketIo.connect();
-  socket.on('lobby-response', (msg: ArrayBuffer) => {
-    console.log('lobby response raw', msg);
+  // TODO: Implement proper client library, reconnect, durability, etc.
+  const wsUrl = `ws://${window.location.host}/socket`;
+  console.log('Attempting WebSocket at URL', wsUrl);
 
-    const response = events.LobbyResponse.decode(new Uint8Array(msg));
+  const ws = new WebSocket(wsUrl);
+  ws.binaryType = 'arraybuffer'; // Force binary type to `arraybuffer` instead of `Blob`
+
+  console.info('New websocket connection: %j', [ws.binaryType, ws.protocol]);
+  ws.addEventListener('open', (event) => {
+    console.log('WebSocket opening', ws.readyState, event);
+
+    const request = events.LobbyRequest.encode({ search: 'hello' }).finish();
+    console.log('Sending lobby request', request);
+    ws.send(request);
+  });
+  ws.addEventListener('message', (msgEvent) => {
+    console.log('WebSocket message', msgEvent, msgEvent.data);
+
+    const response = events.LobbyResponse.decode(new Uint8Array(msgEvent.data));
     console.log('lobby response decoded', response);
     console.log('response instanceof events.LobbyResponse', response instanceof events.LobbyResponse);
   });
-
-  const request = events.LobbyRequest.encode({ search: 'hello' }).finish();
-  console.log('sending lobby request', request);
-
-  // `.binary(...)` does not exist in the type definitions, annoyingly.
-  socket.binary(true).emit('lobby-request', request);
+  ws.addEventListener('close', (closeEvent) => {
+    console.log('WebSocket closing', closeEvent);
+    console.log('Code / Reason', closeEvent.code, closeEvent.reason);
+  });
+  ws.addEventListener('error', (event) => {
+    console.error('WebSocket error', event);
+  });
 }());
