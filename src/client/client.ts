@@ -98,14 +98,18 @@ function DoFrame(tick: number) {
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
-  const socket = socketIo.connect();
-  socket.on('lobby-response', (from: any, msg: any) => {
-    console.log('lobby response', from, msg);
-  });
-  console.log('sending lobby request');
+  const socket: any = socketIo.connect();
+  socket.on('lobby-response', (msg: ArrayBuffer) => {
+    console.log('lobby response raw', msg);
 
-  // TODO: This is not the right encoding.
-  //       Socket.io needs to be switched to using binary encoding.
-  //       Otherwise, just forget the whole thing and use JSON already!
-  socket.emit('lobby-request', events.LobbyRequest.encode({ search: 'hello' }).finish());
+    const response = events.LobbyResponse.decode(new Uint8Array(msg));
+    console.log('lobby response decoded', response);
+    console.log('response instanceof events.LobbyResponse', response instanceof events.LobbyResponse);
+  });
+
+  const request = events.LobbyRequest.encode({ search: 'hello' }).finish();
+  console.log('sending lobby request', request);
+
+  // `.binary(...)` does not exist in the type definitions, annoyingly.
+  socket.binary(true).emit('lobby-request', request);
 }());
