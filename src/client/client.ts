@@ -30,10 +30,35 @@ const cam = new Camera(viewport.width, viewport.height, 20, 15);
 const map = new Map(50, 50, 10, 'Maps/Arena.png');
 
 const player = new Sheep(1, new Vector(25, 25, 0));
-const fighters: Fighter[] = [player, new Sheep(2, new Vector(28, 28, 0))];
+const fighters: Fighter[] = [player];
 const animators: Animator[] = [];
 const projectiles: Projectile[] = [];
 const particles: Particle[] = [];
+
+
+// Call for client to interpret packet data about specific fighters (reads off object version of Fighter.ToPacket())
+function UpdateFighter(packet: any) {
+  let newFighter: Fighter = null;
+
+  for (let i = 0; i < fighters.length; i++) {
+    if (fighters[i].ID === packet.id) {
+      newFighter = fighters[i];
+      break;
+    }
+  }
+
+  if (!newFighter) { // If the fighter could not be found, generate a new one
+    if (packet.c === 'Sheep') newFighter = new Sheep(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
+
+    if (!newFighter) return; // If we could not create a fighter for this class, then ignore this packet
+    if (newFighter) fighters.push(newFighter); // Otherwise, add thme to the list (ESLint won't let me do an else statement lol)
+  } else newFighter.Position = new Vector(packet.p[0], packet.p[1], packet.p[2]);
+
+  newFighter.Velocity = new Vector(packet.v[0], packet.v[1], packet.v[2]);
+  newFighter.Acceleration = new Vector(packet.a[0], packet.a[1], packet.a[2]);
+}
+// Example on how to use it
+UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,-5,0],"a":[0,0,0]}'));
 
 
 // Call when server says a fighter died, hand it player ID's
@@ -130,7 +155,6 @@ function DoFrame(tick: number) {
 
   return window.requestAnimationFrame(DoFrame);
 }
-
 
 (function setup() {
   window.requestAnimationFrame(DoFrame);
