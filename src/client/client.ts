@@ -100,8 +100,7 @@ function DoFrame(tick: number) {
   // Update Camera
   viewport.width = window.innerWidth;
   viewport.height = window.innerHeight;
-  cam.Width = viewport.width;
-  cam.Height = viewport.height;
+  cam.Scale(viewport.width, viewport.height);
   if (player) cam.SetFocus(player);
   cam.UpdateFocus(DeltaTime);
 

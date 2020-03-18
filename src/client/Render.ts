@@ -11,11 +11,48 @@ import PLightning from './particles/Lightning';
 
 import Camera from './Camera';
 import Map from '../common/engine/Map';
-// Needs particle module
-// Needs camera module??
 
-// Particles should be ticked separately from physics as they are unused by the server
-// --server notifies clients to render them but does not need to update them
+function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
+  const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
+  for (let i = 0; i < fighters.length; i++) {
+    const fi = fighters[i];
+    if (fi.Position.y - (fi.Radius * 2) < 0) {
+      const pos = Vector.Clone(fi.Position);
+      pos.y -= fi.Radius * 2;
+      corners.push(camera.PositionOffset(pos));
+    }
+  }
+  corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
+  for (let i = 0; i < fighters.length; i++) {
+    const fi = fighters[i];
+    if (fi.Position.x + fi.Radius > map.Width) {
+      const pos = Vector.Clone(fi.Position);
+      pos.x += fi.Radius;
+      corners.push(camera.PositionOffset(pos));
+    }
+  }
+  corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
+  for (let i = 0; i < fighters.length; i++) {
+    if (fighters[i].Position.y > map.Height) corners.push(camera.PositionOffset(fighters[i].Position));
+  }
+  corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
+  for (let i = 0; i < fighters.length; i++) {
+    const fi = fighters[i];
+    if (fi.Position.x - fi.Radius < 0) {
+      const pos = Vector.Clone(fi.Position);
+      pos.x -= fi.Radius;
+      corners.push(camera.PositionOffset(pos));
+    }
+  }
+  return corners;
+}
+
+
+function DepthSortAnimators(a: any, b: any): number {
+  if (a.GetOwner().Position.y < b.GetOwner().Position.y) return 1;
+  if (a.GetOwner().Position.y > b.GetOwner().Position.y) return -1;
+  return 0;
+}
 
 
 class Renderer {
@@ -36,32 +73,28 @@ class Renderer {
     const zoom = camera.Zoom;
 
     // Draw arena boundaries
-    const corner0 = camera.PositionOffsetMap(new Vector(0, 0, 0), offsetX, offsetY);
-    const corner1 = camera.PositionOffsetMap(new Vector(map.Width, 0, 0), offsetX, offsetY);
-    const corner2 = camera.PositionOffsetMap(
-      new Vector(map.Width, map.Height, 0),
-      offsetX, offsetY,
-    );
-    const corner3 = camera.PositionOffsetMap(new Vector(0, map.Height, 0), offsetX, offsetY);
-
-    canvas.drawImage(map.Texture, 0, 0, 2048, 2048, corner0.x, corner0.y - map.Height * zoom, map.Width * zoom, map.Height * zoom);
-
+    const corners = GetArenaBounds(camera, map, fighters);
+    canvas.drawImage(map.Texture, 0, 0, 2048, 2048, corners[0].x, corners[0].y - map.Height * zoom, map.Width * zoom, map.Height * zoom);
     canvas.strokeStyle = '#ff0000';
     canvas.globalAlpha = 1;
     canvas.lineWidth = zoom * 0.1;
     canvas.lineCap = 'round';
     canvas.beginPath();
-    canvas.moveTo(corner0.x, corner0.y);
-    canvas.lineTo(corner1.x, corner1.y);
-    canvas.lineTo(corner2.x, corner2.y);
-    canvas.lineTo(corner3.x, corner3.y);
+    canvas.moveTo(corners[0].x, corners[0].y);
+    for (let i = 1; i < corners.length; i++) {
+      canvas.lineTo(corners[i].x, corners[i].y);
+    }
     canvas.closePath();
     canvas.stroke();
 
+
+    // Depth-Sort fighters
+    const drawFighters = animators.slice(0).sort(DepthSortAnimators);
+
     // Draw in fighters
-    for (let i = 0; i < fighters.length; i++) {
-      const a = fighters[i];
-      const pos = camera.PositionOffset(a.Position);
+    for (let i = 0; i < drawFighters.length; i++) {
+      const a = drawFighters[i].GetOwner();
+      const pos = camera.PositionOffsetBasic(a.Position);
 
       // First, draw shadow
       canvas.fillStyle = '#000000';
@@ -73,8 +106,8 @@ class Renderer {
       );
       canvas.globalAlpha = 1;
 
-      if (animators[i]) { // If we can find an animator for this fighter, use it
-        const b = animators[i];
+      if (drawFighters[i].SpriteSheet) { // If we can find an animator for this fighter, use it
+        const b = drawFighters[i];
 
         let row = b.row * 2;
         if (a.Flipped) row++;
@@ -110,8 +143,8 @@ class Renderer {
       canvas.strokeStyle = a.RenderStyle;
       canvas.lineWidth = zoom * a.Width;
 
-      const pos1 = camera.PositionOffsetMap(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)), offsetX, offsetY);
-      const pos2 = camera.PositionOffsetMap(a.Position, offsetX, offsetY);
+      const pos1 = camera.PositionOffset(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)));
+      const pos2 = camera.PositionOffset(a.Position);
 
       canvas.beginPath();
       canvas.moveTo(pos1.x, pos1.y);
@@ -127,8 +160,8 @@ class Renderer {
       canvas.globalAlpha = a.Alpha;
       canvas.lineWidth = zoom * a.Width;
 
-      const pos1 = camera.PositionOffsetMap(a.Beginning, offsetX, offsetY);
-      const pos2 = camera.PositionOffsetMap(a.End, offsetX, offsetY);
+      const pos1 = camera.PositionOffset(a.Beginning);
+      const pos2 = camera.PositionOffset(a.End);
 
       canvas.beginPath();
       canvas.moveTo(pos1.x, pos1.y);
@@ -136,7 +169,7 @@ class Renderer {
       if (a.Type === 'Lightning') {
         const l = <PLightning>(a);
         for (let j = 0; j < l.Segments.length; j++) {
-          const seg = camera.PositionOffsetMap(l.Segments[j], offsetX, offsetY);
+          const seg = camera.PositionOffset(l.Segments[j]);
           canvas.lineTo(seg.x, seg.y);
         }
       }
