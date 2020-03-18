@@ -107,15 +107,29 @@ function DoFrame(tick: number) {
   ws.addEventListener('open', (event) => {
     console.log('WebSocket opening', ws.readyState, event);
 
-    const request = events.LobbyRequest.encode({ search: 'hello' }).finish();
+    const request = events.Envelope.encode({
+      type: events.Envelope.TypeEnum.LobbyRequest,
+      data: events.LobbyRequest.encode({ search: 'hello' }).finish(),
+    }).finish();
     console.log('Sending lobby request', request);
     ws.send(request);
   });
   ws.addEventListener('message', (msgEvent) => {
     console.log('WebSocket message', msgEvent, msgEvent.data);
 
-    const response = events.LobbyResponse.decode(new Uint8Array(msgEvent.data));
-    console.log('lobby response decoded', response);
+    const envelope = events.Envelope.decode(new Uint8Array(msgEvent.data));
+    console.log('Envelope decoded', envelope);
+    let response: events.LobbyResponse;
+    switch (envelope.type) {
+      case events.Envelope.TypeEnum.LobbyResponse:
+        console.log('envelope.data', envelope.data);
+        response = events.LobbyResponse.decode(envelope.data);
+        break;
+      // TODO: Add missing types
+      default:
+        throw new Error(`Unexpected Envelope.TypeEnum: ${envelope.type}`);
+    }
+    console.log('LobbyResponse decoded', response);
     console.log('response instanceof events.LobbyResponse', response instanceof events.LobbyResponse);
   });
   ws.addEventListener('close', (closeEvent) => {

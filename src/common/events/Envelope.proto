@@ -1,0 +1,10 @@
+syntax = "proto3";
+ 
+message Envelope {
+    enum TypeEnum {
+        LobbyRequest = 1;
+        LobbyResponse = 2;
+    };
+    TypeEnum type = 1;
+    bytes data = 2;
+}
