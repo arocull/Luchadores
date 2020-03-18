@@ -1,10 +1,10 @@
 syntax = "proto3";
- 
+package core;
+
+// Doesn't seem required, but here just in case
+import "TypeEnum.proto";
+
 message Envelope {
-    enum TypeEnum {
-        LobbyRequest = 1;
-        LobbyResponse = 2;
-    };
     TypeEnum type = 1;
     bytes data = 2;
 }

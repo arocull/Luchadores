@@ -1,4 +1,5 @@
 syntax = "proto3";
+package lobby;
 
 message LobbyResponse {
   repeated string lobbyNames = 1;

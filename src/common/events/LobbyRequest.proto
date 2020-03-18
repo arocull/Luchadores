@@ -1,5 +1,6 @@
 syntax = "proto3";
- 
+package lobby;
+
 message LobbyRequest {
   string search = 1;
 }

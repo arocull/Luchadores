@@ -1,0 +1,7 @@
+syntax = "proto3";
+package core;
+
+enum TypeEnum {
+    LobbyRequest = 1;
+    LobbyResponse = 2;
+};

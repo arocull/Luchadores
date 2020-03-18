@@ -103,34 +103,33 @@ function DoFrame(tick: number) {
   const ws = new WebSocket(wsUrl);
   ws.binaryType = 'arraybuffer'; // Force binary type to `arraybuffer` instead of `Blob`
 
-  console.info('New websocket connection: %j', [ws.binaryType, ws.protocol]);
-  ws.addEventListener('open', (event) => {
-    console.log('WebSocket opening', ws.readyState, event);
-
-    const request = events.Envelope.encode({
-      type: events.Envelope.TypeEnum.LobbyRequest,
-      data: events.LobbyRequest.encode({ search: 'hello' }).finish(),
+  console.info('New websocket connection:', [ws.binaryType, ws.protocol]);
+  ws.addEventListener('open', (/* event */) => {
+    const request = events.core.Envelope.encode({
+      type: events.core.TypeEnum.LobbyRequest,
+      data: events.lobby.LobbyRequest.encode(events.lobby.LobbyRequest.create({ search: 'hello' })).finish(),
     }).finish();
-    console.log('Sending lobby request', request);
+    console.log('Sending Envelope->LobbyRequest', request);
     ws.send(request);
   });
   ws.addEventListener('message', (msgEvent) => {
-    console.log('WebSocket message', msgEvent, msgEvent.data);
-
-    const envelope = events.Envelope.decode(new Uint8Array(msgEvent.data));
+    console.log('Receiving Envelope', new Uint8Array(msgEvent.data));
+    const envelope = events.core.Envelope.decode(new Uint8Array(msgEvent.data));
     console.log('Envelope decoded', envelope);
-    let response: events.LobbyResponse;
+
+    let response: events.lobby.LobbyResponse;
     switch (envelope.type) {
-      case events.Envelope.TypeEnum.LobbyResponse:
+      case events.core.TypeEnum.LobbyResponse:
         console.log('envelope.data', envelope.data);
-        response = events.LobbyResponse.decode(envelope.data);
+        response = events.lobby.LobbyResponse.decode(envelope.data);
         break;
       // TODO: Add missing types
       default:
         throw new Error(`Unexpected Envelope.TypeEnum: ${envelope.type}`);
     }
     console.log('LobbyResponse decoded', response);
-    console.log('response instanceof events.LobbyResponse', response instanceof events.LobbyResponse);
+    console.log('response instanceof events.LobbyResponse',
+      response instanceof events.lobby.LobbyResponse);
   });
   ws.addEventListener('close', (closeEvent) => {
     console.log('WebSocket closing', closeEvent);
