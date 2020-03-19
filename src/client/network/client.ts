@@ -1,5 +1,7 @@
 import * as events from '../../common/events/events';
 
+const UNOPENED = -1;
+
 class NetworkClient {
   private ws: WebSocket;
 
@@ -21,34 +23,43 @@ class NetworkClient {
     });
   }
 
+  close() {
+    return new Promise((resolve) => {
+      if (!this.isClosed()) {
+        this.ws.addEventListener('close', resolve);
+        this.ws.close();
+      } else {
+        resolve();
+      }
+    });
+  }
+
   /**
    * See the documented list of constants at
    * https://developer.mozilla.org/en-US/docs/Web/API/WebSocket#Constants
    */
-  private getReadyState() {
+  private get state() {
     if (this.ws == null) {
-      return -1;
+      return UNOPENED;
     }
     return this.ws.readyState;
   }
 
   isConnecting() {
-    // CONNECTING
-    return this.getReadyState() === 0;
+    return this.state === WebSocket.CONNECTING;
   }
 
   isConnected() {
-    // OPEN
-    return this.getReadyState() === 1;
+    return this.state === WebSocket.OPEN;
+  }
+
+  isClosing() {
+    return this.state === WebSocket.CLOSING;
   }
 
   isClosed() {
-    // `null` or CLOSED or CLOSING
-    // No connection (null) is effectively a closed connection
-    const state = this.getReadyState();
-    return state === -1
-      || state === 2
-      || state === 3;
+    return this.state === UNOPENED
+      || this.state === WebSocket.CLOSED;
   }
 
   private onMessage(msgEvent: MessageEvent) {
