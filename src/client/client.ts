@@ -1,5 +1,5 @@
 // import * as _ from 'lodash';
-import * as events from '../common/events/events';
+import NetworkClient from './network/client';
 
 import Vector from '../common/engine/Vector';
 
@@ -96,46 +96,12 @@ function DoFrame(tick: number) {
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
-  // TODO: Implement proper client library, reconnect, durability, etc.
   const wsUrl = `ws://${window.location.host}/socket`;
   console.log('Attempting WebSocket at URL', wsUrl);
 
-  const ws = new WebSocket(wsUrl);
-  ws.binaryType = 'arraybuffer'; // Force binary type to `arraybuffer` instead of `Blob`
-
-  console.info('New websocket connection:', [ws.binaryType, ws.protocol]);
-  ws.addEventListener('open', (/* event */) => {
-    const request = events.core.Envelope.encode({
-      type: events.core.TypeEnum.LobbyRequest,
-      data: events.lobby.LobbyRequest.encode(events.lobby.LobbyRequest.create({ search: 'hello' })).finish(),
-    }).finish();
-    console.log('Sending Envelope->LobbyRequest', request);
-    ws.send(request);
-  });
-  ws.addEventListener('message', (msgEvent) => {
-    console.log('Receiving Envelope', new Uint8Array(msgEvent.data));
-    const envelope = events.core.Envelope.decode(new Uint8Array(msgEvent.data));
-    console.log('Envelope decoded', envelope);
-
-    let response: events.lobby.LobbyResponse;
-    switch (envelope.type) {
-      case events.core.TypeEnum.LobbyResponse:
-        console.log('envelope.data', envelope.data);
-        response = events.lobby.LobbyResponse.decode(envelope.data);
-        break;
-      // TODO: Add missing types
-      default:
-        throw new Error(`Unexpected Envelope.TypeEnum: ${envelope.type}`);
-    }
-    console.log('LobbyResponse decoded', response);
-    console.log('response instanceof events.LobbyResponse',
-      response instanceof events.lobby.LobbyResponse);
-  });
-  ws.addEventListener('close', (closeEvent) => {
-    console.log('WebSocket closing', closeEvent);
-    console.log('Code / Reason', closeEvent.code, closeEvent.reason);
-  });
-  ws.addEventListener('error', (event) => {
-    console.error('WebSocket error', event);
-  });
+  const ws = new NetworkClient(`ws://${window.location.host}/socket`);
+  ws.connect()
+    .then(() => console.log('Connected OK!'))
+    .catch((err) => console.error('Failed to connect!', err))
+    .finally(() => console.log('... and finally!'));
 }());
