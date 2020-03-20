@@ -178,6 +178,25 @@ class Renderer {
       canvas.stroke();
     }
   }
+
+  public static DrawPlayerList(canvas: CanvasRenderingContext2D, cam: Camera, data: string) {
+    canvas.resetTransform();
+    const cornerX = cam.Width / 6;
+    const cornerY = cam.Height / 6;
+    const sizeX = cam.Width * (2 / 3);
+    const sizeY = cam.Height * (2 / 3);
+
+    const fontSize = 48; // sizeX / 100;
+
+    canvas.fillStyle = '#ffffff';
+    canvas.globalAlpha = 0.9;
+    canvas.fillRect(cornerX, cornerY, sizeX, sizeY);
+
+    canvas.fillStyle = '#000000';
+    canvas.font = `${fontSize}px roboto`;
+    canvas.textBaseline = 'top';
+    canvas.fillText(data, cornerX, cornerY, sizeX);
+  }
   /* eslint-enable no-param-reassign */
 }
 

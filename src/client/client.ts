@@ -26,7 +26,7 @@ const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
 
 // Create objects for basic testing
-const cam = new Camera(viewport.width, viewport.height, 20, 15);
+const cam = new Camera(viewport.width, viewport.height, 17, 17 / 2);
 const map = new Map(50, 50, 10, 'Maps/Arena.png');
 
 const player = new Sheep(1, new Vector(25, 25, 0));
@@ -34,6 +34,8 @@ const fighters: Fighter[] = [player];
 const animators: Animator[] = [];
 const projectiles: Projectile[] = [];
 const particles: Particle[] = [];
+
+let HoldingTab: boolean = false;
 
 
 // Call for client to interpret packet data about specific fighters (reads off object version of Fighter.ToPacket())
@@ -81,10 +83,12 @@ document.addEventListener('keydown', (event) => {
   else if (event.key === 'w') player.Acceleration.y = 20;
   else if (event.key === 's') player.Acceleration.y = -20;
   else if (event.key === ' ') player.Velocity.z = 10;
+  else if (event.key === 'y') HoldingTab = true;
 });
 document.addEventListener('keyup', (event) => {
   if (event.key === 'a' || event.key === 'd') player.Acceleration.x = 0;
   else if (event.key === 'w' || event.key === 's') player.Acceleration.y = 0;
+  else if (event.key === 'y') HoldingTab = false;
 });
 
 
@@ -151,6 +155,8 @@ function DoFrame(tick: number) {
 
 
   Renderer.DrawScreen(canvas, cam, map, fighters, animators, projectiles, particles);
+
+  if (HoldingTab) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
   return window.requestAnimationFrame(DoFrame);
 }
