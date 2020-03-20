@@ -15,6 +15,10 @@ class MessageRouter {
     this.handlers = this.handlers.filter((x) => x !== handler);
   }
 
+  clearHandlers() {
+    this.handlers = [];
+  }
+
   emit(message: any) {
     // Would prefer to use for ... of syntax, but eslint complains
     for (let i = 0; i < this.handlers.length; i++) {

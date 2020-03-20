@@ -45,3 +45,21 @@ test('listener to be removed', () => {
   router.emit(events.lobby.LobbyRequest.create({ search: 'hello' }));
   expect(routerHit).toBe(false);
 });
+
+test('listeners to be cleared', () => {
+  let routerHit = false;
+  const router = new MessageRouter();
+  const handler = new MessageHandler(events.lobby.LobbyRequest, () => {
+    routerHit = true;
+  });
+
+  router.addHandler(handler);
+  router.emit(events.lobby.LobbyRequest.create({ search: 'hello' }));
+  expect(routerHit).toBe(true);
+
+  // reset and remove
+  routerHit = false;
+  router.clearHandlers();
+  router.emit(events.lobby.LobbyRequest.create({ search: 'hello' }));
+  expect(routerHit).toBe(false);
+});
