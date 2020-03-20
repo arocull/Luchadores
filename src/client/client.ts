@@ -26,7 +26,7 @@ const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
 
 // Create objects for basic testing
-const cam = new Camera(viewport.width, viewport.height, 17, 17 / 2);
+const cam = new Camera(viewport.width, viewport.height, 18, 12);
 const map = new Map(50, 50, 10, 'Maps/Arena.png');
 
 const player = new Sheep(1, new Vector(25, 25, 0));
@@ -35,7 +35,13 @@ const animators: Animator[] = [];
 const projectiles: Projectile[] = [];
 const particles: Particle[] = [];
 
-let HoldingTab: boolean = false;
+const Input = {
+  ListOpen: false,
+  MouseDown: false,
+  MouseDirection: new Vector(0, 0, 0),
+  Jump: false,
+  MoveDirection: new Vector(0, 0, 0),
+};
 
 
 // Call for client to interpret packet data about specific fighters (reads off object version of Fighter.ToPacket())
@@ -78,17 +84,27 @@ function OnDeath(died: number, killer: number) {
 
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'a') player.Acceleration.x = -20;
-  else if (event.key === 'd') player.Acceleration.x = 20;
-  else if (event.key === 'w') player.Acceleration.y = 20;
-  else if (event.key === 's') player.Acceleration.y = -20;
-  else if (event.key === ' ') player.Velocity.z = 10;
-  else if (event.key === 'y') HoldingTab = true;
+  if (event.key === 'a') Input.MoveDirection.x = -1;
+  else if (event.key === 'd') Input.MoveDirection.x = 1;
+  else if (event.key === 'w') Input.MoveDirection.y = 1;
+  else if (event.key === 's') Input.MoveDirection.y = -1;
+  else if (event.key === ' ') Input.Jump = true;
+  else if (event.key === 'y') Input.ListOpen = true;
 });
 document.addEventListener('keyup', (event) => {
-  if (event.key === 'a' || event.key === 'd') player.Acceleration.x = 0;
-  else if (event.key === 'w' || event.key === 's') player.Acceleration.y = 0;
-  else if (event.key === 'y') HoldingTab = false;
+  if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
+  else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
+  else if (event.key === ' ') Input.Jump = false;
+  else if (event.key === 'y') Input.ListOpen = false;
+});
+document.addEventListener('mousedown', () => {
+  Input.MouseDown = true;
+});
+document.addEventListener('mouseup', () => {
+  Input.MouseDown = false;
+});
+document.addEventListener('mousemove', (event) => {
+  Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (cam.Width / 2), event.clientY - (cam.Height / 2), 0);
 });
 
 
@@ -97,6 +113,11 @@ function DoFrame(tick: number) {
   // Convert milliseconds to seconds
   const DeltaTime = (tick / 1000) - LastFrame;
   LastFrame = tick / 1000;
+
+  // Use inputs
+  if (Input.Jump) player.Jump();
+  Input.MoveDirection.z = 0;
+  player.Move(Input.MoveDirection);
 
   // Tick physics
   Physics.Tick(DeltaTime, fighters, projectiles, map);
@@ -156,7 +177,7 @@ function DoFrame(tick: number) {
 
   Renderer.DrawScreen(canvas, cam, map, fighters, animators, projectiles, particles);
 
-  if (HoldingTab) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
+  if (Input.ListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
   return window.requestAnimationFrame(DoFrame);
 }

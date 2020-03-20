@@ -194,7 +194,7 @@ class Renderer {
 
     canvas.fillStyle = '#000000';
     canvas.font = `${fontSize}px roboto`;
-    canvas.textBaseline = 'top';
+    canvas.textBaseline = 'hanging';
     canvas.fillText(data, cornerX, cornerY, sizeX);
   }
   /* eslint-enable no-param-reassign */

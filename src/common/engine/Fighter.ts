@@ -14,7 +14,8 @@ class Fighter {
 
   public Mass: number;
   public MaxMomentum: number;
-  public JumpVelocity: number;
+  private JumpVelocity: number;
+  private MoveAcceleration: number;
 
   public Radius: number;
   public Height: number;
@@ -26,6 +27,8 @@ class Fighter {
 
   public JustHitPosition: Vector;
   public JustHitMomentum: number;
+  public JustLanded: boolean;
+  public AimDirection: Vector;
 
   constructor(
     hp: number,
@@ -34,6 +37,7 @@ class Fighter {
     radius: number,
     height: number,
     jumpVelo: number,
+    moveAccel: number,
     character: string,
     id: number,
     position: Vector,
@@ -50,6 +54,7 @@ class Fighter {
     this.Mass = mass; // How much mass this fighter has, used in momentum calculations
     this.MaxMomentum = maxMomentum; // Essentially max speed of character
     this.JumpVelocity = jumpVelo;
+    this.MoveAcceleration = moveAccel; // Maximum acceleration one can reach from standard inputs
 
     this.Radius = radius; // Collision radius
     this.Height = height; // Collision height, may be unecessary unless we want the ability to jump over others
@@ -74,10 +79,28 @@ class Fighter {
     this.Kills++;
   }
 
+
   public CollideWithFighter(hit: Fighter, momentum: number) {
     this.JustHitPosition = Vector.Average(this.Position, hit.Position);
     this.JustHitMomentum = momentum;
   }
+
+
+  public Jump() {
+    if (this.Position.z <= 0) {
+      this.Velocity.z += this.JumpVelocity;
+    }
+  }
+  public Move(direction: Vector) {
+    this.Acceleration = Vector.Multiply(Vector.UnitVector(direction), this.MoveAcceleration);
+  }
+  public Land() {
+    this.JustLanded = true;
+  }
+  public Click(direction: Vector) {
+    this.AimDirection = direction;
+  }
+
 
   // Create a string containing only necessary information about this fighter for use for sending to clients
   public ToPacket():string {
