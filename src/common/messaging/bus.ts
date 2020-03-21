@@ -1,21 +1,33 @@
+/**
+ * The common interface for all MessageBus consumers.
+ */
 export interface Consumer {
   receive(message: any): void;
 }
 
-// TODO: Does this make any sense? Should there be more than one?
-//
-// We won't want to overload non-game buses with huge volumes of game events.
-// On the other hand, managing multiple buses over a single network socket will
-// difficult and awkward if we start running multiple buses.
-//
-// One message bus (network) could perhaps dispatch to other buses in a sort
-// chain, distributing the load to the proper components much higher up.
-//
-// Should there be multiple topics instead of multiple message busses?
-// A consumer component could decide later on how to split messages.
-// Sort of like a router for the message bus itself?
+/**
+ * A list of common topics to use.
+ * However, any other topic name can be used on-demand.
+ */
+export const Topics = {
+  Network: 'network',
+};
 
-class MessageBusImpl {
+/**
+ * The interface for the MessageBus.
+ * Since no class is exported, this is the
+ * type information we want to expose.
+*/
+interface IMessageBus {
+  subscribe(topic: string, consumer: Consumer): void;
+  unsubscribe(topic: string, consumer: Consumer): void;
+  publish(topic: string, message: any): void;
+}
+
+/**
+ * The private MessageBus implementation
+ */
+class MessageBusImpl implements IMessageBus {
   private consumers: Record<string, Consumer[]>;
 
   constructor() {
@@ -52,4 +64,4 @@ class MessageBusImpl {
  * Individual components may choose to attach/detach routers
  * of their own design to the message bus at any time.
  */
-export const MessageBus = new MessageBusImpl();
+export const MessageBus = new MessageBusImpl() as IMessageBus;
