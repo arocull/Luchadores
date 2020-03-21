@@ -3,7 +3,7 @@ import * as events from '../events/events';
 /**
  * Decodes the provided envelope into its concrete type
  */
-function decode(envelope: events.core.Envelope): any {
+function decoder(envelope: events.core.Envelope): any {
   switch (envelope.type) {
     case events.core.TypeEnum.LobbyRequest:
       return events.lobby.LobbyRequest.decode(envelope.data);
@@ -17,4 +17,4 @@ function decode(envelope: events.core.Envelope): any {
   }
 }
 
-export { decode as default };
+export { decoder as default };
