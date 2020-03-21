@@ -5,35 +5,32 @@ import Vector from '../common/engine/Vector';
 
 import Fighter from '../common/engine/Fighter';
 import Sheep from '../common/engine/fighters/Sheep';
-
 import Animator from './animation/Animator';
 
-import Projectile from '../common/engine/projectiles/Projectile';
+// import Projectile from '../common/engine/projectiles/Projectile';
 // import BFire from '../common/engine/projectiles/Fire';
 
 import Particle from './particles/Particle';
 // import PLightning from './particles/Lightning';
 import PRosePetal from './particles/RosePetal';
 import PSmashEffect from './particles/SmashEffect';
-
-import Map from '../common/engine/Map';
-import Physics from '../common/engine/Physics';
-
+// import Map from '../common/engine/Map';
+import World from '../common/engine/World';
 import Camera from './Camera';
 import Renderer from './Render';
+
+
+// Generate World
+const world = new World();
+
 
 // Get rendering viewport--browser only
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
-
-// Create objects for basic testing
 const cam = new Camera(viewport.width, viewport.height, 18, 12);
-const map = new Map(50, 50, 10, 'Maps/Arena.png');
 
 const player = new Sheep(1, new Vector(25, 25, 0));
-const fighters: Fighter[] = [player];
-const animators: Animator[] = [];
-const projectiles: Projectile[] = [];
+world.Fighters.push(player);
 const particles: Particle[] = [];
 
 const Input = {
@@ -49,9 +46,9 @@ const Input = {
 function UpdateFighter(packet: any) {
   let newFighter: Fighter = null;
 
-  for (let i = 0; i < fighters.length; i++) {
-    if (fighters[i].ID === packet.id) {
-      newFighter = fighters[i];
+  for (let i = 0; i < world.Fighters.length; i++) {
+    if (world.Fighters[i].ID === packet.id) {
+      newFighter = world.Fighters[i];
       break;
     }
   }
@@ -60,7 +57,7 @@ function UpdateFighter(packet: any) {
     if (packet.c === 'Sheep') newFighter = new Sheep(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
 
     if (!newFighter) return; // If we could not create a fighter for this class, then ignore this packet
-    if (newFighter) fighters.push(newFighter); // Otherwise, add thme to the list (ESLint won't let me do an else statement lol)
+    if (newFighter) world.Fighters.push(newFighter); // Otherwise, add thme to the list (ESLint won't let me do an else statement lol)
   } else newFighter.Position = new Vector(packet.p[0], packet.p[1], packet.p[2]);
 
   newFighter.Velocity = new Vector(packet.v[0], packet.v[1], packet.v[2]);
@@ -72,13 +69,13 @@ UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,-5,0],"a":[0,
 
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
-  for (let i = 0; i < fighters.length; i++) {
-    if (fighters[i].ID === died) {
-      PRosePetal.Burst(particles, fighters[i].Position, 0.2, 5, 100);
-      fighters.splice(i, 1);
+  for (let i = 0; i < world.Fighters.length; i++) {
+    if (world.Fighters[i].ID === died) {
+      PRosePetal.Burst(particles, world.Fighters[i].Position, 0.2, 5, 100);
+      world.Fighters.splice(i, 1);
       i--;
-    } else if (fighters[i].ID === killer) {
-      fighters[i].EarnKill();
+    } else if (world.Fighters[i].ID === killer) {
+      world.Fighters[i].EarnKill();
     }
   }
 }
@@ -121,7 +118,7 @@ function DoFrame(tick: number) {
   player.Move(Input.MoveDirection);
 
   // Tick physics
-  Physics.Tick(DeltaTime, fighters, projectiles, map);
+  world.TickPhysics(DeltaTime);
 
   // Update Camera
   viewport.width = window.innerWidth;
@@ -132,15 +129,12 @@ function DoFrame(tick: number) {
 
 
   // Tick animators, prune and generate new ones based off of need
-  for (let i = 0; i < fighters.length; i++) {
-    // Prune animators who are not being used or have the wrong owner in this location
-    if (animators[i] && (!animators[i].GetOwner() || animators[i].GetOwner() !== fighters[i])) animators[i] = null;
-    // Add in new animators to fighters lacking them
-    if (!animators[i]) animators[i] = new Animator(fighters[i]);
-    // Tick existing animators
-    if (animators[i]) animators[i].Tick(DeltaTime);
+  for (let i = 0; i < world.Fighters.length; i++) {
+    if (world.Fighters[i]) {
+      if (!world.Fighters[i].Animator) world.Fighters[i].Animator = new Animator(world.Fighters[i]);
+      if (world.Fighters[i].Animator) world.Fighters[i].Animator.Tick(DeltaTime);
+    }
   }
-  if (animators.length > fighters.length) animators.splice(fighters.length, animators.length - fighters.length);
 
   // Tick and prune particles
   for (let i = 0; i < particles.length; i++) {
@@ -152,31 +146,29 @@ function DoFrame(tick: number) {
     }
   }
 
-  for (let i = 0; i < fighters.length; i++) {
-    // eslint-disable-next-line
-    // console.log("Fighters ", i, " with HP ", fighters[i].HP, " and Momentum ", fighters[i].Velocity.length()*fighters[i].Mass);
-    if (fighters[i].JustHitMomentum > 0) {
+  for (let i = 0; i < world.Fighters.length; i++) {
+    if (world.Fighters[i].JustHitMomentum > 0) {
       for (let j = 0; j < 3; j++) {
-        particles.push(new PSmashEffect(fighters[i].JustHitPosition, fighters[i].JustHitMomentum / 5000));
+        particles.push(new PSmashEffect(world.Fighters[i].JustHitPosition, world.Fighters[i].JustHitMomentum / 5000));
       }
 
-      if (Vector.Distance(fighters[i].Position, player.Position) <= 2) {
-        cam.Shake += fighters[i].JustHitMomentum / 1000;
+      if (Vector.Distance(world.Fighters[i].Position, player.Position) <= 2) {
+        cam.Shake += world.Fighters[i].JustHitMomentum / 1000;
       }
 
-      fighters[i].JustHitMomentum = 0;
+      world.Fighters[i].JustHitMomentum = 0;
     }
 
     // Normally shouldn't do this on client incase client simulates a kill but it does not occur on server
     // Currently here for visuals and testing, however
-    if (fighters[i].HP <= 0) {
-      OnDeath(fighters[i].ID, fighters[i].LastHitBy);
+    if (world.Fighters[i].HP <= 0) {
+      OnDeath(world.Fighters[i].ID, world.Fighters[i].LastHitBy);
       i--;
     }
   }
 
 
-  Renderer.DrawScreen(canvas, cam, map, fighters, animators, projectiles, particles);
+  Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
 
   if (Input.ListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 

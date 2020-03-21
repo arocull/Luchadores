@@ -1,7 +1,8 @@
 import Vector from '../Vector';
+import Entity from '../Entity';
 import Fighter from '../Fighter';
 
-class Projectile {
+class Projectile extends Entity {
   protected Lifetime: number;
   public Finished: boolean;
 
@@ -9,7 +10,6 @@ class Projectile {
   public Width: number;
   public Length: number;
 
-  public Acceleration: Vector;
   protected BounceReturn: number;
 
   public DeltaPosition: Vector;
@@ -19,9 +19,11 @@ class Projectile {
     public Owner: Fighter,
     public Damage: number,
     public MaxLifetime: number,
-    public Position: Vector,
-    public Velocity: Vector,
+    position: Vector,
+    velocity: Vector,
   ) {
+    super('Projectile', position, velocity, new Vector(0, 0, 0));
+
     this.Lifetime = 0;
     this.Finished = false;
 
@@ -29,7 +31,6 @@ class Projectile {
     this.Width = 0.1;
     this.Length = 0.4;
 
-    this.Acceleration = new Vector(0, 0, 0);
     this.DeltaPosition = new Vector(0, 0, 0);
     this.BounceReturn = 1;
   }

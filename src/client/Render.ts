@@ -1,14 +1,11 @@
 // Client only -- Renders stuff to the screen
 import Vector from '../common/engine/Vector';
+import Entity from '../common/engine/Entity';
 import Fighter from '../common/engine/Fighter';
-
-import Animator from './animation/Animator';
-
+// import Animator from './animation/Animator';
 import Projectile from '../common/engine/projectiles/Projectile';
-
 import Particle from './particles/Particle';
 import PLightning from './particles/Lightning';
-
 import Camera from './Camera';
 import Map from '../common/engine/Map';
 
@@ -48,9 +45,9 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
 }
 
 
-function DepthSortAnimators(a: any, b: any): number {
-  if (a.GetOwner().Position.y < b.GetOwner().Position.y) return 1;
-  if (a.GetOwner().Position.y > b.GetOwner().Position.y) return -1;
+function DepthSort(a: Entity, b: Entity): number {
+  if (a.Position.y < b.Position.y) return 1;
+  if (a.Position.y > b.Position.y) return -1;
   return 0;
 }
 
@@ -62,7 +59,6 @@ class Renderer {
     camera: Camera,
     map: Map,
     fighters: Fighter[],
-    animators: Animator[],
     projectiles: Projectile[],
     particles: Particle[],
   ) {
@@ -89,11 +85,11 @@ class Renderer {
 
 
     // Depth-Sort fighters
-    const drawFighters = animators.slice(0).sort(DepthSortAnimators);
+    const drawFighters = fighters.slice(0).sort(DepthSort);
 
     // Draw in fighters
     for (let i = 0; i < drawFighters.length; i++) {
-      const a = drawFighters[i].GetOwner();
+      const a = drawFighters[i];
       const pos = camera.PositionOffsetBasic(a.Position);
 
       // First, draw shadow
@@ -106,8 +102,8 @@ class Renderer {
       );
       canvas.globalAlpha = 1;
 
-      if (drawFighters[i].SpriteSheet) { // If we can find an animator for this fighter, use it
-        const b = drawFighters[i];
+      if (drawFighters[i].Animator && drawFighters[i].Animator.SpriteSheet) { // If we can find an animator for this fighter, use it
+        const b = drawFighters[i].Animator;
 
         let row = b.row * 2;
         if (a.Flipped) row++;
@@ -160,7 +156,7 @@ class Renderer {
       canvas.globalAlpha = a.Alpha;
       canvas.lineWidth = zoom * a.Width;
 
-      const pos1 = camera.PositionOffset(a.Beginning);
+      const pos1 = camera.PositionOffset(a.Position);
       const pos2 = camera.PositionOffset(a.End);
 
       canvas.beginPath();
