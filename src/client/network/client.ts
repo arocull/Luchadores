@@ -1,4 +1,5 @@
 import * as events from '../../common/events/events';
+import { MessageBus } from '../../common/messaging/bus';
 import decoder from '../../common/messaging/decoder';
 
 const UNOPENED = -1;
@@ -78,9 +79,14 @@ class NetworkClient {
     const envelope = events.core.Envelope.decode(new Uint8Array(msgEvent.data));
     console.log('Envelope decoded', envelope.type, envelope.data);
 
+    // Decode the type of the message
     const message = decoder(envelope);
     console.log('Envelope decoded as', message.prototype.name);
     console.log('Message content', message);
+
+    // Push it out onto the network topic for future listeners
+    // TODO: Consider making the topic names a list of constants somewhere
+    MessageBus.publish('network', message);
     return this; // shut up linter
   }
 

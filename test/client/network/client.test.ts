@@ -56,3 +56,5 @@ test('connection failure rejects promise', async () => {
     expect(err).not.toBeNull();
   }
 });
+
+// TODO: Add tests for communication, message bus, etc
