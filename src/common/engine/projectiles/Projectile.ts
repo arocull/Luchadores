@@ -15,7 +15,7 @@ class Projectile extends Entity {
   public DeltaPosition: Vector;
 
   constructor(
-    public Type: string,
+    public ProjectileType: string,
     public Owner: Fighter,
     public Damage: number,
     public MaxLifetime: number,

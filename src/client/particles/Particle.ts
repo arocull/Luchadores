@@ -14,7 +14,7 @@ class Particle extends Entity {
   protected Drag: number;
 
   constructor(
-    public Type: string,
+    public ParticleType: string,
     public MaxLifetime: number,
     public RenderStyle: string,
     beginning: Vector,

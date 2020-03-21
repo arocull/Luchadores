@@ -83,95 +83,88 @@ class Renderer {
     canvas.closePath();
     canvas.stroke();
 
-
-    // Depth-Sort fighters
-    const drawFighters = fighters.slice(0).sort(DepthSort);
+    // Depth-Sort all entities before drawing
+    const toDraw: Entity[] = [].concat(fighters, particles, projectiles).sort(DepthSort);
 
     // Draw in fighters
-    for (let i = 0; i < drawFighters.length; i++) {
-      const a = drawFighters[i];
-      const pos = camera.PositionOffsetBasic(a.Position);
+    for (let i = 0; i < toDraw.length; i++) {
+      // eslint-disable-next-line
+      console.log("Drawing particle ", toDraw[i]);
+      if (toDraw[i].Type === 'Fighter') {
+        const a = <Fighter>(toDraw[i]);
+        const pos = camera.PositionOffsetBasic(a.Position);
 
-      // First, draw shadow
-      canvas.fillStyle = '#000000';
-      canvas.globalAlpha = 0.5;
-      canvas.fillRect(
-        (-pos.x - a.Radius * 1.1) * zoom + offsetX,
-        (pos.y + a.Height / 1.5) * zoom + offsetY,
-        2 * a.Radius * 1.1 * zoom, (a.Height * zoom) / 2,
-      );
-      canvas.globalAlpha = 1;
-
-      if (drawFighters[i].Animator && drawFighters[i].Animator.SpriteSheet) { // If we can find an animator for this fighter, use it
-        const b = drawFighters[i].Animator;
-
-        let row = b.row * 2;
-        if (a.Flipped) row++;
-
-        canvas.drawImage(
-          b.SpriteSheet,
-          b.FrameWidth * b.frame,
-          b.FrameHeight * row,
-          b.FrameWidth,
-          b.FrameHeight,
-          (-pos.x - a.Radius * b.Upscale) * zoom + offsetX,
-          (pos.y + pos.z - (a.Height * (b.Upscale - 1))) * zoom + offsetY,
-          2 * a.Radius * b.Upscale * zoom,
-          a.Height * b.Upscale * zoom,
-        );
-        canvas.resetTransform();
-      } else { // Otherwise, draw a box
+        // First, draw shadow
         canvas.fillStyle = '#000000';
+        canvas.globalAlpha = 0.5;
         canvas.fillRect(
-          (-pos.x - a.Radius) * zoom + offsetX,
-          (pos.y + pos.z) * zoom + offsetY,
-          2 * a.Radius * zoom,
-          a.Height * zoom,
+          (-pos.x - a.Radius * 1.1) * zoom + offsetX,
+          (pos.y + a.Height / 1.5) * zoom + offsetY,
+          2 * a.Radius * 1.1 * zoom, (a.Height * zoom) / 2,
         );
-      }
-    }
+        canvas.globalAlpha = 1;
 
+        if (a.Animator && a.Animator.SpriteSheet) { // If we can find an animator for this fighter, use it
+          const b = a.Animator;
 
-    // Draw Projectiles
-    canvas.globalAlpha = 1;
-    for (let i = 0; i < projectiles.length; i++) {
-      const a = projectiles[i];
-      canvas.strokeStyle = a.RenderStyle;
-      canvas.lineWidth = zoom * a.Width;
+          let row = b.row * 2;
+          if (a.Flipped) row++;
 
-      const pos1 = camera.PositionOffset(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)));
-      const pos2 = camera.PositionOffset(a.Position);
-
-      canvas.beginPath();
-      canvas.moveTo(pos1.x, pos1.y);
-      canvas.lineTo(pos2.x, pos2.y);
-      canvas.stroke();
-    }
-
-
-    // Draw Particles
-    for (let i = 0; i < particles.length; i++) {
-      const a = particles[i];
-      canvas.strokeStyle = a.RenderStyle;
-      canvas.globalAlpha = a.Alpha;
-      canvas.lineWidth = zoom * a.Width;
-
-      const pos1 = camera.PositionOffset(a.Position);
-      const pos2 = camera.PositionOffset(a.End);
-
-      canvas.beginPath();
-      canvas.moveTo(pos1.x, pos1.y);
-
-      if (a.Type === 'Lightning') {
-        const l = <PLightning>(a);
-        for (let j = 0; j < l.Segments.length; j++) {
-          const seg = camera.PositionOffset(l.Segments[j]);
-          canvas.lineTo(seg.x, seg.y);
+          canvas.drawImage(
+            b.SpriteSheet,
+            b.FrameWidth * b.frame,
+            b.FrameHeight * row,
+            b.FrameWidth,
+            b.FrameHeight,
+            (-pos.x - a.Radius * b.Upscale) * zoom + offsetX,
+            (pos.y + pos.z - (a.Height * (b.Upscale - 1))) * zoom + offsetY,
+            2 * a.Radius * b.Upscale * zoom,
+            a.Height * b.Upscale * zoom,
+          );
+          canvas.resetTransform();
+        } else { // Otherwise, draw a box
+          canvas.fillStyle = '#000000';
+          canvas.fillRect(
+            (-pos.x - a.Radius) * zoom + offsetX,
+            (pos.y + pos.z) * zoom + offsetY,
+            2 * a.Radius * zoom,
+            a.Height * zoom,
+          );
         }
-      }
+      } else if (toDraw[i].Type === 'Projectile') {
+        const a = <Projectile>toDraw[i];
+        canvas.strokeStyle = a.RenderStyle;
+        canvas.globalAlpha = 1;
+        canvas.lineWidth = zoom * a.Width;
 
-      canvas.lineTo(pos2.x, pos2.y);
-      canvas.stroke();
+        const pos1 = camera.PositionOffset(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)));
+        const pos2 = camera.PositionOffset(a.Position);
+
+        canvas.beginPath();
+        canvas.moveTo(pos1.x, pos1.y);
+        canvas.lineTo(pos2.x, pos2.y);
+        canvas.stroke();
+      } else if (toDraw[i].Type === 'Particle') {
+        const a = <Particle>toDraw[i];
+        canvas.strokeStyle = a.RenderStyle;
+        canvas.globalAlpha = a.Alpha;
+        canvas.lineWidth = zoom * a.Width;
+
+        const pos1 = camera.PositionOffset(a.Position);
+        const pos2 = camera.PositionOffset(a.End);
+
+        canvas.beginPath();
+        canvas.moveTo(pos1.x, pos1.y);
+        if (a.ParticleType === 'Lightning') {
+          const l = <PLightning>(a);
+          for (let j = 0; j < l.Segments.length; j++) {
+            const seg = camera.PositionOffset(l.Segments[j]);
+            canvas.lineTo(seg.x, seg.y);
+          }
+        }
+        canvas.lineTo(pos2.x, pos2.y);
+        canvas.stroke();
+      }
     }
   }
 

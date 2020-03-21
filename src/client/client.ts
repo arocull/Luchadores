@@ -166,10 +166,9 @@ function DoFrame(tick: number) {
       i--;
     }
   }
-
+  cam.Shake += player.BulletShock;
 
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
-
   if (Input.ListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
   return window.requestAnimationFrame(DoFrame);
