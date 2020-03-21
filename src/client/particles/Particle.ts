@@ -1,6 +1,7 @@
 import Vector from '../../common/engine/Vector';
+import Entity from '../../common/engine/Entity';
 
-class Particle {
+class Particle extends Entity {
   protected Lifetime: number;
 
   public Finished: boolean;
@@ -9,26 +10,24 @@ class Particle {
   public Width: number;
 
   public UsePhysics: boolean;
-  public Velocity: Vector;
-  public Acceleration: Vector;
   protected BounceReturn: number;
   protected Drag: number;
 
   constructor(
-    public Type: string,
+    public ParticleType: string,
     public MaxLifetime: number,
     public RenderStyle: string,
-    public Beginning: Vector,
+    beginning: Vector,
     public End: Vector,
   ) {
+    super('Particle', beginning, new Vector(0, 0, 0), new Vector(0, 0, 0));
+
     this.Lifetime = 0;
     this.Finished = false;
     this.Alpha = 0;
     this.Width = 0.1;
 
     this.UsePhysics = false;
-    this.Velocity = new Vector(0, 0, 0);
-    this.Acceleration = new Vector(0, 0, 0);
     this.BounceReturn = 0.5;
     this.Drag = 0.1;
   }
@@ -48,11 +47,11 @@ class Particle {
         Vector.Multiply(this.Acceleration, (DeltaTime ** 2) / 2),
         Vector.Multiply(this.Velocity, DeltaTime),
       );
-      this.Beginning = Vector.Add(this.Beginning, dif);
+      this.Position = Vector.Add(this.Position, dif);
       this.End = Vector.Add(this.End, dif);
 
       // Bounce
-      if (this.Beginning.z <= 0 || this.End.z <= 0) this.Velocity.z *= -this.BounceReturn;
+      if (this.Position.z <= 0 || this.End.z <= 0) this.Velocity.z *= -this.BounceReturn;
       // Apply drag
       if (this.Drag > 0) this.Velocity = Vector.Multiply(this.Velocity, 1 - this.Drag);
 

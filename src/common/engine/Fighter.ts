@@ -1,66 +1,51 @@
 // Includes Vector.js
 import Vector from './Vector';
+import Entity from './Entity';
 
 // A standard fighter with basic properties shared by all characters
-class Fighter {
+class Fighter extends Entity {
   public MaxHP: number;
-  public HP: number;
-
-  public Class: string;
-  public ID: number;
 
   public Kills: number;
   public LastHitBy: number;
 
-  public Mass: number;
-  public MaxMomentum: number;
-  public JumpVelocity: number;
-
-  public Radius: number;
-  public Height: number;
   public Flipped: boolean;
-
-  public Position: Vector;
-  public Velocity: Vector;
-  public Acceleration: Vector;
+  public Animator: any;
 
   public JustHitPosition: Vector;
   public JustHitMomentum: number;
+  public JustLanded: boolean;
+  public AimDirection: Vector;
+  protected BulletCooldown: number;
+  public BulletShock: number;
 
   constructor(
-    hp: number,
-    mass: number,
-    maxMomentum: number,
-    radius: number,
-    height: number,
-    jumpVelo: number,
-    character: string,
-    id: number,
+    public HP: number,
+    public Mass: number, // How much mass this fighter has, used in momentum calculations
+    public MaxMomentum: number, // Essentially max speed of character
+    public Radius: number, // Collision and draw radius
+    public Height: number, // Collision and draw height
+    private JumpVelocity: number, // The velocity or power this character jumps with
+    private MoveAcceleration: number, // Maximum acceleration one can reach from standard inputs
+    public Class: string, // What class this fighter is so we can differentiate between characters
+    public ID: number, // Player/entity ID of this fighter so we can tell who's who
     position: Vector,
   ) {
-    this.MaxHP = hp;
-    this.HP = hp;
+    super('Fighter', position, new Vector(0, 0, 0), new Vector(0, 0, 0));
 
-    this.Class = character; // What class this fighter is so we can differentiate between characters
-    this.ID = id; // Player/entity ID of this fighter so we can tell who's who
+    this.MaxHP = HP;
 
     this.Kills = 0; // How many kills this fighter has racked up this life
     this.LastHitBy = -1; // Player ID of last attacker
 
-    this.Mass = mass; // How much mass this fighter has, used in momentum calculations
-    this.MaxMomentum = maxMomentum; // Essentially max speed of character
-    this.JumpVelocity = jumpVelo;
-
-    this.Radius = radius; // Collision radius
-    this.Height = height; // Collision height, may be unecessary unless we want the ability to jump over others
     this.Flipped = false; // Do we draw them facing leftward or rightward?
-
-    this.Position = position;
-    this.Velocity = new Vector(0, 0, 0); // Magnitude of velocity * mass should never be > MaxMomentum
-    this.Acceleration = new Vector(0, 0, 0); // Done for physics calculation, derived by player input and set by server
+    this.Animator = null; // Animation object
 
     this.JustHitPosition = new Vector(0, 0, 0);
     this.JustHitMomentum = 0;
+    this.AimDirection = new Vector(1, 0, 0);
+    this.BulletCooldown = 0;
+    this.BulletShock = 0;
   }
 
 
@@ -74,10 +59,34 @@ class Fighter {
     this.Kills++;
   }
 
+
   public CollideWithFighter(hit: Fighter, momentum: number) {
     this.JustHitPosition = Vector.Average(this.Position, hit.Position);
     this.JustHitMomentum = momentum;
   }
+
+
+  public Jump() {
+    if (this.Position.z <= 0) {
+      this.Velocity.z += this.JumpVelocity;
+    }
+  }
+  public Move(direction: Vector) {
+    this.Acceleration = Vector.Multiply(Vector.UnitVector(direction), this.MoveAcceleration);
+  }
+  public Land() {
+    this.JustLanded = true;
+  }
+  public Click(direction: Vector) {
+    this.AimDirection = direction;
+  }
+  public TickCooldowns(DeltaTime: number) {
+    this.JustLanded = false;
+    this.JustHitMomentum = 0;
+    this.BulletShock = 0;
+    this.BulletCooldown -= DeltaTime;
+  }
+
 
   // Create a string containing only necessary information about this fighter for use for sending to clients
   public ToPacket():string {

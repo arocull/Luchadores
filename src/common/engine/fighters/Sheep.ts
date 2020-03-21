@@ -4,7 +4,7 @@ import Fighter from '../Fighter';
 // La Oveja Grande - A tanky character that deals damage primarily off of momentum exchange (running into people at high velocities)
 class Sheep extends Fighter {
   constructor(id: number, position: Vector) {
-    super(200, 200, 8000, 0.5, 1, 8, 'Sheep', id, position);
+    super(200, 200, 8000, 0.5, 1, 8, 20, 'Sheep', id, position);
   }
 
   public CollideWithFighter(hit: Fighter, momentum: number) {
