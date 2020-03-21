@@ -5,7 +5,7 @@ class Connection {
   private pingHistoryCapacity: number = 30; // 30 is the rule of thumb for samples (Law of Large Numbers).
 
   constructor(public connectionId: string, public username: string) {
-
+    this.pingHistory = new Denque<number>();
   }
 
   updatePing(ping: number) {
@@ -18,8 +18,11 @@ class Connection {
 
   // Prevent spikes by taking a statistical approach.
   get ping() {
-    const pingValues = this.pingHistory.toArray();
-    return pingValues.reduce((accumulator, current) => accumulator + current) / pingValues.length;
+    if (this.pingHistory.length > 0) {
+      const pingValues = this.pingHistory.toArray();
+      return pingValues.reduce((accumulator, current) => accumulator + current) / pingValues.length;
+    }
+    return undefined;
   }
 }
 
