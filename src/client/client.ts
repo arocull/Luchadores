@@ -9,6 +9,7 @@ import Sheep from '../common/engine/fighters/Sheep';
 import Animator from './animation/Animator';
 
 import Projectile from '../common/engine/projectiles/Projectile';
+// import BFire from '../common/engine/projectiles/Fire';
 
 import Particle from './particles/Particle';
 // import PLightning from './particles/Lightning';
