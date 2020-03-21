@@ -1,6 +1,9 @@
-import { MessageHandler } from './handler';
+export interface MessageHandler<T> {
+  isHandled(message: any): boolean;
+  handle(message: T): void;
+}
 
-class MessageRouter {
+export class MessageRouter {
   private handlers: MessageHandler<any>[];
 
   constructor() {
@@ -29,5 +32,3 @@ class MessageRouter {
     }
   }
 }
-
-export { MessageRouter as default };

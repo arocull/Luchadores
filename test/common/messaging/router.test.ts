@@ -1,15 +1,17 @@
 import * as events from '../../../src/common/events/events';
-import { MessageHandler } from '../../../src/common/messaging/handler';
-import MessageRouter from '../../../src/common/messaging/router';
+import { MessageHandler, MessageRouter } from '../../../src/common/messaging/router';
 
 test('emits to listener', () => {
   let routerHit = false;
   const router = new MessageRouter();
+  const handler: MessageHandler<events.lobby.ILobbyRequest> = {
+    isHandled: (msg) => msg instanceof events.lobby.LobbyRequest,
+    handle: () => {
+      routerHit = true;
+    },
+  };
 
-  router.addHandler(new MessageHandler(events.lobby.LobbyRequest, () => {
-    routerHit = true;
-  }));
-
+  router.addHandler(handler);
   router.emit(events.lobby.LobbyRequest.create({ search: 'hello' }));
 
   expect(routerHit).toBe(true);
@@ -18,11 +20,14 @@ test('emits to listener', () => {
 test('does not emit to others', () => {
   let routerHit = false;
   const router = new MessageRouter();
+  const handler: MessageHandler<events.lobby.ILobbyResponse> = {
+    isHandled: (msg) => msg instanceof events.lobby.LobbyResponse,
+    handle: () => {
+      routerHit = true;
+    },
+  };
 
-  router.addHandler(new MessageHandler(events.lobby.LobbyResponse, () => {
-    routerHit = true;
-  }));
-
+  router.addHandler(handler);
   router.emit(events.lobby.LobbyRequest.create({ search: 'hello' }));
 
   expect(routerHit).toBe(false);
@@ -31,9 +36,12 @@ test('does not emit to others', () => {
 test('listener to be removed', () => {
   let routerHit = false;
   const router = new MessageRouter();
-  const handler = new MessageHandler(events.lobby.LobbyRequest, () => {
-    routerHit = true;
-  });
+  const handler: MessageHandler<events.lobby.ILobbyRequest> = {
+    isHandled: (msg) => msg instanceof events.lobby.LobbyRequest,
+    handle: () => {
+      routerHit = true;
+    },
+  };
 
   router.addHandler(handler);
   router.emit(events.lobby.LobbyRequest.create({ search: 'hello' }));
@@ -49,9 +57,12 @@ test('listener to be removed', () => {
 test('listeners to be cleared', () => {
   let routerHit = false;
   const router = new MessageRouter();
-  const handler = new MessageHandler(events.lobby.LobbyRequest, () => {
-    routerHit = true;
-  });
+  const handler: MessageHandler<events.lobby.ILobbyRequest> = {
+    isHandled: (msg) => msg instanceof events.lobby.LobbyRequest,
+    handle: () => {
+      routerHit = true;
+    },
+  };
 
   router.addHandler(handler);
   router.emit(events.lobby.LobbyRequest.create({ search: 'hello' }));
