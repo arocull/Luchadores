@@ -59,12 +59,21 @@ class Vector { // A structure that holds position data or direction and magnitud
     if (len <= 0) return new Vector(0, 0, 0);
     return new Vector(a.x / len, a.y / len, 0);
   }
+  static UnitVectorFromXYZ(x: number, y: number, z: number) {
+    const len = Math.sqrt((x ** 2) + (y ** 2) + (z ** 2));
+    if (len <= 0) return new Vector(0, 0, 0);
+    return new Vector(x / len, y / len, z / len);
+  }
 
   static Distance(a: Vector, b:Vector):number {
-    return Vector.Subtract(b, a).length();
+    return Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2) + ((a.z - b.z) ** 2));
   }
   static DistanceXY(a: Vector, b:Vector):number {
-    return Vector.Subtract(b, a).lengthXY();
+    return Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2));
+  }
+
+  static Average(a: Vector, b: Vector):Vector {
+    return new Vector((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
   }
 
   static Clone(a: Vector):Vector {

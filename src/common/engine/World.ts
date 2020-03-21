@@ -1,13 +1,27 @@
-// Inludes Vector.js and Fighters.js
 import Vector from './Vector';
+import Player from './Player';
 import Fighter from './Fighter';
+import Projectile from './projectiles/Projectile';
 import Map from './Map';
 
-// Tick the physics of a list of fighters by X seconds
-class Physics {
-  static Tick(DeltaTime: number, fighters: Fighter[], map: Map) {
-    for (let i = 0; i < fighters.length; i++) {
-      const obj = fighters[i];
+class World {
+  public Fighters: Fighter[];
+  public Bullets: Projectile[];
+  public Players: Player[];
+  public Map: Map;
+
+  constructor() {
+    this.Map = new Map(50, 50, 10, 'Maps/Arena.png');
+
+    this.Players = [];
+    this.Fighters = [];
+    this.Bullets = [];
+  }
+
+  public TickPhysics(DeltaTime: number) {
+    for (let i = 0; i < this.Fighters.length; i++) {
+      const obj = this.Fighters[i];
+      const maxSpeed = obj.MaxMomentum / obj.Mass;
 
       // First, apply any potential accelerations due to physics, start with friction as base for optimization
       let accel = new Vector(0, 0, 0);
@@ -18,15 +32,15 @@ class Physics {
       // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls)
       // Should it be proportional to distance outward?
       if (obj.Position.x < 0) accel.x += 100;
-      else if (obj.Position.x > map.Width) accel.x -= 100;
+      else if (obj.Position.x > this.Map.Width) accel.x -= 100;
 
       if (obj.Position.y < 0) accel.y += 100;
-      else if (obj.Position.y > map.Height) accel.y -= 100;
+      else if (obj.Position.y > this.Map.Height) accel.y -= 100;
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
       if (obj.Position.z <= 0) {
         const leveled = new Vector(obj.Velocity.x, obj.Velocity.y, 0);
-        const frict = Vector.Multiply(Vector.UnitVector(leveled), -map.Friction).clamp(0, obj.Velocity.length() * 3);
+        const frict = Vector.Multiply(Vector.UnitVector(leveled), -this.Map.Friction).clamp(0, obj.Velocity.length() * 3);
         accel = Vector.Add(accel, frict);
       }
 
@@ -39,12 +53,17 @@ class Physics {
       );
 
       // If they attempted to move faster than their max momentum, clamp their movement (should do this?)
-      if (deltaX.length() > obj.MaxMomentum / obj.Mass) {
-        deltaX = Vector.Multiply(Vector.UnitVector(deltaX), (obj.MaxMomentum / obj.Mass));
+      if (deltaX.length() > maxSpeed * DeltaTime) {
+        deltaX = Vector.Multiply(Vector.UnitVector(deltaX), maxSpeed * DeltaTime);
       }
 
       obj.Position = Vector.Add(obj.Position, deltaX);
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
+
+      // Terminal velocity
+      if (obj.Velocity.length() > maxSpeed) {
+        obj.Velocity = Vector.Multiply(Vector.UnitVector(obj.Velocity), maxSpeed);
+      }
 
       if (obj.Acceleration.x < -1) obj.Flipped = true;
       else if (obj.Acceleration.x > 1) obj.Flipped = false;
@@ -55,13 +74,22 @@ class Physics {
       }
     }
 
+    for (let i = 0; i < this.Bullets.length; i++) {
+      if (this.Bullets[i].Finished) {
+        this.Bullets.splice(i, 1);
+        i--;
+      } else this.Bullets[i].Tick(DeltaTime);
+    }
+
     // Compute collisions last after everything has moved (makes it slightly more "fair?")
     // Should we do raycasts from previous positions to make sure they do not warp through eachother and avoid collision?
     //      - Note: This is only an issue if DeltaTime and Velocity are too great
-    for (let i = 0; i < fighters.length; i++) {
-      for (let j = i + 1; j < fighters.length; j++) { // If the entity was already iterated through by main loop, should not need to do it again
-        const a = fighters[i];
-        const b = fighters[j];
+    for (let i = 0; i < this.Fighters.length; i++) {
+      const a = this.Fighters[i];
+
+      // Fighter collisions
+      for (let j = i + 1; j < this.Fighters.length; j++) { // If the entity was already iterated through by main loop, should not need to do it again
+        const b = this.Fighters[j];
         if (
           Vector.DistanceXY(a.Position, b.Position) <= a.Radius + b.Radius
           && (a.Position.z <= b.Position.z + b.Height)
@@ -78,12 +106,34 @@ class Physics {
           a.Velocity = aVelo;
 
           const seperate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
-          a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -30 / a.Mass));
-          b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 30 / b.Mass));
+          a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -150 / a.Mass));
+          b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 150 / b.Mass));
+        }
+      }
+
+      // Bullet collisions
+      for (let j = 0; j < this.Bullets.length; j++) {
+        const b = this.Bullets[j];
+
+        const start = Vector.Subtract(b.Position, b.DeltaPosition);
+        const len = b.DeltaPosition.length();
+        const dir = Vector.UnitVector(b.DeltaPosition);
+
+        // Normally we would shoot a ray at a cylinder, but that's kind of difficult
+        // So instead, we will test 3 point along the bullet trajectory to check if has collided with the fighter or not
+        for (let q = 0; q < 3; q++) {
+          const pos = Vector.Add(start, Vector.Multiply(dir, q * (len / 3)));
+          if (
+            Vector.DistanceXY(a.Position, pos) <= a.Radius
+            && (pos.z <= a.Position.z + a.Height)
+          ) {
+            b.Hit(a);
+            break;
+          }
         }
       }
     }
   }
 }
 
-export { Physics as default };
+export { World as default };
