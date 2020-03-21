@@ -1,4 +1,4 @@
-export interface Consumer {
+interface Consumer {
   receive(message: any): void;
 }
 
@@ -8,23 +8,33 @@ export interface Consumer {
  * of their own design to the message bus at any time.
  */
 class MessageBus {
-  private consumers: Consumer[];
+  private consumers: Record<string, Consumer[]>;
 
   constructor() {
-    this.consumers = [];
+    this.consumers = {};
   }
 
-  subscribe(consumer: Consumer) {
-    this.consumers.push(consumer);
+  private getTopic(topic: string) {
+    if (!(topic in this.consumers)) {
+      const newTopic: Consumer[] = [];
+      this.consumers[topic] = newTopic;
+      return newTopic;
+    }
+    return this.consumers[topic];
   }
 
-  unsubscribe(consumer: Consumer) {
-    this.consumers = this.consumers.filter((x) => x !== consumer);
+  subscribe(topic: string, consumer: Consumer) {
+    this.getTopic(topic).push(consumer);
   }
 
-  publish(message: any) {
-    for (let i = 0; i < this.consumers.length; i++) {
-      this.consumers[i].receive(message);
+  unsubscribe(topic: string, consumer: Consumer) {
+    this.consumers[topic] = this.getTopic(topic).filter((x) => x !== consumer);
+  }
+
+  publish(topic: string, message: any) {
+    const consumers = this.getTopic(topic);
+    for (let i = 0; i < consumers.length; i++) {
+      consumers[i].receive(message);
     }
   }
 }
@@ -42,4 +52,4 @@ class MessageBus {
 // A consumer component could decide later on how to split messages.
 // Sort of like a router for the message bus itself?
 const INSTANCE = new MessageBus();
-export { INSTANCE as default };
+export { Consumer, INSTANCE as MessageBus };
