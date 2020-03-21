@@ -1,5 +1,5 @@
-import * as http from 'http';
-import * as socketIo from 'socket.io';
+import http from 'http';
+import socketIo from 'socket.io';
 
 import logger from './Logger';
 
