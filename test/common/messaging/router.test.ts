@@ -1,5 +1,5 @@
 import * as events from '../../../src/common/events/events';
-import MessageHandler from '../../../src/common/messaging/handler';
+import { MessageHandler } from '../../../src/common/messaging/handler';
 import MessageRouter from '../../../src/common/messaging/router';
 
 test('emits to listener', () => {

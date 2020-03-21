@@ -1,4 +1,4 @@
-import MessageHandler from './handler';
+import { MessageHandler } from './handler';
 
 class MessageRouter {
   private handlers: MessageHandler<any>[];
