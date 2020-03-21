@@ -1,0 +1,6 @@
+syntax = "proto3";
+package client;
+
+message ClientDisconnect {
+  string id = 1;
+}

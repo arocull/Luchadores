@@ -1,13 +1,24 @@
+import { v4 as uuid } from 'uuid';
+
 import * as events from '../../common/events/events';
-import { MessageBus } from '../../common/messaging/bus';
+import { Consumer, MessageBus, Topics } from '../../common/messaging/bus';
 import decoder from '../../common/messaging/decoder';
 
 const UNOPENED = -1;
 
 class NetworkClient {
   private ws: WebSocket;
+  private id: string;
+  private publishToServerConsumer: Consumer;
 
   constructor(private url: string) {
+    this.id = uuid();
+
+    // The consumer reads any messages on NetworkOutbound topic
+    // and sends them back out of the WebSocket.
+    this.publishToServerConsumer = {
+      receive: (message: any) => this.send(message),
+    };
   }
 
   // TODO: Implement proper client library, reconnect, durability, etc.
@@ -19,11 +30,24 @@ class NetworkClient {
       this.ws.addEventListener('open', resolve);
       this.ws.addEventListener('error', reject);
 
-      this.ws.addEventListener('open', this.onOpen);
-      this.ws.addEventListener('message', this.onMessage);
-      this.ws.addEventListener('error', this.onError);
-      this.ws.addEventListener('close', this.onClose);
+      this.ws.addEventListener('open', (e) => this.onOpen(e));
+      this.ws.addEventListener('message', (e) => this.onMessage(e));
+      this.ws.addEventListener('error', (e) => this.onError(e));
+      this.ws.addEventListener('close', (e) => this.onClose(e));
     });
+  }
+
+  // TODO: Sending is awkward from other locations. Can we make it simpler?
+  // Figure out how to create envelopes from incoming objects?
+  send(message: Uint8Array) {
+    if (this.isConnected()) {
+      if (!(message instanceof Uint8Array)) {
+        throw new Error(`message of unexpected type! ${typeof message}; ${JSON.stringify(message)}`);
+      }
+      this.ws.send(message);
+    } else {
+      console.warn('Dropped message send due to not being connected', message);
+    }
   }
 
   close() {
@@ -66,9 +90,24 @@ class NetworkClient {
   }
 
   private onOpen(openEvent: Event) {
-    // TODO: Consider emitting events to communicate this state change
     console.log('Opened web socket', openEvent);
-    return this; // shut up linter
+
+    // Subscribe us to receive any events targeting outbound network
+    MessageBus.subscribe(Topics.NetworkToServer, this.publishToServerConsumer);
+
+    // Publish an event to the server (outbound) that we have connected
+    MessageBus.publish(Topics.NetworkToServer, events.core.Envelope.encode({
+      type: events.core.TypeEnum.ClientConnect,
+      data: events.client.ClientConnect.encode({
+        id: this.id,
+      }).finish(),
+    }).finish());
+
+    // Publish an event to the inbound listeners that we have connected
+    // TODO: Should this be based on connect ACK from server?
+    MessageBus.publish(Topics.NetworkFromServer, events.client.ClientConnect.create({
+      id: this.id,
+    }));
   }
 
   private onMessage(msgEvent: MessageEvent) {
@@ -76,29 +115,37 @@ class NetworkClient {
     console.log('WebSocket message', data);
 
     // We can expect every message to be an Envelope
-    const envelope = events.core.Envelope.decode(new Uint8Array(msgEvent.data));
+    const envelope = events.core.Envelope.decode(new Uint8Array(data));
     console.log('Envelope decoded', envelope.type, envelope.data);
 
     // Decode the type of the message
     const message = decoder(envelope);
-    console.log('Envelope decoded as', message.prototype.name);
-    console.log('Message content', message);
+    console.log('Envelope decoded. Content:', message);
 
     // Push it out onto the network topic for future listeners
-    // TODO: Consider making the topic names a list of constants somewhere
-    MessageBus.publish('network', message);
+    MessageBus.publish(Topics.NetworkFromServer, message);
     return this; // shut up linter
   }
 
   private onClose(closeEvent: CloseEvent) {
-    // TODO: Consider emitting events to communicate this state change
     console.log('Closing web socket', closeEvent);
+
+    // Unsubscribe us from receiving any events targeting outbound network
+    MessageBus.unsubscribe(Topics.NetworkToServer, this.publishToServerConsumer);
+
+    // Publish an event to the inbound listeners that we have disconnected
+    MessageBus.publish(Topics.NetworkFromServer, events.client.ClientDisconnect.create({
+      id: this.id,
+    }));
     return this; // shut up linter
   }
 
   private onError(errorEvent: Event) {
-    // TODO: Consider emitting events to communicate this state change
-    console.error('Closing web socket', errorEvent);
+    // This state change isn't very relevant since the WebSocket
+    // communicates very little error information (by design, see MDN).
+    // We can rely on the `close` event for everything and might even remove
+    // this handler entirely.
+    console.error('Web socket error', errorEvent);
     return this; // shut up linter
   }
 }

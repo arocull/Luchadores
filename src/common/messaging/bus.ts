@@ -10,7 +10,8 @@ export interface Consumer {
  * However, any other topic name can be used on-demand.
  */
 export const Topics = {
-  Network: 'network',
+  NetworkFromServer: 'network-from-server',
+  NetworkToServer: 'network-to-server',
 };
 
 /**
@@ -21,6 +22,7 @@ export const Topics = {
 interface IMessageBus {
   subscribe(topic: string, consumer: Consumer): void;
   unsubscribe(topic: string, consumer: Consumer): void;
+  clearSubscribers(): void;
   publish(topic: string, message: any): void;
 }
 
@@ -35,7 +37,7 @@ class MessageBusImpl implements IMessageBus {
   }
 
   private getTopic(topic: string) {
-    if (!(topic in this.consumers)) {
+    if (this.consumers[topic] == null) {
       const newTopic: Consumer[] = [];
       this.consumers[topic] = newTopic;
       return newTopic;
@@ -49,6 +51,10 @@ class MessageBusImpl implements IMessageBus {
 
   unsubscribe(topic: string, consumer: Consumer) {
     this.consumers[topic] = this.getTopic(topic).filter((x) => x !== consumer);
+  }
+
+  clearSubscribers() {
+    this.consumers = {};
   }
 
   publish(topic: string, message: any) {

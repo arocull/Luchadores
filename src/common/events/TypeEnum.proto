@@ -4,4 +4,6 @@ package core;
 enum TypeEnum {
     LobbyRequest = 1;
     LobbyResponse = 2;
+    ClientConnect = 3;
+    ClientDisconnect = 4;
 };
