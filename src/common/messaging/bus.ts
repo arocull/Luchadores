@@ -1,13 +1,21 @@
-interface Consumer {
+export interface Consumer {
   receive(message: any): void;
 }
 
-/**
- * All events go through the message bus. There is only one.
- * Individual components may choose to attach/detach routers
- * of their own design to the message bus at any time.
- */
-class MessageBus {
+// TODO: Does this make any sense? Should there be more than one?
+//
+// We won't want to overload non-game buses with huge volumes of game events.
+// On the other hand, managing multiple buses over a single network socket will
+// difficult and awkward if we start running multiple buses.
+//
+// One message bus (network) could perhaps dispatch to other buses in a sort
+// chain, distributing the load to the proper components much higher up.
+//
+// Should there be multiple topics instead of multiple message busses?
+// A consumer component could decide later on how to split messages.
+// Sort of like a router for the message bus itself?
+
+class MessageBusImpl {
   private consumers: Record<string, Consumer[]>;
 
   constructor() {
@@ -39,17 +47,9 @@ class MessageBus {
   }
 }
 
-// TODO: Does this make any sense? Should there be more than one?
-//
-// We won't want to overload non-game buses with huge volumes of game events.
-// On the other hand, managing multiple buses over a single network socket will
-// difficult and awkward if we start running multiple buses.
-//
-// One message bus (network) could perhaps dispatch to other buses in a sort
-// chain, distributing the load to the proper components much higher up.
-//
-// Should there be multiple topics instead of multiple message busses?
-// A consumer component could decide later on how to split messages.
-// Sort of like a router for the message bus itself?
-const INSTANCE = new MessageBus();
-export { Consumer, INSTANCE as MessageBus };
+/**
+ * All events go through the message bus. There is only one.
+ * Individual components may choose to attach/detach routers
+ * of their own design to the message bus at any time.
+ */
+export const MessageBus = new MessageBusImpl();
