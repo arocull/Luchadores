@@ -12,6 +12,11 @@ class Animator {
 
   public timer: number;
   public lastState: number;
+  protected timeToUniqueIdle: number;
+  protected uniqueIdleLength: number;
+  protected uniqueIdleFrame: number;
+
+  public killEffectCountdown: number;
 
   constructor(protected owner: Fighter) {
     this.SpriteSheet = new Image();
@@ -25,12 +30,27 @@ class Animator {
 
     this.timer = 0;
     this.lastState = 0;
+    this.timeToUniqueIdle = Math.random() * 13;
+    this.uniqueIdleLength = 0.5;
+    this.uniqueIdleFrame = 2;
+
+    this.killEffectCountdown = -1;
   }
 
-  Tick(DeltaTime: number) {
+  protected UniqueIdle() {
+    this.frame = this.uniqueIdleFrame;
+    if (this.timer >= this.timeToUniqueIdle + this.uniqueIdleLength) {
+      this.timer = 0;
+      this.timeToUniqueIdle = Math.random() * 13;
+
+      this.uniqueIdleFrame = Math.floor(Math.random() * 0.6 + 0.5) + 2;
+    }
+  }
+
+  public Tick(DeltaTime: number) {
     let state = 0;
     if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = 2;
-    else if (this.owner.Position.z > 0) state = 1;
+    else if (this.owner.Position.z > 0.05) state = 1;
 
     if (state !== this.lastState) this.timer = 0;
 
@@ -46,16 +66,19 @@ class Animator {
         this.frame = Math.floor(this.timer * 4) % 4;
         this.row = 1;
         break;
-      default:
-        this.frame = Math.floor(this.timer * 2) % 2; // Idle animation
+      default: // Idle animation
+        if (this.timer > this.timeToUniqueIdle) {
+          this.UniqueIdle();
+        } else this.frame = Math.floor(this.timer * 2) % 2;
         this.row = 0;
     }
 
     this.lastState = state;
-  }
 
-  GetOwner(): Fighter {
-    return this.owner;
+    if (this.killEffectCountdown > 0) {
+      this.killEffectCountdown -= DeltaTime;
+      if (this.killEffectCountdown < 0) this.killEffectCountdown = 0;
+    } else this.killEffectCountdown = -1;
   }
 }
 

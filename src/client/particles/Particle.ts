@@ -11,6 +11,7 @@ class Particle extends Entity {
 
   public UsePhysics: boolean; // Upon ticking, do we update its position and velocity?
   protected BounceReturn: number; // Does it bounce off the ground? How much?
+  protected StopOnGround: boolean; // Should the particle continue moving once it hits the ground?
   protected Drag: number; // How much should its speed be dampened as it moves through the air
   protected Trail: number; // Should the tail of the particle slowly follow its head, or operate statically?
 
@@ -30,8 +31,13 @@ class Particle extends Entity {
 
     this.UsePhysics = false;
     this.BounceReturn = 0.5;
+    this.StopOnGround = false;
     this.Drag = 0.1;
     this.Trail = 0;
+  }
+
+  protected UpdateAlpha() {
+    this.Alpha = 1 - (this.Lifetime / this.MaxLifetime);
   }
 
   Tick(DeltaTime: number) {
@@ -42,7 +48,7 @@ class Particle extends Entity {
       return;
     }
 
-    this.Alpha = 1 - (this.Lifetime / this.MaxLifetime);
+    this.UpdateAlpha();
 
     if (this.UsePhysics) {
       const dif = Vector.Add(
@@ -58,7 +64,10 @@ class Particle extends Entity {
       }
 
       // Bounce
-      if (this.Position.z <= 0 || this.End.z <= 0) this.Velocity.z *= -this.BounceReturn;
+      if (this.Position.z <= 0 || this.End.z <= 0) {
+        this.Velocity.z *= -this.BounceReturn;
+        if (this.StopOnGround) this.UsePhysics = false;
+      }
       // Apply drag
       if (this.Drag > 0) this.Velocity = Vector.Multiply(this.Velocity, 1 - this.Drag * DeltaTime);
 
