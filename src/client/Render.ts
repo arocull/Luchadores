@@ -89,7 +89,6 @@ class Renderer {
     // Draw in fighters
     for (let i = 0; i < toDraw.length; i++) {
       // eslint-disable-next-line
-      console.log("Drawing particle ", toDraw[i]);
       if (toDraw[i].Type === 'Fighter') {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);
