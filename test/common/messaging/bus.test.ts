@@ -1,7 +1,3 @@
-// TODO: This is awkward for importing exported interfaces.
-// Do we really need ESLint enforcing export default?
-// In fact we have no way to import the interface because
-// ESLint will complain about importing the same file twice.
 import { Consumer, MessageBus } from '../../../src/common/messaging/bus';
 
 test('send and receive to subscribers', () => {
