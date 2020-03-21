@@ -12,10 +12,13 @@ import Animator from './animation/Animator';
 
 import Particle from './particles/Particle';
 // import PLightning from './particles/Lightning';
-import PRosePetal from './particles/RosePetal';
+// import PRosePetal from './particles/RosePetal';
+import PConfetti from './particles/Confetti';
 import PSmashEffect from './particles/SmashEffect';
 // import Map from '../common/engine/Map';
 import World from '../common/engine/World';
+
+import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import Renderer from './Render';
 
@@ -27,7 +30,8 @@ const world = new World();
 // Get rendering viewport--browser only
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
-const cam = new Camera(viewport.width, viewport.height, 18, 12);
+const renderSettings = new RenderSettings(3, 5, true);
+const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 
 const player = new Sheep(1, new Vector(25, 25, 0));
 world.Fighters.push(player);
@@ -71,7 +75,7 @@ UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,-5,0],"a":[0,
 function OnDeath(died: number, killer: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
     if (world.Fighters[i].ID === died) {
-      PRosePetal.Burst(particles, world.Fighters[i].Position, 0.2, 5, 100);
+      PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
       world.Fighters.splice(i, 1);
       i--;
     } else if (world.Fighters[i].ID === killer) {
