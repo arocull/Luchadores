@@ -2,5 +2,6 @@ syntax = "proto3";
 package lobby;
 
 message LobbyRequest {
-  string search = 1;
+  TypeEnum type = 1;
+  string search = 2;
 }

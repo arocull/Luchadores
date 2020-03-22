@@ -2,5 +2,6 @@ syntax = "proto3";
 package lobby;
 
 message LobbyResponse {
-  repeated string lobbyNames = 1;
+  TypeEnum type = 1;
+  repeated string lobbyNames = 2;
 }

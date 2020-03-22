@@ -3,7 +3,7 @@
 import { WebSocket, Server } from 'mock-socket'; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 import * as events from '../../../src/common/events/events';
-import decoder from '../../../src/common/messaging/decoder';
+import { decoder, encoder } from '../../../src/common/messaging/serde';
 import { Consumer, MessageBus, Topics } from '../../../src/common/messaging/bus';
 import NetworkClient from '../../../src/client/network/client';
 
@@ -67,18 +67,15 @@ test('send and receive messages', async () => {
   const messagesReceivedByServer: any[] = [];
   const serverSentMessage: Promise<void> = new Promise((resolve, reject) => {
     server.on('connection', (socket) => {
-      socket.on('message', (msg) => {
-        const envelope = events.core.Envelope.decode(new Uint8Array(msg as ArrayBuffer));
-        const decoded = decoder(envelope);
+      socket.on('message', (msg: ArrayBuffer) => {
+        const decoded = decoder(msg);
         messagesReceivedByServer.push(decoded);
 
         if (decoded instanceof events.client.ClientConnect) {
-          const encoded = events.core.Envelope.encode({
+          const encoded = encoder(<events.client.IClientConnect>{
             type: events.core.TypeEnum.ClientConnect,
-            data: events.client.ClientConnect.encode({
-              id: 'got it',
-            }).finish(),
-          }).finish();
+            id: 'got it',
+          });
 
           // Some kind of weirdness is going on in mock-socket
           // with the difference between Node's Buffer type
@@ -117,21 +114,20 @@ test('send and receive messages', async () => {
 
   await client.connect();
 
+  console.log(messagesFromServer);
   expect(messagesFromServer.length).toBe(1);
-  expect(messagesFromServer[0] instanceof events.client.ClientConnect).toBe(true);
+  expect(messagesFromServer[0].type).toBe(events.core.TypeEnum.ClientConnect);
 
   expect(messagesToServer.length).toBe(1);
   expect(messagesToServer[0] instanceof Uint8Array).toBe(true);
 
   await serverSentMessage;
   expect(messagesReceivedByServer.length).toBe(1);
-  expect(messagesReceivedByServer[0] instanceof events.client.ClientConnect).toBe(true);
-  expect((messagesReceivedByServer[0] as events.client.IClientConnect).id)
-    .not.toBeNull(); // client generated uuid
+  expect(messagesReceivedByServer[0].type).toBe(events.core.TypeEnum.ClientConnect);
+  expect(messagesReceivedByServer[0].id).not.toBeNull(); // client generated uuid
 
   await new Promise((resolve) => setTimeout(resolve, 100));
   expect(messagesFromServer.length).toBe(2);
-  expect(messagesFromServer[1] instanceof events.client.ClientConnect).toBe(true);
-  expect((messagesFromServer[1] as events.client.IClientConnect).id)
-    .toBe('got it'); // server sent uuid
+  expect(messagesFromServer[1].type).toBe(events.core.TypeEnum.ClientConnect);
+  expect(messagesFromServer[1].id).toBe('got it'); // server sent uuid
 });

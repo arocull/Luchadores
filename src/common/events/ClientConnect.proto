@@ -2,5 +2,6 @@ syntax = "proto3";
 package client;
 
 message ClientConnect {
-  string id = 1;
+  TypeEnum type = 1;
+  string id = 2;
 }

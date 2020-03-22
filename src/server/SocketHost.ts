@@ -3,8 +3,8 @@ import * as http from 'http';
 import * as WebSocket from 'ws';
 
 import logger from './Logger';
-import * as events from '../common/events/events';
-import decoder from '../common/messaging/decoder';
+// import * as events from '../common/events/events';
+import { decoder } from '../common/messaging/serde';
 
 class SocketHost {
   public ws: WebSocket.Server;
@@ -20,12 +20,10 @@ class SocketHost {
         req.connection.remotePort,
       ]);
 
-      socket.on('message', ((data) => {
-        logger.info('Receiving Envelope %j', data);
-        const envelope = events.core.Envelope.decode(data as Buffer);
-        logger.info('Envelope decoded %j', envelope);
+      socket.on('message', ((data: Buffer) => {
+        logger.info('Receiving data %j', data);
 
-        const decoded = decoder(envelope);
+        const decoded = decoder(data);
         logger.info('Message decoded %j', decoded);
       }));
 

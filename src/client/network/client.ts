@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 
 import * as events from '../../common/events/events';
 import { Consumer, MessageBus, Topics } from '../../common/messaging/bus';
-import decoder from '../../common/messaging/decoder';
+import { decoder, encoder } from '../../common/messaging/serde';
 
 const UNOPENED = -1;
 
@@ -95,32 +95,26 @@ class NetworkClient {
     // Subscribe us to receive any events targeting outbound network
     MessageBus.subscribe(Topics.NetworkToServer, this.publishToServerConsumer);
 
-    // Publish an event to the server (outbound) that we have connected
-    MessageBus.publish(Topics.NetworkToServer, events.core.Envelope.encode({
+    const clientConnect = <events.client.IClientConnect>{
       type: events.core.TypeEnum.ClientConnect,
-      data: events.client.ClientConnect.encode({
-        id: this.id,
-      }).finish(),
-    }).finish());
+      id: this.id,
+    };
+
+    // Publish an event to the server (outbound) that we have connected
+    MessageBus.publish(Topics.NetworkToServer, encoder(clientConnect));
 
     // Publish an event to the inbound listeners that we have connected
     // TODO: Should this be based on connect ACK from server?
-    MessageBus.publish(Topics.NetworkFromServer, events.client.ClientConnect.create({
-      id: this.id,
-    }));
+    MessageBus.publish(Topics.NetworkFromServer, clientConnect);
   }
 
   private onMessage(msgEvent: MessageEvent) {
     const data = new Uint8Array(msgEvent.data as ArrayBuffer);
     console.log('WebSocket message', data);
 
-    // We can expect every message to be an Envelope
-    const envelope = events.core.Envelope.decode(new Uint8Array(data));
-    console.log('Envelope decoded', envelope.type, envelope.data);
-
     // Decode the type of the message
-    const message = decoder(envelope);
-    console.log('Envelope decoded. Content:', message);
+    const message = decoder(data);
+    console.log('Message decoded. Content:', message);
 
     // Push it out onto the network topic for future listeners
     MessageBus.publish(Topics.NetworkFromServer, message);
@@ -134,9 +128,10 @@ class NetworkClient {
     MessageBus.unsubscribe(Topics.NetworkToServer, this.publishToServerConsumer);
 
     // Publish an event to the inbound listeners that we have disconnected
-    MessageBus.publish(Topics.NetworkFromServer, events.client.ClientDisconnect.create({
+    MessageBus.publish(Topics.NetworkFromServer, <events.client.IClientDisconnect>{
+      type: events.core.TypeEnum.ClientDisconnect,
       id: this.id,
-    }));
+    });
     return this; // shut up linter
   }
 
