@@ -93,7 +93,7 @@ class NetworkClient {
     console.log('Opened web socket', openEvent);
 
     // Subscribe us to receive any events targeting outbound network
-    MessageBus.subscribe(Topics.NetworkToServer, this.publishToServerConsumer);
+    MessageBus.subscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
 
     const clientConnect = <events.client.IClientConnect>{
       type: events.core.TypeEnum.ClientConnect,
@@ -101,11 +101,11 @@ class NetworkClient {
     };
 
     // Publish an event to the server (outbound) that we have connected
-    MessageBus.publish(Topics.NetworkToServer, encoder(clientConnect));
+    MessageBus.publish(Topics.ClientNetworkToServer, encoder(clientConnect));
 
     // Publish an event to the inbound listeners that we have connected
     // TODO: Should this be based on connect ACK from server?
-    MessageBus.publish(Topics.NetworkFromServer, clientConnect);
+    MessageBus.publish(Topics.ClientNetworkFromServer, clientConnect);
   }
 
   private onMessage(msgEvent: MessageEvent) {
@@ -117,7 +117,7 @@ class NetworkClient {
     console.log('Message decoded. Content:', message);
 
     // Push it out onto the network topic for future listeners
-    MessageBus.publish(Topics.NetworkFromServer, message);
+    MessageBus.publish(Topics.ClientNetworkFromServer, message);
     return this; // shut up linter
   }
 
@@ -125,10 +125,10 @@ class NetworkClient {
     console.log('Closing web socket', closeEvent);
 
     // Unsubscribe us from receiving any events targeting outbound network
-    MessageBus.unsubscribe(Topics.NetworkToServer, this.publishToServerConsumer);
+    MessageBus.unsubscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
 
     // Publish an event to the inbound listeners that we have disconnected
-    MessageBus.publish(Topics.NetworkFromServer, <events.client.IClientDisconnect>{
+    MessageBus.publish(Topics.ClientNetworkFromServer, <events.client.IClientDisconnect>{
       type: events.core.TypeEnum.ClientDisconnect,
       id: this.id,
     });

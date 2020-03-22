@@ -109,8 +109,8 @@ test('send and receive messages', async () => {
       messagesToServer.push(msg);
     },
   };
-  MessageBus.subscribe(Topics.NetworkFromServer, consumerFromServer);
-  MessageBus.subscribe(Topics.NetworkToServer, consumerToServer);
+  MessageBus.subscribe(Topics.ClientNetworkFromServer, consumerFromServer);
+  MessageBus.subscribe(Topics.ClientNetworkToServer, consumerToServer);
 
   await client.connect();
 
