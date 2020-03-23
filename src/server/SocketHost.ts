@@ -8,7 +8,7 @@ import SocketClient from './SocketClient';
 // import { decoder } from '../common/messaging/serde';
 
 class SocketHost {
-  public ws: WebSocket.Server;
+  private ws: WebSocket.Server;
   private clients: SocketClient[]; // TODO: Remove clients that disconnect
 
   constructor(server: http.Server) {

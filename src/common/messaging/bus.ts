@@ -35,11 +35,11 @@ interface IMessageBus {
  */
 class MessageBusImpl extends EventEmitter implements IMessageBus {
   subscribe(topic: string, consumer: Consumer) {
-    this.addListener(topic, consumer);
+    this.on(topic, consumer);
   }
 
   unsubscribe(topic: string, consumer: Consumer) {
-    this.removeListener(topic, consumer);
+    this.off(topic, consumer);
   }
 
   clearSubscribers() {

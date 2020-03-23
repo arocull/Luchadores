@@ -1,0 +1,7 @@
+syntax = "proto3";
+package client;
+
+message ClientAck {
+  TypeEnum type = 1;
+  string id = 2;
+}

@@ -4,7 +4,7 @@ import { WebSocket, Server } from 'mock-socket'; // eslint-disable-line @typescr
 
 import * as events from '../../../src/common/events/events';
 import { decoder, encoder } from '../../../src/common/messaging/serde';
-import { Consumer, MessageBus, Topics } from '../../../src/common/messaging/bus';
+import { MessageBus, Topics } from '../../../src/common/messaging/bus';
 import NetworkClient from '../../../src/client/network/client';
 
 const URL = 'ws://mock-host:3000';
@@ -18,6 +18,21 @@ afterEach(() => {
   client = null;
   MessageBus.clearSubscribers();
 });
+
+
+// Some kind of weirdness is going on in mock-socket
+// with the difference between Node's Buffer type
+// and ArrayBuffer / Uint8Array. If we don't manually
+// convert the type over like this, it returns us back
+// an empty Uint8Array on the other side.
+//
+// https://github.com/thoov/mock-socket/issues/6#issuecomment-602102569
+function translateBuffer(buffer: Buffer) {
+  const newBuffer = new ArrayBuffer(buffer.byteLength);
+  const newBufferView = new Uint8Array(newBuffer);
+  newBufferView.set(buffer, 0);
+  return newBuffer;
+}
 
 test('connection success completes promise', async () => {
   client = new NetworkClient(URL);
@@ -65,61 +80,47 @@ test('send and receive messages', async () => {
   client = new NetworkClient(URL);
 
   const messagesReceivedByServer: any[] = [];
-  const serverSentMessage: Promise<void> = new Promise((resolve, reject) => {
-    server.on('connection', (socket) => {
-      socket.on('message', (msg: ArrayBuffer) => {
-        const decoded = decoder(msg);
-        messagesReceivedByServer.push(decoded);
+  const messagesSentFromServer: any[] = [];
+  server.on('connection', (socket) => {
+    socket.on('message', (msg: ArrayBuffer) => {
+      const decoded = decoder(msg);
+      messagesReceivedByServer.push(decoded);
 
-        if (decoded instanceof events.client.ClientConnect) {
-          const encoded = encoder(<events.client.IClientConnect>{
-            type: events.core.TypeEnum.ClientConnect,
-            id: 'got it',
-          });
+      if (decoded.type === events.core.TypeEnum.ClientConnect) {
+        const encoded = encoder(<events.client.IClientAck>{
+          type: events.core.TypeEnum.ClientAck,
+          id: (decoded as events.client.ClientConnect).id,
+        });
 
-          // Some kind of weirdness is going on in mock-socket
-          // with the difference between Node's Buffer type
-          // and ArrayBuffer / Uint8Array. If we don't manually
-          // convert the type over like this, it returns us back
-          // an empty Uint8Array on the other side.
-          //
-          // https://github.com/thoov/mock-socket/issues/6#issuecomment-602102569
-          const newBuffer = new ArrayBuffer(encoded.byteLength);
-          const newBufferView = new Uint8Array(newBuffer);
-          newBufferView.set(encoded, 0);
-          socket.send(newBuffer);
-
-          resolve();
-        } else {
-          reject(new Error(`Wrong message type! ${JSON.stringify(decoded)}`));
-        }
-      });
+        const buffer = translateBuffer(encoded as Buffer);
+        socket.send(buffer);
+        messagesSentFromServer.push(buffer);
+      }
     });
   });
 
   const messagesFromServer: any[] = [];
   const messagesToServer: any[] = [];
-  const consumerFromServer: Consumer = (msg) => messagesFromServer.push(msg);
-  const consumerToServer: Consumer = (msg) => messagesToServer.push(msg);
-  MessageBus.subscribe(Topics.ClientNetworkFromServer, consumerFromServer);
-  MessageBus.subscribe(Topics.ClientNetworkToServer, consumerToServer);
+  MessageBus.subscribe(Topics.ClientNetworkFromServer,
+    (msg) => messagesFromServer.push(msg));
+  MessageBus.subscribe(Topics.ClientNetworkToServer,
+    (msg) => messagesToServer.push(msg));
 
   await client.connect();
-
-  console.log(messagesFromServer);
-  expect(messagesFromServer.length).toBe(1);
-  expect(messagesFromServer[0].type).toBe(events.core.TypeEnum.ClientConnect);
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   expect(messagesToServer.length).toBe(1);
   expect(messagesToServer[0] instanceof Uint8Array).toBe(true);
 
-  await serverSentMessage;
+  expect(messagesFromServer.length).toBe(1);
+  expect(messagesFromServer[0].type).toBe(events.core.TypeEnum.ClientAck);
+  expect(messagesFromServer[0].id).toBe(client.getId());
+
+  expect(messagesSentFromServer.length).toBe(1);
+  expect(messagesSentFromServer[0] instanceof ArrayBuffer).toBe(true);
+
   expect(messagesReceivedByServer.length).toBe(1);
   expect(messagesReceivedByServer[0].type).toBe(events.core.TypeEnum.ClientConnect);
   expect(messagesReceivedByServer[0].id).not.toBeNull(); // client generated uuid
-
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  expect(messagesFromServer.length).toBe(2);
-  expect(messagesFromServer[1].type).toBe(events.core.TypeEnum.ClientConnect);
-  expect(messagesFromServer[1].id).toBe('got it'); // server sent uuid
+  expect(messagesReceivedByServer[0].id).toBe(client.getId());
 });

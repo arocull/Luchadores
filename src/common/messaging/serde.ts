@@ -17,14 +17,16 @@ interface ProtobufTypeSerde {
 const { TypeEnum } = events.core;
 function getProtobufType(object: Kind): ProtobufTypeSerde {
   switch (object.type) {
+    case TypeEnum.ClientConnect:
+      return events.client.ClientConnect;
+    case TypeEnum.ClientAck:
+      return events.client.ClientAck;
+    case TypeEnum.ClientDisconnect:
+      return events.client.ClientDisconnect;
     case TypeEnum.LobbyRequest:
       return events.lobby.LobbyRequest;
     case TypeEnum.LobbyResponse:
       return events.lobby.LobbyResponse;
-    case TypeEnum.ClientConnect:
-      return events.client.ClientConnect;
-    case TypeEnum.ClientDisconnect:
-      return events.client.ClientDisconnect;
     default:
       // TODO: Figure out how to make this an exhaustive switch
       // and produce a compile error if not all cases are covered.
@@ -41,7 +43,7 @@ export function encoder(kind: Kind): Uint8Array {
 /**
  * Decodes the provided envelope into its concrete type
  */
-export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): any {
+export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): Kind {
   let data: Uint8Array;
   if (buffer instanceof Buffer
       || buffer instanceof ArrayBuffer) {

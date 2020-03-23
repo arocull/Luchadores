@@ -9,6 +9,7 @@ const UNOPENED = -1;
 class NetworkClient {
   private ws: WebSocket;
   private id: string;
+  private clientAckTimeout: NodeJS.Timeout;
   private publishToServerConsumer: Consumer;
 
   constructor(private url: string) {
@@ -17,6 +18,10 @@ class NetworkClient {
     // The consumer reads any messages on NetworkOutbound topic
     // and sends them back out of the WebSocket.
     this.publishToServerConsumer = (message: any) => this.send(message);
+  }
+
+  getId() {
+    return this.id;
   }
 
   // TODO: Implement proper client library, reconnect, durability, etc.
@@ -33,19 +38,6 @@ class NetworkClient {
       this.ws.addEventListener('error', (e) => this.onError(e));
       this.ws.addEventListener('close', (e) => this.onClose(e));
     });
-  }
-
-  // TODO: Sending is awkward from other locations. Can we make it simpler?
-  // Figure out how to create envelopes from incoming objects?
-  send(message: Uint8Array) {
-    if (this.isConnected()) {
-      if (!(message instanceof Uint8Array)) {
-        throw new Error(`message of unexpected type! ${typeof message}; ${JSON.stringify(message)}`);
-      }
-      this.ws.send(message);
-    } else {
-      console.warn('Dropped message send due to not being connected', message);
-    }
   }
 
   close() {
@@ -93,6 +85,12 @@ class NetworkClient {
     // Subscribe us to receive any events targeting outbound network
     MessageBus.subscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
 
+    // TODO: Add a timeout for if this event doesn't get ack'd
+    this.clientAckTimeout = setTimeout(() => {
+      console.error('ClientAck not received in time - terminating connection');
+      this.close();
+    }, 2000);
+
     const clientConnect = <events.client.IClientConnect>{
       type: events.core.TypeEnum.ClientConnect,
       id: this.id,
@@ -100,19 +98,35 @@ class NetworkClient {
 
     // Publish an event to the server (outbound) that we have connected
     MessageBus.publish(Topics.ClientNetworkToServer, encoder(clientConnect));
+  }
 
-    // Publish an event to the inbound listeners that we have connected
-    // TODO: Should this be based on connect ACK from server?
-    MessageBus.publish(Topics.ClientNetworkFromServer, clientConnect);
+  // TODO: Sending is awkward from other locations. Can we make it simpler?
+  // Figure out how to create envelopes from incoming objects?
+  private send(message: Uint8Array) {
+    if (this.isConnected()) {
+      if (!(message instanceof Uint8Array)) {
+        throw new Error(`message of unexpected type! ${typeof message}; ${JSON.stringify(message)}`);
+      }
+      this.ws.send(message);
+    } else {
+      console.warn('Dropped message send due to not being connected', message);
+    }
   }
 
   private onMessage(msgEvent: MessageEvent) {
     const data = new Uint8Array(msgEvent.data as ArrayBuffer);
+
     console.log('WebSocket message', data);
 
     // Decode the type of the message
     const message = decoder(data);
     console.log('Message decoded. Content:', message);
+
+    // Handle ClientAcks if needed
+    if (message.type === events.core.TypeEnum.ClientAck) {
+      console.log('ClientAck - clearing timeout');
+      clearTimeout(this.clientAckTimeout);
+    }
 
     // Push it out onto the network topic for future listeners
     MessageBus.publish(Topics.ClientNetworkFromServer, message);
@@ -121,6 +135,9 @@ class NetworkClient {
 
   private onClose(closeEvent: CloseEvent) {
     console.log('Closing web socket', closeEvent);
+
+    // Clear any pending timers
+    clearTimeout(this.clientAckTimeout);
 
     // Unsubscribe us from receiving any events targeting outbound network
     MessageBus.unsubscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);

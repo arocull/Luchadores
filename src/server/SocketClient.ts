@@ -3,7 +3,7 @@ import * as WebSocket from 'ws';
 import logger from './Logger';
 import * as events from '../common/events/events';
 import { Consumer, MessageBus, Topics } from '../common/messaging/bus';
-import { decoder } from '../common/messaging/serde';
+import { decoder, encoder } from '../common/messaging/serde';
 
 interface AddressInfo {
   remoteFamily?: string;
@@ -46,6 +46,10 @@ class SocketClient {
   onConnect(event: events.client.IClientConnect) {
     this.id = event.id;
     logger.info('Socket ClientConnect - this client is now %o', this.id);
+    this.socket.send(encoder(<events.client.ClientAck>{
+      type: events.core.TypeEnum.ClientAck,
+      id: this.id,
+    }));
 
     return this; // shut up linter
   }

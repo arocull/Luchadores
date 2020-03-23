@@ -2,8 +2,10 @@ syntax = "proto3";
 package core;
 
 enum TypeEnum {
-    LobbyRequest = 1;
-    LobbyResponse = 2;
-    ClientConnect = 3;
-    ClientDisconnect = 4;
+    LobbyRequest = 100;
+    LobbyResponse = 101;
+
+    ClientConnect = 200;
+    ClientAck = 201;
+    ClientDisconnect = 202;
 };
