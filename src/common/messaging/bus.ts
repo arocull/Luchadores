@@ -39,12 +39,12 @@ class MessageBusImpl implements IMessageBus {
   }
 
   private getTopic(topic: string) {
-    if (this.consumers[topic] == null) {
-      const newTopic: Consumer[] = [];
-      this.consumers[topic] = newTopic;
-      return newTopic;
+    let result = this.consumers[topic];
+    if (result == null) {
+      result = [];
+      this.consumers[topic] = result;
     }
-    return this.consumers[topic];
+    return result;
   }
 
   subscribe(topic: string, consumer: Consumer) {
