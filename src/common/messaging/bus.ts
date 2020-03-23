@@ -1,3 +1,5 @@
+import { EventEmitter } from 'events';
+
 /**
  * The common interface for all MessageBus consumers.
  */
@@ -31,39 +33,21 @@ interface IMessageBus {
 /**
  * The private MessageBus implementation
  */
-class MessageBusImpl implements IMessageBus {
-  private consumers: Record<string, Consumer[]>;
-
-  constructor() {
-    this.consumers = {};
-  }
-
-  private getTopic(topic: string) {
-    let result = this.consumers[topic];
-    if (result == null) {
-      result = [];
-      this.consumers[topic] = result;
-    }
-    return result;
-  }
-
+class MessageBusImpl extends EventEmitter implements IMessageBus {
   subscribe(topic: string, consumer: Consumer) {
-    this.getTopic(topic).push(consumer);
+    this.addListener(topic, consumer.receive);
   }
 
   unsubscribe(topic: string, consumer: Consumer) {
-    this.consumers[topic] = this.getTopic(topic).filter((x) => x !== consumer);
+    this.removeListener(topic, consumer.receive);
   }
 
   clearSubscribers() {
-    this.consumers = {};
+    this.removeAllListeners();
   }
 
   publish(topic: string, message: any) {
-    const consumers = this.getTopic(topic);
-    for (let i = 0; i < consumers.length; i++) {
-      consumers[i].receive(message);
-    }
+    this.emit(topic, message);
   }
 }
 
