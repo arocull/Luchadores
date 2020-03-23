@@ -4,7 +4,7 @@ import { EventEmitter } from 'events';
  * The common interface for all MessageBus consumers.
  */
 export interface Consumer {
-  receive(message: any): void;
+  (message: any): void;
 }
 
 /**
@@ -35,11 +35,11 @@ interface IMessageBus {
  */
 class MessageBusImpl extends EventEmitter implements IMessageBus {
   subscribe(topic: string, consumer: Consumer) {
-    this.addListener(topic, consumer.receive);
+    this.addListener(topic, consumer);
   }
 
   unsubscribe(topic: string, consumer: Consumer) {
-    this.removeListener(topic, consumer.receive);
+    this.removeListener(topic, consumer);
   }
 
   clearSubscribers() {

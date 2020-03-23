@@ -20,14 +20,12 @@ class SocketClient {
     private addressInfo: AddressInfo,
   ) {
     this.socket.on('message', (data: Buffer) => this.onMessage(data));
-    this.socket.on('close', (code, reason) => this.onClose(code, reason));
+    this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
 
-    this.consumer = {
-      receive: (message) => {
-        if (message.type === events.core.TypeEnum.ClientConnect) {
-          this.onConnect(message);
-        }
-      },
+    this.consumer = (message) => {
+      if (message.type === events.core.TypeEnum.ClientConnect) {
+        this.onConnect(message);
+      }
     };
   }
 

@@ -3,10 +3,8 @@ import { Consumer, MessageBus } from '../../../src/common/messaging/bus';
 test('send and receive to subscribers', () => {
   const topic = 'topic';
   const messages: any[] = [];
-  const consumer: Consumer = {
-    receive: ((msg: any) => {
-      messages.push(msg);
-    }),
+  const consumer: Consumer = (msg: any) => {
+    messages.push(msg);
   };
 
   MessageBus.publish(topic, 'hello');

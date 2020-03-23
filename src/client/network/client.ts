@@ -16,9 +16,7 @@ class NetworkClient {
 
     // The consumer reads any messages on NetworkOutbound topic
     // and sends them back out of the WebSocket.
-    this.publishToServerConsumer = {
-      receive: (message: any) => this.send(message),
-    };
+    this.publishToServerConsumer = (message: any) => this.send(message);
   }
 
   // TODO: Implement proper client library, reconnect, durability, etc.

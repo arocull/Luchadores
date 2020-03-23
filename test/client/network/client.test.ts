@@ -99,16 +99,8 @@ test('send and receive messages', async () => {
 
   const messagesFromServer: any[] = [];
   const messagesToServer: any[] = [];
-  const consumerFromServer: Consumer = {
-    receive: (msg) => {
-      messagesFromServer.push(msg);
-    },
-  };
-  const consumerToServer: Consumer = {
-    receive: (msg) => {
-      messagesToServer.push(msg);
-    },
-  };
+  const consumerFromServer: Consumer = (msg) => messagesFromServer.push(msg);
+  const consumerToServer: Consumer = (msg) => messagesToServer.push(msg);
   MessageBus.subscribe(Topics.ClientNetworkFromServer, consumerFromServer);
   MessageBus.subscribe(Topics.ClientNetworkToServer, consumerToServer);
 
