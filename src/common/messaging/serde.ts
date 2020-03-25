@@ -1,13 +1,14 @@
 // "serde" is shorthand for "serializer / deserializer"
-import * as events from '../events';
+
+import { IEvent, IKind, TypeEnum } from '../events'; // The public interface types
+import * as events from '../events/events'; // The private Protobuf classes
 
 interface ProtobufTypeSerde {
   encode(message: any): protobuf.Writer;
   decode(data: Uint8Array): any;
 }
 
-const { TypeEnum } = events;
-function getProtobufType(object: events.IKind): ProtobufTypeSerde {
+function getProtobufType(object: IKind): ProtobufTypeSerde {
   switch (object.type) {
     case TypeEnum.ClientConnect:
       return events.ClientConnect;
@@ -27,7 +28,7 @@ function getProtobufType(object: events.IKind): ProtobufTypeSerde {
   }
 }
 
-export function encoder(kind: events.IKind): Uint8Array {
+export function encoder(kind: IEvent): Uint8Array {
   const serde = getProtobufType(kind);
   return serde.encode(kind).finish();
 }
@@ -35,7 +36,7 @@ export function encoder(kind: events.IKind): Uint8Array {
 /**
  * Decodes the provided envelope into its concrete type
  */
-export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): events.IEvent {
+export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): IEvent {
   let data: Uint8Array;
   if (buffer instanceof Buffer
       || buffer instanceof ArrayBuffer) {

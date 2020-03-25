@@ -87,9 +87,9 @@ test('send and receive messages', async () => {
       messagesReceivedByServer.push(decoded);
 
       if (decoded.type === events.TypeEnum.ClientConnect) {
-        const encoded = encoder(<events.IClientAck>{
+        const encoded = encoder({
           type: events.TypeEnum.ClientAck,
-          id: (decoded as events.ClientConnect).id,
+          id: decoded.id,
         });
 
         const buffer = translateBuffer(encoded as Buffer);

@@ -1,46 +1,34 @@
 import * as events from '../../../src/common/events';
 import { decoder, encoder } from '../../../src/common/messaging/serde';
 
-test('decodes lobby.LobbyRequest', () => {
-  const encoded = events.LobbyRequest.encode({
-    type: events.TypeEnum.LobbyRequest,
-    search: 'hello',
-  }).finish();
-
-  const message = decoder(encoded) as events.LobbyRequest;
-  expect(message).toBeInstanceOf(events.LobbyRequest);
-  expect(message.search).toBe('hello');
-});
-
-test('encodes lobby.LobbyRequest', () => {
-  const encoded = encoder(<events.ILobbyRequest>{
+test('encodes and decodes lobby.LobbyRequest', () => {
+  const encoded = encoder({
     type: events.TypeEnum.LobbyRequest,
     search: 'hello',
   });
+  expect(ArrayBuffer.isView(encoded)).toBe(true);
 
-  const message = events.LobbyRequest.decode(encoded);
-  expect(message).toBeInstanceOf(events.LobbyRequest);
+  const message = decoder(encoded);
+  if (message.type !== events.TypeEnum.LobbyRequest) {
+    fail('Type mismatch!');
+  }
+
+  expect(message.type).toBe(events.TypeEnum.LobbyRequest);
   expect(message.search).toBe('hello');
 });
 
-test('decodes lobby.LobbyResponse', () => {
-  const encoded = events.LobbyResponse.encode({
-    type: events.TypeEnum.LobbyResponse,
-    lobbyNames: ['one', 'two', 'three'],
-  }).finish();
-
-  const message = decoder(encoded) as events.LobbyResponse;
-  expect(message).toBeInstanceOf(events.LobbyResponse);
-  expect(message.lobbyNames).toEqual(['one', 'two', 'three']);
-});
-
-test('encodes lobby.LobbyResponse', () => {
-  const encoded = encoder(<events.ILobbyResponse>{
+test('encodes and decodes lobby.LobbyResponse', () => {
+  const encoded = encoder({
     type: events.TypeEnum.LobbyResponse,
     lobbyNames: ['one', 'two', 'three'],
   });
+  expect(ArrayBuffer.isView(encoded)).toBe(true);
 
-  const message = events.LobbyResponse.decode(encoded);
-  expect(message).toBeInstanceOf(events.LobbyResponse);
+  const message = decoder(encoded);
+  if (message.type !== events.TypeEnum.LobbyResponse) {
+    fail('Type mismatch!');
+  }
+
+  expect(message.type).toBe(events.TypeEnum.LobbyResponse);
   expect(message.lobbyNames).toEqual(['one', 'two', 'three']);
 });

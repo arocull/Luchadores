@@ -1,13 +1,7 @@
-// Reexporting events modules in a cleaner interface
+// This file reexports public events modules in a cleaner interface.
+// It doesn't reexport all of the inner details of Protobuf.
+// Instead, it exposes the necessary interfaces to do communication work.
 import * as events from './events';
-export {
-  Kind,
-  ClientAck,
-  ClientConnect,
-  ClientDisconnect,
-  LobbyRequest,
-  LobbyResponse,
-} from './events';
 
 export { default as TypeEnum } from './TypeEnum';
 import TypeEnum from './TypeEnum';

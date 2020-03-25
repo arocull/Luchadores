@@ -100,7 +100,7 @@ class NetworkClient {
     MessageBus.subscribe(Topics.ClientNetworkFromServer, this.clientAckConsumer);
 
     // Publish an event to the server that we have connected
-    MessageBus.publish(Topics.ClientNetworkToServer, encoder(<events.IClientConnect>{
+    MessageBus.publish(Topics.ClientNetworkToServer, encoder({
       type: events.TypeEnum.ClientConnect,
       id: this.id,
     }));
