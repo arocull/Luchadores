@@ -1,6 +1,6 @@
 import { v4 as uuid } from 'uuid';
 
-import * as events from '../../common/events/events';
+import * as events from '../../common/events';
 import { Consumer, MessageBus, Topics } from '../../common/messaging/bus';
 import { decoder, encoder } from '../../common/messaging/serde';
 
@@ -91,8 +91,8 @@ class NetworkClient {
       this.close();
     }, 2000);
 
-    const clientConnect = <events.client.IClientConnect>{
-      type: events.core.TypeEnum.ClientConnect,
+    const clientConnect = <events.IClientConnect>{
+      type: events.TypeEnum.ClientConnect,
       id: this.id,
     };
 
@@ -123,7 +123,7 @@ class NetworkClient {
     console.log('Message decoded. Content:', message);
 
     // Handle ClientAcks if needed
-    if (message.type === events.core.TypeEnum.ClientAck) {
+    if (message.type === events.TypeEnum.ClientAck) {
       console.log('ClientAck - clearing timeout');
       clearTimeout(this.clientAckTimeout);
     }
@@ -143,8 +143,8 @@ class NetworkClient {
     MessageBus.unsubscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
 
     // Publish an event to the inbound listeners that we have disconnected
-    MessageBus.publish(Topics.ClientNetworkFromServer, <events.client.IClientDisconnect>{
-      type: events.core.TypeEnum.ClientDisconnect,
+    MessageBus.publish(Topics.ClientNetworkFromServer, <events.IClientDisconnect>{
+      type: events.TypeEnum.ClientDisconnect,
       id: this.id,
     });
     return this; // shut up linter

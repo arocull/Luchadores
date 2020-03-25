@@ -2,7 +2,7 @@
 // https://www.npmjs.com/package/mock-socket
 import { WebSocket, Server } from 'mock-socket'; // eslint-disable-line @typescript-eslint/no-unused-vars
 
-import * as events from '../../../src/common/events/events';
+import * as events from '../../../src/common/events';
 import { decoder, encoder } from '../../../src/common/messaging/serde';
 import { MessageBus, Topics } from '../../../src/common/messaging/bus';
 import NetworkClient from '../../../src/client/network/client';
@@ -86,10 +86,10 @@ test('send and receive messages', async () => {
       const decoded = decoder(msg);
       messagesReceivedByServer.push(decoded);
 
-      if (decoded.type === events.core.TypeEnum.ClientConnect) {
-        const encoded = encoder(<events.client.IClientAck>{
-          type: events.core.TypeEnum.ClientAck,
-          id: (decoded as events.client.ClientConnect).id,
+      if (decoded.type === events.TypeEnum.ClientConnect) {
+        const encoded = encoder(<events.IClientAck>{
+          type: events.TypeEnum.ClientAck,
+          id: (decoded as events.ClientConnect).id,
         });
 
         const buffer = translateBuffer(encoded as Buffer);
@@ -113,14 +113,14 @@ test('send and receive messages', async () => {
   expect(messagesToServer[0] instanceof Uint8Array).toBe(true);
 
   expect(messagesFromServer.length).toBe(1);
-  expect(messagesFromServer[0].type).toBe(events.core.TypeEnum.ClientAck);
+  expect(messagesFromServer[0].type).toBe(events.TypeEnum.ClientAck);
   expect(messagesFromServer[0].id).toBe(client.getId());
 
   expect(messagesSentFromServer.length).toBe(1);
   expect(messagesSentFromServer[0] instanceof ArrayBuffer).toBe(true);
 
   expect(messagesReceivedByServer.length).toBe(1);
-  expect(messagesReceivedByServer[0].type).toBe(events.core.TypeEnum.ClientConnect);
+  expect(messagesReceivedByServer[0].type).toBe(events.TypeEnum.ClientConnect);
   expect(messagesReceivedByServer[0].id).not.toBeNull(); // client generated uuid
   expect(messagesReceivedByServer[0].id).toBe(client.getId());
 });

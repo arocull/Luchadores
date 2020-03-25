@@ -1,7 +1,4 @@
-syntax = "proto3";
-package lobby;
-
 message LobbyRequest {
-  TypeEnum type = 1;
-  string search = 2;
+  required int32 type = 1;
+  required string search = 2;
 }

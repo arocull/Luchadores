@@ -1,7 +1,7 @@
 import * as WebSocket from 'ws';
 
 import logger from './Logger';
-import * as events from '../common/events/events';
+import * as events from '../common/events';
 import { Consumer, MessageBus, Topics } from '../common/messaging/bus';
 import { decoder, encoder } from '../common/messaging/serde';
 
@@ -23,7 +23,7 @@ class SocketClient {
     this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
 
     this.consumer = (message) => {
-      if (message.type === events.core.TypeEnum.ClientConnect) {
+      if (message.type === events.TypeEnum.ClientConnect) {
         this.onConnect(message);
       }
     };
@@ -43,11 +43,11 @@ class SocketClient {
 
   // TODO: Implement a timeout somewhere around here.
   // If the client hasn't identified themselves in short order, close their connection.
-  onConnect(event: events.client.IClientConnect) {
+  onConnect(event: events.IClientConnect) {
     this.id = event.id;
     logger.info('Socket ClientConnect - this client is now %o', this.id);
-    this.socket.send(encoder(<events.client.ClientAck>{
-      type: events.core.TypeEnum.ClientAck,
+    this.socket.send(encoder(<events.ClientAck>{
+      type: events.TypeEnum.ClientAck,
       id: this.id,
     }));
 
@@ -68,8 +68,8 @@ class SocketClient {
   onClose(code: number, reason: string) {
     logger.info('Socket connection closed %j, %j', code, reason);
 
-    MessageBus.publish(Topics.ServerNetworkFromClient, <events.client.IClientDisconnect>{
-      type: events.core.TypeEnum.ClientDisconnect,
+    MessageBus.publish(Topics.ServerNetworkFromClient, <events.IClientDisconnect>{
+      type: events.TypeEnum.ClientDisconnect,
       id: this.id,
     });
 

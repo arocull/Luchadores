@@ -1,32 +1,24 @@
 // "serde" is shorthand for "serializer / deserializer"
-import * as events from '../events/events';
-
-export interface Kind {
-  // This is optional for type compatibility, but effectively required in practice.
-  // proto3 syntax does not have the concept of "required" fields.
-  // https://stackoverflow.com/a/31814967/97964
-  // https://capnproto.org/faq.html#how-do-i-make-a-field-required-like-in-protocol-buffers
-  type?: events.core.TypeEnum;
-}
+import * as events from '../events';
 
 interface ProtobufTypeSerde {
   encode(message: any): protobuf.Writer;
   decode(data: Uint8Array): any;
 }
 
-const { TypeEnum } = events.core;
-function getProtobufType(object: Kind): ProtobufTypeSerde {
+const { TypeEnum } = events;
+function getProtobufType(object: events.IKind): ProtobufTypeSerde {
   switch (object.type) {
     case TypeEnum.ClientConnect:
-      return events.client.ClientConnect;
+      return events.ClientConnect;
     case TypeEnum.ClientAck:
-      return events.client.ClientAck;
+      return events.ClientAck;
     case TypeEnum.ClientDisconnect:
-      return events.client.ClientDisconnect;
+      return events.ClientDisconnect;
     case TypeEnum.LobbyRequest:
-      return events.lobby.LobbyRequest;
+      return events.LobbyRequest;
     case TypeEnum.LobbyResponse:
-      return events.lobby.LobbyResponse;
+      return events.LobbyResponse;
     default:
       // TODO: Figure out how to make this an exhaustive switch
       // and produce a compile error if not all cases are covered.
@@ -35,7 +27,7 @@ function getProtobufType(object: Kind): ProtobufTypeSerde {
   }
 }
 
-export function encoder(kind: Kind): Uint8Array {
+export function encoder(kind: events.IKind): Uint8Array {
   const serde = getProtobufType(kind);
   return serde.encode(kind).finish();
 }
@@ -43,7 +35,7 @@ export function encoder(kind: Kind): Uint8Array {
 /**
  * Decodes the provided envelope into its concrete type
  */
-export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): Kind {
+export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): events.IKind {
   let data: Uint8Array;
   if (buffer instanceof Buffer
       || buffer instanceof ArrayBuffer) {
@@ -52,7 +44,7 @@ export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): Kind {
     data = buffer;
   }
 
-  const kind = events.core.Kind.decode(data);
+  const kind = events.Kind.decode(data);
   const serde = getProtobufType(kind);
   return serde.decode(data);
 }

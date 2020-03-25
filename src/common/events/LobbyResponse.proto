@@ -1,7 +1,4 @@
-syntax = "proto3";
-package lobby;
-
 message LobbyResponse {
-  TypeEnum type = 1;
+  required int32 type = 1;
   repeated string lobbyNames = 2;
 }

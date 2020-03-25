@@ -1,6 +1,3 @@
-syntax = "proto3";
-package core;
-
 message Kind {
-  TypeEnum type = 1;
+  required int32 type = 1;
 }
