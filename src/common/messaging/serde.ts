@@ -35,7 +35,7 @@ export function encoder(kind: events.IKind): Uint8Array {
 /**
  * Decodes the provided envelope into its concrete type
  */
-export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): events.IKind {
+export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): events.IEvent {
   let data: Uint8Array;
   if (buffer instanceof Buffer
       || buffer instanceof ArrayBuffer) {
