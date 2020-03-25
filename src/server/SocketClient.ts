@@ -13,7 +13,10 @@ interface AddressInfo {
 
 class SocketClient {
   private id: string;
-  private consumer: Consumer;
+
+  private clientAckTimeout: NodeJS.Timeout;
+  private clientAckConsumer: Consumer;
+  private publishToClientConsumer: Consumer;
 
   constructor(
     private socket: WebSocket,
@@ -22,36 +25,49 @@ class SocketClient {
     this.socket.on('message', (data: Buffer) => this.onMessage(data));
     this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
 
-    this.consumer = (message) => {
+    // If the client hasn't identified themselves in short order, close their connection.
+    this.clientAckTimeout = setTimeout(() => {
+      logger.error('Client did not ACK in time - disconnecting: %j', this.addressInfo);
+      socket.close();
+    }, 2000);
+
+    this.clientAckConsumer = (message: events.IEvent) => {
+      // Our internal listener only cares about this event.
       if (message.type === events.TypeEnum.ClientConnect) {
+        // Handle the event and unsubscribe. We shouldn't see this again.
         this.onConnect(message);
+        MessageBus.unsubscribe(Topics.ServerNetworkFromClient, this.clientAckConsumer);
       }
+    };
+
+    this.publishToClientConsumer = (message: events.IEvent) => {
+      this.socket.send(encoder(message));
     };
   }
 
   subscribe() {
-    MessageBus.subscribe(Topics.ServerNetworkFromClient, this.consumer);
+    MessageBus.subscribe(Topics.ServerNetworkFromClient, this.clientAckConsumer);
+    MessageBus.subscribe(Topics.ServerNetworkToClient, this.publishToClientConsumer);
 
     return this; // shut up linter
   }
 
   unsubscribe() {
-    MessageBus.unsubscribe(Topics.ServerNetworkFromClient, this.consumer);
+    MessageBus.unsubscribe(Topics.ServerNetworkFromClient, this.clientAckConsumer);
+    MessageBus.unsubscribe(Topics.ServerNetworkToClient, this.publishToClientConsumer);
 
     return this; // shut up linter
   }
 
-  // TODO: Implement a timeout somewhere around here.
-  // If the client hasn't identified themselves in short order, close their connection.
   onConnect(event: events.IClientConnect) {
     this.id = event.id;
     logger.info('Socket ClientConnect - this client is now %o', this.id);
-    this.socket.send(encoder(<events.ClientAck>{
+    clearTimeout(this.clientAckTimeout);
+
+    MessageBus.publish(Topics.ServerNetworkToClient, <events.IClientAck>{
       type: events.TypeEnum.ClientAck,
       id: this.id,
-    }));
-
-    return this; // shut up linter
+    });
   }
 
   onMessage(data: Buffer) {
@@ -72,8 +88,6 @@ class SocketClient {
       type: events.TypeEnum.ClientDisconnect,
       id: this.id,
     });
-
-    return this; // shut up linter
   }
 }
 
