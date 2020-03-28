@@ -3,6 +3,7 @@ import Player from './Player';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import Map from './Map';
+import { IPlayerInputState } from '../events/events';
 
 class World {
   public Fighters: Fighter[];
@@ -17,6 +18,20 @@ class World {
     this.Fighters = [];
     this.Bullets = [];
   }
+
+
+  /* eslint-disable class-methods-use-this, no-param-reassign */
+  // Apply player inputs to player's character
+  public ApplyAction(player: Player, action: IPlayerInputState) {
+    player.Character.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0));
+
+    player.Character.Click(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.mouseDirection.y, action.mouseDirection.z));
+    player.Character.Firing = action.mouseDown;
+
+    if (action.jump === true) player.Character.Jump();
+  }
+  /* eslint-enable class-methods-use-this, no-param-reassign */
+
 
   public TickPhysics(DeltaTime: number) {
     for (let i = 0; i < this.Fighters.length; i++) {

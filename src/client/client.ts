@@ -3,6 +3,7 @@ import NetworkClient from './network/client';
 import Vector from '../common/engine/Vector';
 import Fighter from '../common/engine/Fighter';
 import Sheep from '../common/engine/fighters/Sheep';
+import Deer from '../common/engine/fighters/Deer';
 import Animator from './animation/Animator';
 import Particle from './particles/Particle';
 import PConfetti from './particles/Confetti';
@@ -24,7 +25,7 @@ const canvas = viewport.getContext('2d');
 const renderSettings = new RenderSettings(3, 5, true);
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 
-const player = new Sheep(1, new Vector(25, 25, 0));
+const player = new Deer(1, new Vector(25, 25, 0));
 world.Fighters.push(player);
 const particles: Particle[] = [];
 
