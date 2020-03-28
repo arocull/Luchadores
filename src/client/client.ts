@@ -1,21 +1,15 @@
 // import * as _ from 'lodash';
 import * as socketIo from 'socket.io-client';
-
 import Vector from '../common/engine/Vector';
-
 import Fighter from '../common/engine/Fighter';
 import Sheep from '../common/engine/fighters/Sheep';
 import Animator from './animation/Animator';
-
-// import Projectile from '../common/engine/projectiles/Projectile';
-// import BFire from '../common/engine/projectiles/Fire';
-
 import Particle from './particles/Particle';
-// import PLightning from './particles/Lightning';
+import PConfetti from './particles/Confetti';
 import PRosePetal from './particles/RosePetal';
 import PSmashEffect from './particles/SmashEffect';
-// import Map from '../common/engine/Map';
 import World from '../common/engine/World';
+import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import Renderer from './Render';
 
@@ -27,7 +21,8 @@ const world = new World();
 // Get rendering viewport--browser only
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
-const cam = new Camera(viewport.width, viewport.height, 18, 12);
+const renderSettings = new RenderSettings(3, 5, true);
+const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 
 const player = new Sheep(1, new Vector(25, 25, 0));
 world.Fighters.push(player);
@@ -71,11 +66,12 @@ UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,-5,0],"a":[0,
 function OnDeath(died: number, killer: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
     if (world.Fighters[i].ID === died) {
-      PRosePetal.Burst(particles, world.Fighters[i].Position, 0.2, 5, 100);
+      PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
       world.Fighters.splice(i, 1);
       i--;
     } else if (world.Fighters[i].ID === killer) {
       world.Fighters[i].EarnKill();
+      if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 3;
     }
   }
 }
@@ -128,13 +124,40 @@ function DoFrame(tick: number) {
   cam.UpdateFocus(DeltaTime);
 
 
-  // Tick animators, prune and generate new ones based off of need
   for (let i = 0; i < world.Fighters.length; i++) {
-    if (world.Fighters[i]) {
-      if (!world.Fighters[i].Animator) world.Fighters[i].Animator = new Animator(world.Fighters[i]);
-      if (world.Fighters[i].Animator) world.Fighters[i].Animator.Tick(DeltaTime);
+    const a = world.Fighters[i];
+    if (a) {
+      // Tick animators, prune and generate new ones based off of need
+      if (!a.Animator) a.Animator = new Animator(a);
+      else if (a.Animator) {
+        a.Animator.Tick(DeltaTime);
+        if (a.Animator.killEffectCountdown === 0) {
+          PRosePetal.Burst(particles, a.Position, 0.2, 5, 20 * renderSettings.ParticleAmount);
+        }
+      }
+
+      // Collision effects
+      if (a.JustHitMomentum > 0) {
+        for (let j = 0; j < 3; j++) {
+          particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000));
+        }
+
+        if (Vector.Distance(a.Position, player.Position) <= 2) {
+          cam.Shake += a.JustHitMomentum / 1000;
+        }
+
+        a.JustHitMomentum = 0;
+      }
+
+      // Normally shouldn't do this on client incase client simulates a kill but it does not occur on server
+      // Currently here for visuals and testing, however
+      if (a.HP <= 0) {
+        OnDeath(a.ID, a.LastHitBy);
+        i--;
+      }
     }
   }
+  cam.Shake += player.BulletShock;
 
   // Tick and prune particles
   for (let i = 0; i < particles.length; i++) {
@@ -146,30 +169,10 @@ function DoFrame(tick: number) {
     }
   }
 
-  for (let i = 0; i < world.Fighters.length; i++) {
-    if (world.Fighters[i].JustHitMomentum > 0) {
-      for (let j = 0; j < 3; j++) {
-        particles.push(new PSmashEffect(world.Fighters[i].JustHitPosition, world.Fighters[i].JustHitMomentum / 5000));
-      }
-
-      if (Vector.Distance(world.Fighters[i].Position, player.Position) <= 2) {
-        cam.Shake += world.Fighters[i].JustHitMomentum / 1000;
-      }
-
-      world.Fighters[i].JustHitMomentum = 0;
-    }
-
-    // Normally shouldn't do this on client incase client simulates a kill but it does not occur on server
-    // Currently here for visuals and testing, however
-    if (world.Fighters[i].HP <= 0) {
-      OnDeath(world.Fighters[i].ID, world.Fighters[i].LastHitBy);
-      i--;
-    }
-  }
-  cam.Shake += player.BulletShock;
-
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
   if (Input.ListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
+
+  // PRosePetal.Burst(particles, player.Position, 0.2, 3, 1);
 
   return window.requestAnimationFrame(DoFrame);
 }

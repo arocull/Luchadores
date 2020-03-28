@@ -11,7 +11,7 @@ import Map from '../common/engine/Map';
 
 function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
   const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
-  for (let i = 0; i < fighters.length; i++) {
+  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
     const fi = fighters[i];
     if (fi.Position.y - (fi.Radius * 2) < 0) {
       const pos = Vector.Clone(fi.Position);
@@ -20,7 +20,7 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
     }
   }
   corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
-  for (let i = 0; i < fighters.length; i++) {
+  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
     const fi = fighters[i];
     if (fi.Position.x + fi.Radius > map.Width) {
       const pos = Vector.Clone(fi.Position);
@@ -29,11 +29,11 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
     }
   }
   corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
-  for (let i = 0; i < fighters.length; i++) {
+  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
     if (fighters[i].Position.y > map.Height) corners.push(camera.PositionOffset(fighters[i].Position));
   }
   corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
-  for (let i = 0; i < fighters.length; i++) {
+  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
     const fi = fighters[i];
     if (fi.Position.x - fi.Radius < 0) {
       const pos = Vector.Clone(fi.Position);
@@ -88,8 +88,6 @@ class Renderer {
 
     // Draw in fighters
     for (let i = 0; i < toDraw.length; i++) {
-      // eslint-disable-next-line
-      console.log("Drawing particle ", toDraw[i]);
       if (toDraw[i].Type === 'Fighter') {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);

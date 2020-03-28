@@ -56,17 +56,28 @@ test('physics terminal velocity test', () => {
   expect(e.Position.x).toBeLessThanOrEqual(e.MaxMomentum / e.Mass + 0.01);
 });
 
-test('physics bullet test', () => {
+test('physics bullet tests', () => {
   const world = new World();
   world.Map = new Map(20, 20, 0, '');
-  const sheep = new Sheep(6, new Vector(0, 10, 0));
-  const bullet = new Projectile('Bullet', null, 10, 1, new Vector(10, 10, 0), new Vector(-15, 0, 0));
-  world.Fighters.push(sheep);
-  world.Bullets.push(bullet);
+
+  const sheep = new Sheep(1, new Vector(0, 10, 0));
+  const sheep2 = new Sheep(2, new Vector(0, 20, 0));
+
+  const bullet = new Projectile('Bullet', sheep2, 10, 1, new Vector(10, 10, 0), new Vector(-15, 0, 0));
+  const bullet2 = new Projectile('Bullet', sheep2, 10, 1, new Vector(10, 20, 0), new Vector(-15, 0, 0));
+  const bullet3 = new Projectile('Bullet', null, 10, 0.5, new Vector(0, 0, 0), new Vector(1, 0, 0));
+
+  world.Fighters.push(sheep, sheep2);
+  world.Bullets.push(bullet, bullet2, bullet3);
 
   // Tests bullet in a high-latency setting to make sure they still collide even at fast velocities
   for (let i = 0; i < 10; i++) {
     world.TickPhysics(0.1);
   }
-  expect(sheep.HP).toBe(sheep.MaxHP - 10);
+
+  expect(sheep.HP).toBe(sheep.MaxHP - 10); // Bullet damage
+  expect(sheep.LastHitBy).toBe(sheep2.ID);
+
+  expect(sheep2.HP).toBe(sheep2.MaxHP); // Bullet passing over owner
+  expect(world.Bullets.indexOf(bullet3)).toBe(-1); // Bullet timing out
 });
