@@ -24,6 +24,8 @@ function getProtobufType(object: IKind): ProtobufTypeSerde {
       return events.PlayerConnect;
     case TypeEnum.PlayerJoined:
       return events.PlayerJoined;
+    case TypeEnum.PlayerInputState:
+      return events.PlayerInputState;
     default:
       // TODO: Figure out how to make this an exhaustive switch
       // and produce a compile error if not all cases are covered.

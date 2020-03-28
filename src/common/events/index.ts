@@ -31,10 +31,25 @@ export interface ILobbyResponse extends events.ILobbyResponse {
   type: TypeEnum.LobbyResponse;
 }
 
+export interface IPlayerConnect extends events.IPlayerConnect {
+  type: TypeEnum.PlayerConnect;
+}
+
+export interface IPlayerJoined extends events.IPlayerJoined {
+  type: TypeEnum.PlayerJoined;
+}
+
+export interface IPlayerInputState extends events.IPlayerInputState {
+  type: TypeEnum.PlayerInputState;
+}
+
 export type IEvent =
   | IClientAck
   | IClientConnect
   | IClientDisconnect
   | ILobbyRequest
   | ILobbyResponse
+  | IPlayerConnect
+  | IPlayerJoined
+  | IPlayerInputState
   ;
