@@ -5,6 +5,19 @@ import Projectile from './projectiles/Projectile';
 import Map from './Map';
 import { IPlayerInputState } from '../events/events';
 
+// World Class - Manages bullets and fighters
+/* General flow of things:
+
+- Apply player inputs
+
+- Fire bullets and handle character updates
+- Tick physics
+
+- Check for deaths
+
+- Distribute updates
+
+*/
 class World {
   public Fighters: Fighter[];
   public Bullets: Projectile[];
@@ -31,6 +44,23 @@ class World {
     if (action.jump === true) player.Character.Jump();
   }
   /* eslint-enable class-methods-use-this, no-param-reassign */
+
+  public DoUpdates(DeltaTime: number) {
+    for (let i = 0; i < this.Fighters.length; i++) {
+      const a = this.Fighters[i];
+
+      // Tick cooldowns
+      a.TickCooldowns(DeltaTime);
+
+
+      // Fire bullets
+      const bullet = a.TryBullet();
+      if (bullet) {
+        // Should we put a BULLET FIRED event here? <------------ una pregunta
+        this.Bullets.push(bullet);
+      }
+    }
+  }
 
 
   public TickPhysics(DeltaTime: number) {

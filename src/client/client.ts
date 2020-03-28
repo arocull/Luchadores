@@ -112,7 +112,7 @@ document.addEventListener('mouseup', () => {
   Input.MouseDown = false;
 });
 document.addEventListener('mousemove', (event) => {
-  Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (cam.Width / 2), event.clientY - (cam.Height / 2), 0);
+  Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (viewport.width / 2), (viewport.height / 2) - event.clientY, 0);
 });
 
 
@@ -126,6 +126,10 @@ function DoFrame(tick: number) {
   if (Input.Jump) player.Jump();
   Input.MoveDirection.z = 0;
   player.Move(Input.MoveDirection);
+  player.Click(Input.MouseDirection);
+  player.Firing = Input.MouseDown;
+
+  world.DoUpdates(DeltaTime);
 
   // Tick physics
   world.TickPhysics(DeltaTime);
@@ -137,7 +141,7 @@ function DoFrame(tick: number) {
   if (player) cam.SetFocus(player);
   cam.UpdateFocus(DeltaTime);
 
-
+  // Apply visual effects
   for (let i = 0; i < world.Fighters.length; i++) {
     const a = world.Fighters[i];
     if (a) {
@@ -185,8 +189,6 @@ function DoFrame(tick: number) {
 
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
   if (Input.ListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
-
-  // PRosePetal.Burst(particles, player.Position, 0.2, 3, 1);
 
   return window.requestAnimationFrame(DoFrame);
 }
