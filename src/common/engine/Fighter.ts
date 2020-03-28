@@ -16,6 +16,7 @@ class Fighter extends Entity {
   public JustHitMomentum: number;
   public JustLanded: boolean;
   public AimDirection: Vector;
+  public Firing: boolean;
   protected BulletCooldown: number;
   public BulletShock: number;
 
@@ -44,6 +45,7 @@ class Fighter extends Entity {
     this.JustHitPosition = new Vector(0, 0, 0);
     this.JustHitMomentum = 0;
     this.AimDirection = new Vector(1, 0, 0);
+    this.Firing = false;
     this.BulletCooldown = 0;
     this.BulletShock = 0;
   }
@@ -63,6 +65,19 @@ class Fighter extends Entity {
   public CollideWithFighter(hit: Fighter, momentum: number) {
     this.JustHitPosition = Vector.Average(this.Position, hit.Position);
     this.JustHitMomentum = momentum;
+  }
+  /* eslint-disable class-methods-use-this */
+  public FireBullet(): any {
+    return null;
+  }
+  /* eslint-enable class-methods-use-this */
+  public TryBullet(): any {
+    if (this.Firing && this.BulletCooldown <= 0) {
+      const bullet = this.FireBullet();
+      if (bullet) return bullet;
+    }
+
+    return null;
   }
 
 
@@ -85,6 +100,8 @@ class Fighter extends Entity {
     this.JustHitMomentum = 0;
     this.BulletShock = 0;
     this.BulletCooldown -= DeltaTime;
+
+    if (this.BulletCooldown < 0) this.BulletCooldown = 0;
   }
 
 
