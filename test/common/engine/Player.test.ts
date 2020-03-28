@@ -1,20 +1,20 @@
-import Connection from '../../src/server/Connection';
+import Player from '../../../src/common/engine/Player';
 
-describe('Connection', () => {
+describe('Player', () => {
   it('should have no ping at initialization', () => {
-    const conn = new Connection('asdf', 'asdf');
+    const conn = new Player('asdf', 'asdf');
     expect(conn.getPing()).toEqual(undefined);
   });
 
   it('should push pings to the queue', () => {
-    const conn = new Connection('asdf', 'asdf');
+    const conn = new Player('asdf', 'asdf');
 
     conn.updatePing(123);
     expect(conn.getPing()).toEqual(123);
   });
 
   it('should average pings', () => {
-    const conn = new Connection('asdf', 'asdf');
+    const conn = new Player('asdf', 'asdf');
 
     conn.updatePing(123);
     conn.updatePing(400);
@@ -22,7 +22,7 @@ describe('Connection', () => {
   });
 
   it('should purge old pings', () => {
-    const conn = new Connection('asdf', 'asdf');
+    const conn = new Player('asdf', 'asdf');
 
     conn.updatePing(123);
     conn.updatePing(400);
