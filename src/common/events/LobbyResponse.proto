@@ -1,0 +1,4 @@
+message LobbyResponse {
+  required int32 type = 1;
+  repeated string lobbyNames = 2;
+}

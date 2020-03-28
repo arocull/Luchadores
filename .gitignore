@@ -1,4 +1,7 @@
-dist/**
+# Compiled outputs
+dist/
+src/common/events/events.js
+src/common/events/events.d.ts
 
 ### Standard:
 # Logs
@@ -107,5 +110,4 @@ web_modules/
 .tern-port
 
 # Stores VSCode versions used for testing VSCode extensions
-.vscode
 .vscode-test

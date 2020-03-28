@@ -1,5 +1,5 @@
 // import * as _ from 'lodash';
-import * as socketIo from 'socket.io-client';
+import NetworkClient from './network/client';
 import Vector from '../common/engine/Vector';
 import Fighter from '../common/engine/Fighter';
 import Sheep from '../common/engine/fighters/Sheep';
@@ -180,6 +180,12 @@ function DoFrame(tick: number) {
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
-  // TODO: Use connection
-  socketIo.connect();
+  const wsUrl = `ws://${window.location.host}/socket`;
+  console.log('Attempting WebSocket at URL', wsUrl);
+
+  const ws = new NetworkClient(`ws://${window.location.host}/socket`);
+  ws.connect()
+    .then(() => console.log('Connected OK!'))
+    .catch((err) => console.error('Failed to connect!', err))
+    .finally(() => console.log('... and finally!'));
 }());

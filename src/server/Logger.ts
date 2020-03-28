@@ -8,6 +8,7 @@ const logger = winston.createLogger({
     winston.format.label({ label: 'Luchadores' }),
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
+    winston.format.splat(), // See https://stackoverflow.com/a/46973676/97964
   ),
   transports: [
     new winston.transports.Console({

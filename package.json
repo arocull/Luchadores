@@ -5,13 +5,14 @@
   "private": true,
   "main": "dist/src/server/server.js",
   "scripts": {
-    "pretest": "npm run prebuild && tsc",
+    "pretest": "npm run build",
     "test": "JEST_JUNIT_OUTPUT_DIR='coverage' jest dist/test --coverage --reporters=default --reporters=jest-junit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "clean": "rm -rf dist/",
-    "prebuild": "mkdir -p dist/public/ && cp -R assets/* dist/public/",
-    "build": "npm run prebuild && webpack --config ./webpack/development.js",
+    "generate-events": "pbjs -t static-module -w commonjs src/common/events/**/*.proto -o src/common/events/events.js && pbts -o src/common/events/events.d.ts src/common/events/events.js",
+    "prebuild": "mkdir -p dist/public/ && cp -R assets/* dist/public/ && npm run generate-events",
+    "build": "tsc && webpack --config ./webpack/development.js",
     "rebuild": "npm run clean && npm run build",
     "watch": "npm run prebuild && webpack --config ./webpack/development.js --watch",
     "postinstall": "npm run build",
@@ -52,8 +53,8 @@
     "@types/jest": "^25.1.4",
     "@types/lodash": "^4.14.149",
     "@types/node": "^13.9.1",
-    "@types/socket.io": "^2.1.4",
-    "@types/socket.io-client": "^1.4.32",
+    "@types/uuid": "^7.0.2",
+    "@types/ws": "^7.2.2",
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
     "clean-webpack-plugin": "^3.0.0",
@@ -64,6 +65,7 @@
     "jest": "^25.1.0",
     "jest-junit": "^10.0.0",
     "lint-staged": "^10.0.8",
+    "mock-socket": "^9.0.3",
     "ts-loader": "^6.2.1",
     "typescript": "^3.8.3",
     "webpack": "^4.42.0",
@@ -74,8 +76,13 @@
   "dependencies": {
     "express": "^4.17.1",
     "lodash": "^4.17.15",
-    "socket.io": "^2.3.0",
-    "socket.io-client": "^2.3.0",
-    "winston": "^3.2.1"
+    "protobufjs": "^6.8.9",
+    "uuid": "^7.0.2",
+    "winston": "^3.2.1",
+    "ws": "^7.2.3"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.1",
+    "utf-8-validate": "^5.0.2"
   }
 }
