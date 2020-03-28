@@ -14,8 +14,6 @@ interface AddressInfo {
 class SocketClient {
   private id: string;
 
-  private clientAckTimeout: NodeJS.Timeout;
-  private clientAckConsumer: Consumer;
   private publishToClientConsumer: Consumer;
 
   constructor(
@@ -26,19 +24,24 @@ class SocketClient {
     this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
 
     // If the client hasn't identified themselves in short order, close their connection.
-    this.clientAckTimeout = setTimeout(() => {
-      logger.error('Client did not ACK in time - disconnecting: %j', this.addressInfo);
-      socket.close();
-    }, 2000);
-
-    this.clientAckConsumer = (message: events.IEvent) => {
+    MessageBus.await(Topics.ServerNetworkFromClient, 2000, (message: any) => {
       // Our internal listener only cares about this event.
       if (message.type === events.TypeEnum.ClientConnect) {
         // Handle the event and unsubscribe. We shouldn't see this again.
-        this.onConnect(message);
-        MessageBus.unsubscribe(Topics.ServerNetworkFromClient, this.clientAckConsumer);
+        this.id = message.id;
+        logger.info('Socket ClientConnect - this client is now %o', this.id);
+
+        MessageBus.publish(Topics.ServerNetworkToClient, <events.IClientAck>{
+          type: events.TypeEnum.ClientAck,
+          id: this.id,
+        });
+        return message;
       }
-    };
+      return null;
+    }).catch((err) => {
+      logger.error('Client did not ACK in time - disconnecting: %j, %j', this.addressInfo, err);
+      socket.close();
+    });
 
     this.publishToClientConsumer = (message: events.IEvent) => {
       this.socket.send(encoder(message));
@@ -46,28 +49,15 @@ class SocketClient {
   }
 
   subscribe() {
-    MessageBus.subscribe(Topics.ServerNetworkFromClient, this.clientAckConsumer);
     MessageBus.subscribe(Topics.ServerNetworkToClient, this.publishToClientConsumer);
 
     return this; // shut up linter
   }
 
   unsubscribe() {
-    MessageBus.unsubscribe(Topics.ServerNetworkFromClient, this.clientAckConsumer);
     MessageBus.unsubscribe(Topics.ServerNetworkToClient, this.publishToClientConsumer);
 
     return this; // shut up linter
-  }
-
-  onConnect(event: events.IClientConnect) {
-    this.id = event.id;
-    logger.info('Socket ClientConnect - this client is now %o', this.id);
-    clearTimeout(this.clientAckTimeout);
-
-    MessageBus.publish(Topics.ServerNetworkToClient, <events.IClientAck>{
-      type: events.TypeEnum.ClientAck,
-      id: this.id,
-    });
   }
 
   onMessage(data: Buffer) {

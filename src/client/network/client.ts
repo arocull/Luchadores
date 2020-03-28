@@ -9,9 +9,7 @@ const UNOPENED = -1;
 class NetworkClient {
   private ws: WebSocket;
   private id: string;
-  private clientAckTimeout: NodeJS.Timeout;
 
-  private clientAckConsumer: Consumer;
   private publishToServerConsumer: Consumer;
 
   constructor(private url: string) {
@@ -19,11 +17,6 @@ class NetworkClient {
 
     // The consumer reads any messages on NetworkOutbound topic
     // and sends them back out of the WebSocket.
-    this.clientAckConsumer = (message: events.IEvent) => {
-      if (message.type === events.TypeEnum.ClientAck) {
-        this.onClientAck(message);
-      }
-    };
     this.publishToServerConsumer = (message: Uint8Array) => this.send(message);
   }
 
@@ -93,11 +86,21 @@ class NetworkClient {
     MessageBus.subscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
 
     // Add a timeout for if this event doesn't get ack'd
-    this.clientAckTimeout = setTimeout(() => {
-      console.error('ClientAck not received in time - terminating connection');
+    MessageBus.await(Topics.ClientNetworkFromServer, 2000, (message: any) => {
+      if (message.type === events.TypeEnum.ClientAck) {
+        if (message.id !== this.id) {
+          this.close();
+          console.error('Client ID mismatch! Disconnecting.');
+        }
+
+        console.log('ClientAck and ID match - away we go!');
+        return message;
+      }
+      return null;
+    }).catch((err) => {
       this.close();
-    }, 2000);
-    MessageBus.subscribe(Topics.ClientNetworkFromServer, this.clientAckConsumer);
+      console.error('Client never ACK\'d. Disconnecting.', err);
+    });
 
     // Publish an event to the server that we have connected
     MessageBus.publish(Topics.ClientNetworkToServer, encoder({
@@ -119,18 +122,6 @@ class NetworkClient {
     }
   }
 
-  private onClientAck(ack: events.IClientAck) {
-    if (ack.id !== this.id) {
-      this.close();
-      throw new Error('Client ID mismatch! Disconnecting.');
-    }
-
-    console.log('ClientAck and ID match - away we go!');
-    clearTimeout(this.clientAckTimeout);
-    MessageBus.unsubscribe(Topics.ClientNetworkFromServer, this.clientAckConsumer);
-    return this; // shut up linter
-  }
-
   private onMessage(msgEvent: MessageEvent) {
     const data = new Uint8Array(msgEvent.data as ArrayBuffer);
 
@@ -148,11 +139,7 @@ class NetworkClient {
   private onClose(closeEvent: CloseEvent) {
     console.log('Closing web socket', closeEvent);
 
-    // Clear any pending timers
-    clearTimeout(this.clientAckTimeout);
-
     // Unsubscribe event handlers
-    MessageBus.unsubscribe(Topics.ClientNetworkFromServer, this.clientAckConsumer);
     MessageBus.unsubscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
 
     // Publish an event to the inbound listeners that we have disconnected
