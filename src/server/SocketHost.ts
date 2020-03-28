@@ -14,7 +14,7 @@ class SocketHost {
   constructor(server: http.Server) {
     this.clients = [];
     this.ws = new WebSocket.Server({ server, path: '/socket' });
-    this.ws.on('connection', (socket, req) => this.onConnection(socket, req));
+    this.ws.on('connection', (socket, req) => this.onConnection(socket as any, req));
   }
 
   onConnection(socket: WebSocket, req: http.IncomingMessage) {
