@@ -20,6 +20,10 @@ function getProtobufType(object: IKind): ProtobufTypeSerde {
       return events.LobbyRequest;
     case TypeEnum.LobbyResponse:
       return events.LobbyResponse;
+    case TypeEnum.PlayerConnect:
+      return events.PlayerConnect;
+    case TypeEnum.PlayerJoined:
+      return events.PlayerJoined;
     default:
       // TODO: Figure out how to make this an exhaustive switch
       // and produce a compile error if not all cases are covered.
