@@ -7,6 +7,10 @@ export interface Consumer {
   (message: any): void;
 }
 
+export interface HandledConsumer<T> {
+  (message: any): T;
+}
+
 /**
  * A list of common topics to use.
  * However, any other topic name can be used on-demand.
@@ -25,7 +29,9 @@ export const Topics = {
 */
 interface IMessageBus {
   subscribe(topic: string, consumer: Consumer): void;
+  await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T>;
   unsubscribe(topic: string, consumer: Consumer): void;
+  subscribers(topic: string): Consumer[];
   clearSubscribers(): void;
   publish(topic: string, message: any): void;
 }
@@ -38,8 +44,31 @@ class MessageBusImpl extends EventEmitter implements IMessageBus {
     this.on(topic, consumer);
   }
 
+  await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T> {
+    return new Promise((resolve, reject) => {
+      let wrappedConsumer: Consumer;
+      const timeout = setTimeout(() => {
+        this.off(topic, wrappedConsumer);
+        reject(new Error(`Expected message did not arrive in ${timeoutMs}ms on topic ${topic}`));
+      }, timeoutMs);
+
+      wrappedConsumer = (message: any) => {
+        if (consumer(message) != null) {
+          clearTimeout(timeout);
+          this.off(topic, wrappedConsumer);
+          resolve(message);
+        }
+      };
+      this.on(topic, wrappedConsumer);
+    });
+  }
+
   unsubscribe(topic: string, consumer: Consumer) {
     this.off(topic, consumer);
+  }
+
+  subscribers(topic: string): Consumer[] {
+    return this.listeners(topic) as Consumer[];
   }
 
   clearSubscribers() {
