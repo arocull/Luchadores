@@ -1,7 +1,7 @@
 import Denque from 'denque';
 
 class Connection {
-  public pingHistory: Denque<number>;
+  private pingHistory: Denque<number>;
   private pingHistoryCapacity: number = 30; // 30 is the rule of thumb for samples (Law of Large Numbers).
 
   constructor(public connectionId: string, public username: string) {
@@ -17,12 +17,16 @@ class Connection {
   }
 
   // Prevent spikes by taking a statistical approach.
-  get ping() {
+  getPing() {
     if (this.pingHistory.length > 0) {
       const pingValues = this.pingHistory.toArray();
       return pingValues.reduce((accumulator, current) => accumulator + current) / pingValues.length;
     }
     return undefined;
+  }
+
+  getPingHistory() {
+    return this.pingHistory;
   }
 }
 

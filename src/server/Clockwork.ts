@@ -1,4 +1,3 @@
-import { EventEmitter } from 'events';
 import _ from 'lodash';
 import Denque from 'denque';
 import { Moment } from 'moment';
@@ -23,9 +22,9 @@ interface World {
   apply: Function
 }
 
-class Clockwork extends EventEmitter {
-  public connections: Array<Connection> = [];
-  public world: World;
+class Clockwork {
+  private connections: Array<Connection> = [];
+  private world: World;
   private running: boolean = false;
   private actions: Denque<Action>;
   private loop: NodeJS.Timeout;
@@ -36,7 +35,7 @@ class Clockwork extends EventEmitter {
     if (this.running) {
       const pings: number[] = [];
       _.each(this.connections, (conn) => {
-        pings.push(conn.ping);
+        pings.push(conn.getPing());
       });
 
       // Worst of *average* pings! This way we even the playing field so the
