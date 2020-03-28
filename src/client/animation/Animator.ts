@@ -22,6 +22,8 @@ class Animator {
     this.SpriteSheet = new Image();
     this.SpriteSheet.src = `Sprites/${owner.Class}.png`;
 
+    if (owner.Class === 'Deer') this.SpriteSheet = null;
+
     this.FrameWidth = 512;
     this.FrameHeight = 512;
     this.Upscale = 1.3;
