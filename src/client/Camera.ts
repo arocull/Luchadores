@@ -1,5 +1,6 @@
 import Vector from '../common/engine/Vector';
 import Fighter from '../common/engine/Fighter';
+import RenderSettings from './RenderSettings';
 
 class Camera {
   private Focus: Fighter;
@@ -16,6 +17,7 @@ class Camera {
     public Height: number,
     public MaxDrawWidth: number,
     public MaxDrawHeight: number,
+    public Settings: RenderSettings,
   ) {
     this.Focus = null;
     this.FocusPosition = new Vector(0, 0, 0);
@@ -41,13 +43,13 @@ class Camera {
     if (this.Focus) {
       this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y, 0);
 
-      if (this.Shake > 0) {
+      if (this.Shake > 0 && this.Settings.EnableCameraShake) {
         this.Shake -= DeltaTime * 10;
         if (this.Shake < 0) this.Shake = 0;
 
         const shake = (new Vector(Math.random() - 0.5, Math.random() - 0.5, 0)).clamp(1, 1);
         this.FocusPosition = Vector.Add(this.FocusPosition, Vector.Multiply(shake, (Math.random() * this.Shake) / 100));
-      }
+      } else if (!this.Settings.EnableCameraShake) this.Shake = 0;
     }
 
     // Use constant aspect ratio
