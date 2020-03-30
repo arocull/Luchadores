@@ -129,7 +129,7 @@ function DoFrame(tick: number) {
   player.Click(Input.MouseDirection);
   player.Firing = Input.MouseDown;
 
-  world.DoUpdates(DeltaTime);
+  world.doUpdates(DeltaTime);
 
   // Tick physics
   world.TickPhysics(DeltaTime);
@@ -193,6 +193,7 @@ function DoFrame(tick: number) {
   return window.requestAnimationFrame(DoFrame);
 }
 
+/* eslint-disable no-console */
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
@@ -205,3 +206,4 @@ function DoFrame(tick: number) {
     .catch((err) => console.error('Failed to connect!', err))
     .finally(() => console.log('... and finally!'));
 }());
+/* eslint-enable no-console */

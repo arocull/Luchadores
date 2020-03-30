@@ -8,7 +8,7 @@ class Deer extends Fighter {
     super(100, 100, 2000, 0.5, 1, 14, 30, 'Deer', id, position);
   }
 
-  public FireBullet(): Projectile {
+  public fireBullet(): Projectile {
     this.BulletShock += 1.2;
     this.BulletCooldown += 0.125;
 

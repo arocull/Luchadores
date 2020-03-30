@@ -67,17 +67,28 @@ class Fighter extends Entity {
     this.JustHitMomentum = momentum;
   }
   /* eslint-disable class-methods-use-this */
-  public FireBullet(): any {
+  public fireBullet(): any {
     return null;
   }
   /* eslint-enable class-methods-use-this */
-  public TryBullet(): any {
-    if (this.Firing && this.BulletCooldown <= 0) {
-      const bullet = this.FireBullet();
-      if (bullet) return bullet;
+  public tryBullet(): any[] {
+    const bullets: any[] = [];
+
+    // Fire a bullet--if time had passed to the point where multiple bullets could have been fired, fire all of them and tick them accordingly
+    for (let i = 0; i < 10 && this.BulletCooldown <= 0; i++) {
+      const t = Math.abs(this.BulletCooldown);
+
+      if (this.Firing && this.BulletCooldown <= 0) {
+        const b = this.fireBullet();
+
+        if (b === null) return bullets;
+
+        if (t > 0) b.Tick(t);
+        bullets.push(b);
+      }
     }
 
-    return null;
+    return bullets;
   }
 
 
@@ -95,13 +106,13 @@ class Fighter extends Entity {
   public Click(direction: Vector) {
     this.AimDirection = direction;
   }
-  public TickCooldowns(DeltaTime: number) {
+  public tickCooldowns(DeltaTime: number) {
     this.JustLanded = false;
     this.JustHitMomentum = 0;
     this.BulletShock = 0;
-    this.BulletCooldown -= DeltaTime;
 
-    if (this.BulletCooldown < 0) this.BulletCooldown = 0;
+    if (this.BulletCooldown <= 0) this.BulletCooldown = 0;
+    else this.BulletCooldown -= DeltaTime;
   }
 
 

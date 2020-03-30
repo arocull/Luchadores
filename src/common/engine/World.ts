@@ -35,29 +35,34 @@ class World {
 
   /* eslint-disable class-methods-use-this, no-param-reassign */
   // Apply player inputs to player's character
-  public ApplyAction(player: Player, action: IPlayerInputState) {
-    player.Character.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0));
+  public applyAction(player: Player, action: IPlayerInputState) {
+    const char = player.getCharacter();
+    char.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0));
 
-    player.Character.Click(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.mouseDirection.y, action.mouseDirection.z));
-    player.Character.Firing = action.mouseDown;
+    char.Click(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.mouseDirection.y, action.mouseDirection.z));
+    char.Firing = action.mouseDown;
 
-    if (action.jump === true) player.Character.Jump();
+    if (action.jump === true) char.Jump();
   }
   /* eslint-enable class-methods-use-this, no-param-reassign */
 
-  public DoUpdates(DeltaTime: number) {
+  public doUpdates(DeltaTime: number) {
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
 
       // Tick cooldowns
-      a.TickCooldowns(DeltaTime);
+      a.tickCooldowns(DeltaTime);
 
 
       // Fire bullets
-      const bullet = a.TryBullet();
-      if (bullet) {
-        // Should we put a BULLET FIRED event here? <------------ una pregunta
-        this.Bullets.push(bullet);
+      if (a.Firing) {
+        const projs = a.tryBullet();
+        if (projs && projs.length > 0) {
+          for (let j = 0; j < projs.length; j++) {
+            // Should we put a BULLET FIRED event here (include bullet age)?
+            this.Bullets.push(projs[j]);
+          }
+        }
       }
     }
   }
