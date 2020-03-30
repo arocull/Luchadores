@@ -92,13 +92,17 @@ class Renderer {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);
 
+        let upscaleoffset = 0;
+        if (a.Animator) upscaleoffset = Math.max(0, a.Animator.Upscale - 1);
+
         // First, draw shadow
         canvas.fillStyle = '#000000';
         canvas.globalAlpha = 0.5;
         canvas.fillRect(
           (-pos.x - a.Radius * 1.1) * zoom + offsetX,
-          (pos.y + a.Height / 1.5) * zoom + offsetY,
-          2 * a.Radius * 1.1 * zoom, (a.Height * zoom) / 2,
+          (pos.y + (pos.z / 2) + upscaleoffset) * zoom + offsetY,
+          2 * a.Radius * 1.1 * zoom,
+          -(a.Height / 2) * zoom,
         );
         canvas.globalAlpha = 1;
 
@@ -114,10 +118,10 @@ class Renderer {
             b.FrameHeight * row,
             b.FrameWidth,
             b.FrameHeight,
-            (-pos.x - a.Radius * b.Upscale) * zoom + offsetX,
-            (pos.y + pos.z - (a.Height * (b.Upscale - 1))) * zoom + offsetY,
-            2 * a.Radius * b.Upscale * zoom,
-            a.Height * b.Upscale * zoom,
+            (-pos.x - (a.Height / 2) * b.Upscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
+            (pos.y + pos.z + (a.Height * (b.Upscale - 1))) * zoom + offsetY,
+            a.Height * b.Upscale * zoom, // 2 * Radius originally used in place of a.Height
+            -a.Height * b.Upscale * zoom,
           );
           canvas.resetTransform();
         } else { // Otherwise, draw a box
