@@ -1,7 +1,8 @@
 import Vector from './Vector';
+import { EntityType } from './Enums';
 
 class Entity {
-  constructor(public Type: string, public Position: Vector, public Velocity: Vector, public Acceleration: Vector) {
+  constructor(public type: EntityType, public Position: Vector, public Velocity: Vector, public Acceleration: Vector) {
 
   }
 }

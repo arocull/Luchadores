@@ -1,6 +1,7 @@
 import Vector from '../Vector';
 import Entity from '../Entity';
 import Fighter from '../Fighter';
+import { EntityType, ProjectileType } from '../Enums';
 
 class Projectile extends Entity {
   protected Lifetime: number;
@@ -15,14 +16,14 @@ class Projectile extends Entity {
   public DeltaPosition: Vector;
 
   constructor(
-    public ProjectileType: string,
+    public projectileType: ProjectileType,
     public Owner: Fighter,
     public Damage: number,
     protected MaxLifetime: number,
     position: Vector,
     velocity: Vector,
   ) {
-    super('Projectile', position, velocity, new Vector(0, 0, 0));
+    super(EntityType.Projectile, position, velocity, new Vector(0, 0, 0));
 
     this.Lifetime = 0;
     this.finished = false;

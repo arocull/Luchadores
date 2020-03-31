@@ -1,11 +1,12 @@
 import Vector from '../../common/engine/Vector';
 import Particle from './Particle';
+import { ParticleType } from '../../common/engine/Enums';
 
 class PLightning extends Particle {
   public Segments: Vector[];
 
   constructor(public SegmentLength: number, beginning: Vector, end: Vector) {
-    super('Lightning', 0.2, '#88bbff', beginning, end);
+    super(ParticleType.Lightning, 0.2, '#88bbff', beginning, end);
 
     let pos = beginning;
     this.Segments = [];

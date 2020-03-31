@@ -1,4 +1,5 @@
 import Fighter from '../../common/engine/Fighter';
+import { FighterType } from '../../common/engine/Enums';
 
 class Animator {
   public SpriteSheet: HTMLImageElement;
@@ -20,19 +21,27 @@ class Animator {
 
   constructor(protected owner: Fighter) {
     this.SpriteSheet = new Image();
-    this.SpriteSheet.src = `Sprites/${owner.Class}.png`;
 
-    if (owner.Class === 'Deer') this.SpriteSheet = null;
-
-    if (owner.Class === 'Flamingo') {
-      this.FrameWidth = 1024;
-      this.FrameHeight = 1024;
-      this.Upscale = 1;
-    } else {
-      this.FrameWidth = 512;
-      this.FrameHeight = 512;
-      this.Upscale = 1.3;
+    switch (owner.character) {
+      case FighterType.Sheep:
+        this.SpriteSheet.src = 'Sprites/Sheep.png';
+        this.FrameWidth = 512;
+        this.FrameHeight = 512;
+        this.Upscale = 1.3;
+        break;
+      case FighterType.Flamingo:
+        this.SpriteSheet.src = 'Sprites/Flamingo.png';
+        this.FrameWidth = 1024;
+        this.FrameHeight = 1024;
+        this.Upscale = 1;
+        break;
+      default:
+        this.SpriteSheet = null;
+        this.FrameWidth = 512;
+        this.FrameHeight = 512;
+        this.Upscale = 1;
     }
+
     this.frame = 0;
     this.row = 0;
 
@@ -53,7 +62,7 @@ class Animator {
       this.timer = 0;
       this.timeToUniqueIdle = Math.random() * 13;
 
-      if (this.owner.Class === 'Flamingo') this.uniqueIdleFrame = 8;
+      if (this.owner.character === FighterType.Flamingo) this.uniqueIdleFrame = 8;
       else this.uniqueIdleFrame = Math.floor(Math.random() * 0.6 + 0.5) + 2;
     }
   }
@@ -71,7 +80,7 @@ class Animator {
     if (state === 2 && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
     else this.timer += DeltaTime;
 
-    if (this.owner.Class === 'Flamingo') { // Currently flamingo has it's own animation states as it's spritesheet is a new format
+    if (this.owner.character === FighterType.Flamingo) { // Currently flamingo has it's own animation states as it's spritesheet is a new format
       switch (state) {
         case 1: // Falling animation
           this.frame = 6;

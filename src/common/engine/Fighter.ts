@@ -1,6 +1,7 @@
 // Includes Vector.js
 import Vector from './Vector';
 import Entity from './Entity';
+import { EntityType, FighterType } from './Enums';
 
 // A standard fighter with basic properties shared by all characters
 class Fighter extends Entity {
@@ -30,11 +31,11 @@ class Fighter extends Entity {
     public Height: number, // Collision and draw height
     private JumpVelocity: number, // The velocity or power this character jumps with
     private MoveAcceleration: number, // Maximum acceleration one can reach from standard inputs
-    public Class: string, // What class this fighter is so we can differentiate between characters
+    public character: FighterType, // What class this fighter is so we can differentiate between characters
     public ID: number, // Player/entity ID of this fighter so we can tell who's who
     position: Vector,
   ) {
-    super('Fighter', position, new Vector(0, 0, 0), new Vector(0, 0, 0));
+    super(EntityType.Fighter, position, new Vector(0, 0, 0), new Vector(0, 0, 0));
 
     this.MaxHP = HP;
 

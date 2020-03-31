@@ -1,8 +1,9 @@
 // Client only -- Renders stuff to the screen
 import Vector from '../common/engine/Vector';
+import { EntityType, ParticleType, ProjectileType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import Fighter from '../common/engine/Fighter';
-// import Animator from './animation/Animator';
+import Animator from './animation/Animator';
 import Projectile from '../common/engine/projectiles/Projectile';
 import Particle from './particles/Particle';
 import PLightning from './particles/Lightning';
@@ -93,7 +94,7 @@ class Renderer {
 
     // Draw in fighters
     for (let i = 0; i < toDraw.length; i++) {
-      if (toDraw[i].Type === 'Fighter') {
+      if (toDraw[i].type === EntityType.Fighter) {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);
 
@@ -112,7 +113,7 @@ class Renderer {
         canvas.globalAlpha = 1;
 
         if (a.Animator && a.Animator.SpriteSheet) { // If we can find an animator for this fighter, use it
-          const b = a.Animator;
+          const b: Animator = a.Animator;
 
           let row = b.row * 2;
           if (a.Flipped) row++;
@@ -138,13 +139,13 @@ class Renderer {
             a.Height * zoom,
           );
         }
-      } else if (toDraw[i].Type === 'Projectile') {
+      } else if (toDraw[i].type === EntityType.Projectile) {
         const a = <Projectile>toDraw[i];
 
         const pos1 = camera.PositionOffset(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)));
         const pos2 = camera.PositionOffset(a.Position);
 
-        if (a.ProjectileType === 'Fire') { // Fire, despite being a bullet, needs to look cool, so generate its looks here on the client
+        if (a.projectileType === ProjectileType.Fire) { // Fire, despite being a bullet, needs to look cool, so generate its looks here on the client
           const perc = Math.min(a.getLifePercentage(), 1);
           canvas.globalAlpha = Math.sin(Math.PI * perc);
           canvas.strokeStyle = Particle.RGBToHex(255, 250 * perc, 30 * perc);
@@ -159,7 +160,7 @@ class Renderer {
         canvas.moveTo(pos1.x, pos1.y);
         canvas.lineTo(pos2.x, pos2.y);
         canvas.stroke();
-      } else if (toDraw[i].Type === 'Particle') {
+      } else if (toDraw[i].type === EntityType.Particle) {
         const a = <Particle>toDraw[i];
         canvas.strokeStyle = a.RenderStyle;
         canvas.globalAlpha = a.Alpha;
@@ -170,7 +171,7 @@ class Renderer {
 
         canvas.beginPath();
         canvas.moveTo(pos1.x, pos1.y);
-        if (a.ParticleType === 'Lightning') { // If it is lightning, draw all segments in center of path
+        if (a.particleType === ParticleType.Lightning) { // If it is lightning, draw all segments in center of path
           const l = <PLightning>(a);
           for (let j = 0; j < l.Segments.length; j++) {
             const seg = camera.PositionOffset(l.Segments[j]);

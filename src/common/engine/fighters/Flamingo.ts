@@ -1,5 +1,6 @@
 import Vector from '../Vector';
 import Fighter from '../Fighter';
+import { FighterType } from '../Enums';
 import Random from '../Random';
 import Fire from '../projectiles/Fire';
 
@@ -10,7 +11,7 @@ class Flamingo extends Fighter {
   private breathing: boolean;
 
   constructor(id: number, position: Vector) {
-    super(100, 120, 2200, 0.5, 2, 20, 30, 'Flamingo', id, position);
+    super(100, 120, 2200, 0.5, 2, 20, 30, FighterType.Flamingo, id, position);
 
     // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;

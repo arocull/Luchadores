@@ -1,5 +1,6 @@
 import Vector from '../../common/engine/Vector';
 import Particle from './Particle';
+import { ParticleType } from '../../common/engine/Enums';
 
 class PSmashEffect extends Particle {
   constructor(position: Vector, intensity: number) {
@@ -8,7 +9,7 @@ class PSmashEffect extends Particle {
     start.y -= 0.5;
     const end = Vector.Add(start, Vector.Multiply(outwardDir, intensity));
 
-    super('SmashEffect', 0.2, '#feee55', start, end);
+    super(ParticleType.SmashEffect, 0.2, '#feee55', start, end);
 
     this.UsePhysics = true;
     this.Velocity = outwardDir;
