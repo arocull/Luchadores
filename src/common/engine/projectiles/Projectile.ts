@@ -62,16 +62,6 @@ class Projectile extends Entity {
   public getLifePercentage() {
     return this.Lifetime / this.MaxLifetime;
   }
-
-  // Create a string containing only necessary information about this projectile for use for sending to clients
-  public ToPacket():string {
-    let str = `{id:${this.Owner.ID},t:${this.Type},d:${this.Damage},`;
-    str += `p:[${this.Position.x},${this.Position.y},${this.Position.z}],`;
-    str += `v:[${this.Velocity.x},${this.Velocity.y},${this.Velocity.z}],`;
-    str += `a:[${this.Acceleration.x},${this.Acceleration.y},${this.Acceleration.z}]}`;
-
-    return str;
-  }
 }
 
 export { Projectile as default };

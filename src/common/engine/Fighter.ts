@@ -117,17 +117,6 @@ class Fighter extends Entity {
     if (this.BulletCooldown <= 0) this.BulletCooldown = 0;
     else this.BulletCooldown -= DeltaTime;
   }
-
-
-  // Create a string containing only necessary information about this fighter for use for sending to clients
-  public ToPacket():string {
-    let str = `{id:${this.ID},c:${this.Class},`;
-    str += `p:[${this.Position.x},${this.Position.y},${this.Position.z}],`;
-    str += `v:[${this.Velocity.x},${this.Velocity.y},${this.Velocity.z}],`;
-    str += `a:[${this.Acceleration.x},${this.Acceleration.y},${this.Acceleration.z}]}`;
-
-    return str;
-  }
 }
 
 export { Fighter as default };

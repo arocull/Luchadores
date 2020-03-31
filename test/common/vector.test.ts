@@ -29,3 +29,21 @@ test('vector arithematic test', () => {
 
   expect(Vector.Lerp(vect2, vect3, 0.5).z).toBe(0.5);
 });
+
+test('vector unit-length zero test', () => {
+  const vect1 = Vector.UnitVector(new Vector(0, 0, 0));
+  const vect2 = Vector.UnitVectorXY(new Vector(0, 0, 0));
+  const vect3 = Vector.UnitVectorFromXYZ(0, 0, 0);
+
+  expect(vect1.x).toBe(0);
+  expect(vect1.y).toBe(0);
+  expect(vect1.z).toBe(0);
+
+  expect(vect2.x).toBe(0);
+  expect(vect2.y).toBe(0);
+  expect(vect2.z).toBe(0);
+
+  expect(vect3.x).toBe(0);
+  expect(vect3.y).toBe(0);
+  expect(vect3.z).toBe(0);
+});
