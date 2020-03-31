@@ -4,7 +4,7 @@ import Fighter from '../Fighter';
 
 class Projectile extends Entity {
   protected Lifetime: number;
-  public Finished: boolean;
+  public finished: boolean;
 
   public RenderStyle: string;
   public Width: number;
@@ -25,7 +25,7 @@ class Projectile extends Entity {
     super('Projectile', position, velocity, new Vector(0, 0, 0));
 
     this.Lifetime = 0;
-    this.Finished = false;
+    this.finished = false;
 
     this.RenderStyle = '#feef22';
     this.Width = 0.1;
@@ -39,7 +39,7 @@ class Projectile extends Entity {
     this.Lifetime += DeltaTime;
 
     if (this.Lifetime > this.MaxLifetime) {
-      this.Finished = true;
+      this.finished = true;
       return;
     }
 
@@ -53,10 +53,11 @@ class Projectile extends Entity {
     if (this.Position.z <= 0) this.Velocity.z *= -this.BounceReturn;
   }
 
+  // Called when projectile hits a fighter--it does damage and then marks projectile to be destroyed
   Hit(hit: Fighter) {
     if (this.Owner && hit.ID === this.Owner.ID) return;
     hit.TakeDamage(this.Damage, this.Owner);
-    this.Finished = true;
+    this.finished = true;
   }
 
   public getLifePercentage() {

@@ -24,13 +24,14 @@ class Animator {
 
     if (owner.Class === 'Deer') this.SpriteSheet = null;
 
-    this.FrameWidth = 512;
-    this.FrameHeight = 512;
-    this.Upscale = 1.3;
     if (owner.Class === 'Flamingo') {
       this.FrameWidth = 1024;
       this.FrameHeight = 1024;
       this.Upscale = 1;
+    } else {
+      this.FrameWidth = 512;
+      this.FrameHeight = 512;
+      this.Upscale = 1.3;
     }
     this.frame = 0;
     this.row = 0;
@@ -44,6 +45,8 @@ class Animator {
     this.killEffectCountdown = -1;
   }
 
+
+  // Unique idle animation, different for every character with different effects hence its own seperate function
   protected UniqueIdle() {
     this.frame = this.uniqueIdleFrame;
     if (this.timer >= this.timeToUniqueIdle + this.uniqueIdleLength) {
@@ -57,21 +60,24 @@ class Animator {
 
   public Tick(DeltaTime: number) {
     let state = 0;
+
+    // If they are moving, set the state to that, otherwise if they are in the air, display falling animation
     if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = 2;
     else if (this.owner.Position.z > 0.05) state = 1;
 
-    if (state !== this.lastState) this.timer = 0;
+    if (state !== this.lastState) this.timer = 0; // Reset animation timer if state has changed
 
+    // If they are moving and on the ground, timer should increase at a rate proportional to their speed
     if (state === 2 && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
     else this.timer += DeltaTime;
 
-    if (this.owner.Class === 'Flamingo') {
+    if (this.owner.Class === 'Flamingo') { // Currently flamingo has it's own animation states as it's spritesheet is a new format
       switch (state) {
-        case 1:
+        case 1: // Falling animation
           this.frame = 6;
           this.row = 1;
           break;
-        case 2:
+        case 2: // Move animation
           this.frame = Math.floor(this.timer * 10) % 10;
           this.row = 1;
           break;
@@ -83,11 +89,11 @@ class Animator {
       }
     } else {
       switch (state) {
-        case 1:
+        case 1: // Falling animation
           this.frame = 2;
           this.row = 0;
           break;
-        case 2:
+        case 2: // Move animation
           this.frame = Math.floor(this.timer * 4) % 4;
           this.row = 1;
           break;

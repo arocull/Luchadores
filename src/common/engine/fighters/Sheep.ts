@@ -5,6 +5,7 @@ import Fighter from '../Fighter';
 class Sheep extends Fighter {
   constructor(id: number, position: Vector) {
     super(200, 200, 8000, 0.5, 1, 8, 20, 'Sheep', id, position);
+    this.ranged = false;
   }
 
   public CollideWithFighter(hit: Fighter, momentum: number) {

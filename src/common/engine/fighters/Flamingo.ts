@@ -1,16 +1,18 @@
 import Vector from '../Vector';
 import Fighter from '../Fighter';
+import Random from '../Random';
 import Fire from '../projectiles/Fire';
 
-// Flamenacre - Flamenco + Acre (Flamingo + Spicy) - A tall, quicker character who breathes fire and is a general spaz
+// Flamenacre - Flamenco + Acre (Flamingo + Spicy) - A taller character who breathes fire and is a general spaz
 class Flamingo extends Fighter {
   private breath: number;
   private maxBreath: number;
   private breathing: boolean;
 
   constructor(id: number, position: Vector) {
-    super(100, 120, 2500, 0.5, 2, 20, 30, 'Flamingo', id, position);
+    super(100, 120, 2200, 0.5, 2, 20, 30, 'Flamingo', id, position);
 
+    // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;
     this.breath = 50;
   }
@@ -23,18 +25,26 @@ class Flamingo extends Fighter {
     this.BulletCooldown += 0.05;
     this.breath -= 1;
 
+    // If flamingo runs out of breath, halt all fire-breathing
     if (this.breath < 1) this.breathing = true;
 
+    // Get position to fire from
     const pos = Vector.Clone(this.Position);
     pos.z += this.Height * 0.75;
     if (this.Flipped === true) pos.x -= this.Radius;
     else pos.x += this.Radius;
 
+    // Recoil and sprite-flipping
     this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(this.AimDirection, 0.2));
     if (this.AimDirection.x < 0) this.Flipped = true;
     else if (this.AimDirection.x > 0) this.Flipped = false;
 
-    const dir = Vector.UnitVectorFromXYZ(this.AimDirection.x + (Math.random() - 0.5) / 3, this.AimDirection.y + (Math.random() - 0.5) / 3, 0);
+    // Get randomized direction
+    const dir = Vector.UnitVectorFromXYZ(
+      this.AimDirection.x + (Random.getFloat() - 0.5) / 3,
+      this.AimDirection.y + (Random.getFloat() - 0.5) / 3,
+      0,
+    );
     dir.z = -1;
 
     return new Fire(pos, dir, this);
@@ -45,7 +55,7 @@ class Flamingo extends Fighter {
 
     this.breath += DelaTime * 8;
     if (this.breath > this.maxBreath) this.breath = this.maxBreath;
-    if (this.breath > this.maxBreath / 2) this.breathing = false;
+    if (this.breath > this.maxBreath / 2) this.breathing = false; // If breath has reached at least half capacity, allow fire-breathing again
   }
 }
 

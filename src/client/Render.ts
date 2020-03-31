@@ -144,12 +144,12 @@ class Renderer {
         const pos1 = camera.PositionOffset(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)));
         const pos2 = camera.PositionOffset(a.Position);
 
-        if (a.ProjectileType === 'Fire') {
+        if (a.ProjectileType === 'Fire') { // Fire, despite being a bullet, needs to look cool, so generate its looks here on the client
           const perc = Math.min(a.getLifePercentage(), 1);
           canvas.globalAlpha = Math.sin(Math.PI * perc);
           canvas.strokeStyle = Particle.RGBToHex(255, 250 * perc, 30 * perc);
           canvas.lineWidth = zoom * a.Width * 2 * Math.sin(perc);
-        } else {
+        } else { // Otherwise, follow standard-issue bullet draw rules
           canvas.strokeStyle = a.RenderStyle;
           canvas.globalAlpha = 1;
           canvas.lineWidth = zoom * a.Width;
@@ -170,7 +170,7 @@ class Renderer {
 
         canvas.beginPath();
         canvas.moveTo(pos1.x, pos1.y);
-        if (a.ParticleType === 'Lightning') {
+        if (a.ParticleType === 'Lightning') { // If it is lightning, draw all segments in center of path
           const l = <PLightning>(a);
           for (let j = 0; j < l.Segments.length; j++) {
             const seg = camera.PositionOffset(l.Segments[j]);

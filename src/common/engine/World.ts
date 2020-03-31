@@ -33,19 +33,21 @@ class World {
   }
 
 
-  /* eslint-disable class-methods-use-this, no-param-reassign */
   // Apply player inputs to player's character
+  /* eslint-disable class-methods-use-this, no-param-reassign */
   public applyAction(player: Player, action: IPlayerInputState) {
     const char = player.getCharacter();
-    char.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0));
+    if (!char || char.HP < 0) return; // If the player's character is currently dead or missing, do not apply inputs
 
-    char.Click(Vector.UnitVectorFromXYZ(action.mouseDirection.x, action.mouseDirection.y, 0));
-    char.Firing = action.mouseDown;
-
-    if (action.jump === true) char.Jump();
+    char.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0)); // Apply movement input
+    char.aim(Vector.UnitVectorFromXYZ(action.mouseDirection.x, action.mouseDirection.y, 0)); // Apply new aim
+    char.Firing = action.mouseDown; // Are they trying to fire bullets?
+    if (action.jump === true) char.Jump(); // Jump
   }
   /* eslint-enable class-methods-use-this, no-param-reassign */
 
+
+  // Do various updates that are not realted to physics
   public doUpdates(DeltaTime: number) {
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
@@ -55,7 +57,7 @@ class World {
 
 
       // Fire bullets
-      if (a.Firing) {
+      if (a.Firing && a.isRanged()) {
         const projs = a.tryBullet();
         if (projs && projs.length > 0) {
           for (let j = 0; j < projs.length; j++) {
@@ -68,7 +70,9 @@ class World {
   }
 
 
+  // Tick physics and collisions for fighters and bullets
   public TickPhysics(DeltaTime: number) {
+    // Tick general fighter physics
     for (let i = 0; i < this.Fighters.length; i++) {
       const obj = this.Fighters[i];
       const maxSpeed = obj.MaxMomentum / obj.Mass;
@@ -79,13 +83,12 @@ class World {
       // Gravity
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
-      // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls)
-      // Should it be proportional to distance outward?
-      if (obj.Position.x < 0) accel.x += 100;
-      else if (obj.Position.x > this.Map.Width) accel.x -= 100;
+      // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
+      if (obj.Position.x < 0) accel.x += this.Map.getWallStrength() * Math.abs(obj.Position.x);
+      else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.getWallStrength() * (obj.Position.x - this.Map.Width);
 
-      if (obj.Position.y < 0) accel.y += 100;
-      else if (obj.Position.y > this.Map.Height) accel.y -= 100;
+      if (obj.Position.y < 0) accel.y += this.Map.getWallStrength() * Math.abs(obj.Position.y);
+      else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.getWallStrength() * (obj.Position.y - this.Map.Height);
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
       if (obj.Position.z <= 0) {
@@ -124,11 +127,12 @@ class World {
       }
     }
 
+    // Tick bullets
     for (let i = 0; i < this.Bullets.length; i++) {
-      if (this.Bullets[i].Finished) {
+      if (this.Bullets[i].finished) { // Remove despawning bullets
         this.Bullets.splice(i, 1);
         i--;
-      } else this.Bullets[i].Tick(DeltaTime);
+      } else this.Bullets[i].Tick(DeltaTime); // Otherwise, tick bullet physics
     }
 
     // Compute collisions last after everything has moved (makes it slightly more "fair?")
@@ -155,6 +159,7 @@ class World {
           b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / b.Mass);
           a.Velocity = aVelo;
 
+          // Slight bounceback used to prevent characters from getting stuck in eachother
           const seperate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
           a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -150 / a.Mass));
           b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 150 / b.Mass));

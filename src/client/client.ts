@@ -1,22 +1,20 @@
-// import * as _ from 'lodash';
+/* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
 import Vector from '../common/engine/Vector';
-import Fighter from '../common/engine/Fighter';
-import Sheep from '../common/engine/fighters/Sheep';
-import Flamingo from '../common/engine/fighters/Flamingo';
+import Random from '../common/engine/Random';
+import { Fighter, Sheep, Deer, Flamingo } from '../common/engine/fighters/index';
+import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
 import Animator from './animation/Animator';
-import Particle from './particles/Particle';
-import PConfetti from './particles/Confetti';
-import PRosePetal from './particles/RosePetal';
-import PSmashEffect from './particles/SmashEffect';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import Renderer from './Render';
+/* eslint-enable object-curly-newline */
 
 
 // Generate World
 const world = new World();
+Random.randomSeed();
 
 
 // Get rendering viewport--browser only
@@ -30,11 +28,11 @@ world.Fighters.push(player);
 const particles: Particle[] = [];
 
 const Input = {
-  ListOpen: false,
-  MouseDown: false,
-  MouseDirection: new Vector(0, 0, 0),
-  Jump: false,
-  MoveDirection: new Vector(0, 0, 0),
+  ListOpen: false, // Opens player list GUI on local client--does not need to be networked
+  MouseDown: false, // Is the player holding their mouse down?
+  MouseDirection: new Vector(0, 0, 0), // Where are they aiming?
+  Jump: false, // Are they strying to jump?
+  MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
 };
 
 
@@ -61,6 +59,10 @@ function UpdateFighter(packet: Packet) {
   if (!newFighter) { // If the fighter could not be found, generate a new one
     if (packet.c === 'Sheep') {
       newFighter = new Sheep(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
+    } else if (packet.c === 'Deer') {
+      newFighter = new Deer(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
+    } else if (packet.c === 'Flamingo') {
+      newFighter = new Flamingo(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
     } else {
       throw new Error(`Unknown fighter type: ${packet.c}`);
     }
@@ -113,8 +115,7 @@ document.addEventListener('mouseup', () => {
 });
 document.addEventListener('mousemove', (event) => {
   // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
-  // (only necessary for Flamingo)
-  if (player && player.Class === 'Flamingo') {
+  if (player && player.isRanged()) {
     const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(player.Position), new Vector(event.clientX, event.clientY, 0)));
     dir.x *= -1;
 
@@ -135,7 +136,7 @@ function DoFrame(tick: number) {
   if (Input.Jump) player.Jump();
   Input.MoveDirection.z = 0;
   player.Move(Input.MoveDirection);
-  player.Click(Input.MouseDirection);
+  player.aim(Input.MouseDirection);
   player.Firing = Input.MouseDown;
 
   world.doUpdates(DeltaTime);
