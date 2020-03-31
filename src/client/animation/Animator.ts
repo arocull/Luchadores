@@ -27,6 +27,11 @@ class Animator {
     this.FrameWidth = 512;
     this.FrameHeight = 512;
     this.Upscale = 1.3;
+    if (owner.Class === 'Flamingo') {
+      this.FrameWidth = 1024;
+      this.FrameHeight = 1024;
+      this.Upscale = 1;
+    }
     this.frame = 0;
     this.row = 0;
 
@@ -45,7 +50,8 @@ class Animator {
       this.timer = 0;
       this.timeToUniqueIdle = Math.random() * 13;
 
-      this.uniqueIdleFrame = Math.floor(Math.random() * 0.6 + 0.5) + 2;
+      if (this.owner.Class === 'Flamingo') this.uniqueIdleFrame = 8;
+      else this.uniqueIdleFrame = Math.floor(Math.random() * 0.6 + 0.5) + 2;
     }
   }
 
@@ -59,20 +65,38 @@ class Animator {
     if (state === 2 && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
     else this.timer += DeltaTime;
 
-    switch (state) {
-      case 1:
-        this.frame = 2;
-        this.row = 0;
-        break;
-      case 2:
-        this.frame = Math.floor(this.timer * 4) % 4;
-        this.row = 1;
-        break;
-      default: // Idle animation
-        if (this.timer > this.timeToUniqueIdle) {
-          this.UniqueIdle();
-        } else this.frame = Math.floor(this.timer * 2) % 2;
-        this.row = 0;
+    if (this.owner.Class === 'Flamingo') {
+      switch (state) {
+        case 1:
+          this.frame = 6;
+          this.row = 1;
+          break;
+        case 2:
+          this.frame = Math.floor(this.timer * 10) % 10;
+          this.row = 1;
+          break;
+        default: // Idle animation
+          if (this.timer > this.timeToUniqueIdle) {
+            this.UniqueIdle();
+          } else this.frame = Math.floor(this.timer * 5) % 5;
+          this.row = 0;
+      }
+    } else {
+      switch (state) {
+        case 1:
+          this.frame = 2;
+          this.row = 0;
+          break;
+        case 2:
+          this.frame = Math.floor(this.timer * 4) % 4;
+          this.row = 1;
+          break;
+        default: // Idle animation
+          if (this.timer > this.timeToUniqueIdle) {
+            this.UniqueIdle();
+          } else this.frame = Math.floor(this.timer * 2) % 2;
+          this.row = 0;
+      }
     }
 
     this.lastState = state;

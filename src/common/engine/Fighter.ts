@@ -71,6 +71,9 @@ class Fighter extends Entity {
     return null;
   }
   /* eslint-enable class-methods-use-this */
+  public canFirebullet(): boolean {
+    return (this.Firing && this.BulletCooldown <= 0);
+  }
   public tryBullet(): any[] {
     const bullets: any[] = [];
 
@@ -78,7 +81,7 @@ class Fighter extends Entity {
     for (let i = 0; i < 10 && this.BulletCooldown <= 0; i++) {
       const t = Math.abs(this.BulletCooldown);
 
-      if (this.Firing && this.BulletCooldown <= 0) {
+      if (this.canFirebullet()) {
         const b = this.fireBullet();
 
         if (b === null) return bullets;

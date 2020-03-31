@@ -2,7 +2,7 @@ import Vector from '../Vector';
 import Fighter from '../Fighter';
 import Projectile from '../projectiles/Projectile';
 
-// La Oveja Grande - A tanky character that deals damage primarily off of momentum exchange (running into people at high velocities)
+// Deer - A general all-around character who can jump high and fire a constant stream of bullets
 class Deer extends Fighter {
   constructor(id: number, position: Vector) {
     super(100, 100, 2000, 0.5, 1, 14, 30, 'Deer', id, position);

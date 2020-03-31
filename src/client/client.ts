@@ -3,7 +3,7 @@ import NetworkClient from './network/client';
 import Vector from '../common/engine/Vector';
 import Fighter from '../common/engine/Fighter';
 import Sheep from '../common/engine/fighters/Sheep';
-import Deer from '../common/engine/fighters/Deer';
+import Flamingo from '../common/engine/fighters/Flamingo';
 import Animator from './animation/Animator';
 import Particle from './particles/Particle';
 import PConfetti from './particles/Confetti';
@@ -25,7 +25,7 @@ const canvas = viewport.getContext('2d');
 const renderSettings = new RenderSettings(3, 5, true);
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 
-const player = new Deer(1, new Vector(25, 25, 0));
+const player = new Flamingo(1, new Vector(25, 25, 0));
 world.Fighters.push(player);
 const particles: Particle[] = [];
 
@@ -112,7 +112,16 @@ document.addEventListener('mouseup', () => {
   Input.MouseDown = false;
 });
 document.addEventListener('mousemove', (event) => {
-  Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (viewport.width / 2), (viewport.height / 2) - event.clientY, 0);
+  // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
+  // (only necessary for Flamingo)
+  if (player && player.Class === 'Flamingo') {
+    const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(player.Position), new Vector(event.clientX, event.clientY, 0)));
+    dir.x *= -1;
+
+    Input.MouseDirection = dir;
+  } else {
+    Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (viewport.width / 2), (viewport.height / 2) - event.clientY, 0);
+  }
 });
 
 

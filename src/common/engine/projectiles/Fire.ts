@@ -5,10 +5,10 @@ import Projectile from './Projectile';
 // BFire - Type bullet of variant Fire
 class BFire extends Projectile {
   constructor(position: Vector, direction: Vector, owner: Fighter) {
-    super('Fire', owner, 5, 0.5, position, Vector.Multiply(direction, 3));
+    super('Fire', owner, 5, 1, position, Vector.Multiply(direction, 6));
     this.BounceReturn = 0;
     this.RenderStyle = '#f0e055';
-    this.Width = 3;
+    this.Width = 0.4;
   }
 }
 

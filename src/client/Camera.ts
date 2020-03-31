@@ -41,7 +41,7 @@ class Camera {
   }
   public UpdateFocus(DeltaTime: number) { // Internal, lerps camera to focus
     if (this.Focus) {
-      this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y, 0);
+      this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0);
 
       if (this.Shake > 0 && this.Settings.EnableCameraShake) {
         this.Shake -= DeltaTime * 10;
@@ -58,6 +58,9 @@ class Camera {
   public ClearFocus(newFocus: Vector) { // Choose position to focus on and clear focused fighter
     this.Focus = null;
     this.FocusPosition = newFocus;
+  }
+  public GetFocusPosition(): Vector {
+    return this.FocusPosition;
   }
 
   public PositionOffsetBasic(pos: Vector): Vector {

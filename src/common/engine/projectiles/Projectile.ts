@@ -18,7 +18,7 @@ class Projectile extends Entity {
     public ProjectileType: string,
     public Owner: Fighter,
     public Damage: number,
-    public MaxLifetime: number,
+    protected MaxLifetime: number,
     position: Vector,
     velocity: Vector,
   ) {
@@ -57,6 +57,10 @@ class Projectile extends Entity {
     if (this.Owner && hit.ID === this.Owner.ID) return;
     hit.TakeDamage(this.Damage, this.Owner);
     this.Finished = true;
+  }
+
+  public getLifePercentage() {
+    return this.Lifetime / this.MaxLifetime;
   }
 
   // Create a string containing only necessary information about this projectile for use for sending to clients

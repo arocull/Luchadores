@@ -13,9 +13,9 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
   const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
   for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
     const fi = fighters[i];
-    if (fi.Position.y - (fi.Radius * 2) < 0) {
+    if (fi.Position.y - fi.Radius < 0) {
       const pos = Vector.Clone(fi.Position);
-      pos.y -= fi.Radius * 2;
+      pos.y -= fi.Radius;
       corners.push(camera.PositionOffset(pos));
     }
   }
@@ -30,7 +30,12 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
   }
   corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
   for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    if (fighters[i].Position.y > map.Height) corners.push(camera.PositionOffset(fighters[i].Position));
+    const fi = fighters[i];
+    if (fi.Position.y + fi.Radius > map.Height) {
+      const pos = Vector.Clone(fi.Position);
+      pos.y += fi.Radius;
+      corners.push(camera.PositionOffset(pos));
+    }
   }
   corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
   for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
@@ -135,12 +140,20 @@ class Renderer {
         }
       } else if (toDraw[i].Type === 'Projectile') {
         const a = <Projectile>toDraw[i];
-        canvas.strokeStyle = a.RenderStyle;
-        canvas.globalAlpha = 1;
-        canvas.lineWidth = zoom * a.Width;
 
         const pos1 = camera.PositionOffset(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)));
         const pos2 = camera.PositionOffset(a.Position);
+
+        if (a.ProjectileType === 'Fire') {
+          const perc = Math.min(a.getLifePercentage(), 1);
+          canvas.globalAlpha = Math.sin(Math.PI * perc);
+          canvas.strokeStyle = Particle.RGBToHex(255, 250 * perc, 30 * perc);
+          canvas.lineWidth = zoom * a.Width * 2 * Math.sin(perc);
+        } else {
+          canvas.strokeStyle = a.RenderStyle;
+          canvas.globalAlpha = 1;
+          canvas.lineWidth = zoom * a.Width;
+        }
 
         canvas.beginPath();
         canvas.moveTo(pos1.x, pos1.y);

@@ -39,7 +39,7 @@ class World {
     const char = player.getCharacter();
     char.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0));
 
-    char.Click(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.mouseDirection.y, action.mouseDirection.z));
+    char.Click(Vector.UnitVectorFromXYZ(action.mouseDirection.x, action.mouseDirection.y, 0));
     char.Firing = action.mouseDown;
 
     if (action.jump === true) char.Jump();
