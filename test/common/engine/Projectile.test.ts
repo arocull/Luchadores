@@ -1,6 +1,6 @@
 import Vector from '../../../src/common/engine/Vector';
-// import Random from '../../../src/common/engine/Random';
-import { Sheep } from '../../../src/common/engine/fighters/index';
+import Random from '../../../src/common/engine/Random';
+import { Sheep, Deer, Flamingo } from '../../../src/common/engine/fighters/index';
 import Projectile from '../../../src/common/engine/projectiles/Projectile';
 import Map from '../../../src/common/engine/Map';
 import World from '../../../src/common/engine/World';
@@ -57,7 +57,7 @@ test('bullet timeout test', () => {
   expect(world.Bullets.indexOf(bullet3)).toBe(-1); // Bullet timing out
 });
 
-/* test('bullet jump-dodge test', () => {
+test('bullet jump-dodge test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World();
   world.Map = new Map(20, 20, 0, '');
@@ -65,11 +65,11 @@ test('bullet timeout test', () => {
   const flam = new Flamingo(1, new Vector(0, 0, 0));
   flam.AimDirection = new Vector(1, 0, 0);
   flam.Firing = true;
-  const deer = new Deer(2, new Vector(5, 0, 0));
+  const deer = new Deer(2, new Vector(4, 0, 0));
 
   world.Fighters.push(flam, deer);
 
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 80; i++) {
     world.doUpdates(0.05);
     world.TickPhysics(0.05);
 
@@ -91,4 +91,4 @@ test('bullet timeout test', () => {
     }
   }
   expect(deer.HP).toBe(hp); // Not hit when bullets are leaped over
-}); */
+});
