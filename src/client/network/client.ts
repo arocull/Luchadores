@@ -91,6 +91,7 @@ class NetworkClient {
         if (message.id !== this.id) {
           this.close();
           console.error('Client ID mismatch! Disconnecting.');
+          return;
         }
 
         console.log('ClientAck and ID match - away we go!');
