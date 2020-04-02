@@ -49,11 +49,8 @@ interface Packet {
 
 function UpdateFighter(packet: Packet) {
   let newFighter: Fighter = null;
-  for (let i = 0; i < world.Fighters.length; i++) {
-    if (world.Fighters[i].ID === packet.id) {
-      newFighter = world.Fighters[i];
-      break;
-    }
+  for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
+    if (world.Fighters[i].getOwnerID() === packet.id) newFighter = world.Fighters[i];
   }
 
   if (!newFighter) { // If the fighter could not be found, generate a new one
@@ -81,11 +78,11 @@ UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,-5,0],"a":[0,
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
-    if (world.Fighters[i].ID === died) {
+    if (world.Fighters[i].getOwnerID() === died) {
       PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
       world.Fighters.splice(i, 1);
       i--;
-    } else if (world.Fighters[i].ID === killer) {
+    } else if (world.Fighters[i].getOwnerID() === killer) {
       world.Fighters[i].EarnKill();
       if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 3;
     }
@@ -180,7 +177,7 @@ function DoFrame(tick: number) {
       // Normally shouldn't do this on client incase client simulates a kill but it does not occur on server
       // Currently here for visuals and testing, however
       if (a.HP <= 0) {
-        OnDeath(a.ID, a.LastHitBy);
+        OnDeath(a.getOwnerID(), a.LastHitBy);
         i--;
       }
     }

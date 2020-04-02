@@ -23,7 +23,7 @@ test('bullet damage test', () => {
   }
 
   expect(sheep.HP).toBe(sheep.MaxHP - 5); // Bullet damage
-  expect(sheep.LastHitBy).toBe(sheep2.ID);
+  expect(sheep.LastHitBy).toBe(sheep2.getOwnerID());
 });
 
 test('bullet miss owner test', () => {

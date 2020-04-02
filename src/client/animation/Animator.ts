@@ -22,7 +22,7 @@ class Animator {
   constructor(protected owner: Fighter) {
     this.SpriteSheet = new Image();
 
-    switch (owner.character) {
+    switch (owner.getCharacter()) {
       case FighterType.Sheep:
         this.SpriteSheet.src = 'Sprites/Sheep.png';
         this.FrameWidth = 512;
@@ -62,7 +62,7 @@ class Animator {
       this.timer = 0;
       this.timeToUniqueIdle = Math.random() * 13;
 
-      if (this.owner.character === FighterType.Flamingo) this.uniqueIdleFrame = 8;
+      if (this.owner.getCharacter() === FighterType.Flamingo) this.uniqueIdleFrame = 8;
       else this.uniqueIdleFrame = Math.floor(Math.random() * 0.6 + 0.5) + 2;
     }
   }
@@ -80,7 +80,7 @@ class Animator {
     if (state === 2 && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
     else this.timer += DeltaTime;
 
-    if (this.owner.character === FighterType.Flamingo) { // Currently flamingo has it's own animation states as it's spritesheet is a new format
+    if (this.owner.getCharacter() === FighterType.Flamingo) { // Currently flamingo has it's own animation states as it's spritesheet is a new format
       switch (state) {
         case 1: // Falling animation
           this.frame = 6;

@@ -4,7 +4,20 @@ import { FighterType } from '../Enums';
 import Random from '../Random';
 import Fire from '../projectiles/Fire';
 
-// Flamenacre - Flamenco + Acre (Flamingo + Spicy) - A taller character who breathes fire and is a general spaz
+/* Flamenacre - Flamenco + Acre (Flamingo + Spicy) - A taller character who breathes fire and is a general spaz
+
+Properties that need to be replicated from server to client:
+- Class Type
+- Player ID
+- Position
+- Velocity
+- Acceleration
+- Firing
+- Aim Direction
+- Breath
+- Breathing
+
+*/
 class Flamingo extends Fighter {
   private breath: number;
   private maxBreath: number;
@@ -57,6 +70,18 @@ class Flamingo extends Fighter {
     this.breath += DelaTime * 8;
     if (this.breath > this.maxBreath) this.breath = this.maxBreath;
     if (this.breath > this.maxBreath / 2) this.breathing = false; // If breath has reached at least half capacity, allow fire-breathing again
+  }
+
+  public getBreath(): number {
+    return this.breath;
+  }
+  public isBreathing(): boolean {
+    return this.breathing;
+  }
+
+  public setBreath(newBreath: number, newBreathing: boolean) {
+    this.breath = newBreath;
+    this.breathing = newBreathing;
   }
 }
 

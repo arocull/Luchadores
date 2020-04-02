@@ -79,6 +79,7 @@ class NetworkClient {
       || this.state === WebSocket.CLOSED;
   }
 
+  /* eslint-disable no-console */
   private onOpen(openEvent: Event) {
     console.log('Opened web socket', openEvent);
 
@@ -91,7 +92,7 @@ class NetworkClient {
         if (message.id !== this.id) {
           this.close();
           console.error('Client ID mismatch! Disconnecting.');
-          return;
+          return null;
         }
 
         console.log('ClientAck and ID match - away we go!');
@@ -109,6 +110,7 @@ class NetworkClient {
       id: this.id,
     }));
   }
+  /* eslint-enable no-console */
 
   // TODO: Sending is awkward from other locations. Can we make it simpler?
   // Figure out how to create envelopes from incoming objects?
