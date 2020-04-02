@@ -32,11 +32,8 @@ class World {
     this.Fighters = [];
     this.Bullets = [];
 
-    MessageBus.subscribe('Bullets', (message) => {
-      const proj = <Projectile>(message); // Cast message to a projectile
-      if (proj) { // If it still works, add the projectile to the list
-        this.Bullets.push(proj);
-      }
+    MessageBus.subscribe('NewProjectile', (message) => {
+      this.Bullets.push(message as Projectile);
     });
   }
 
@@ -58,17 +55,21 @@ class World {
   /* eslint-enable class-methods-use-this, no-param-reassign */
 
 
+  // Run all general world-tick functions
+  // Note that DeltaTime should be in seconds
+  public tick(DeltaTime: number) {
+    this.doUpdates(DeltaTime);
+    this.TickPhysics(DeltaTime);
+  }
+
+
   // Do various updates that are not realted to physics
   public doUpdates(DeltaTime: number) {
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
 
-      // Tick cooldowns
       a.tickCooldowns(DeltaTime);
-
-
-      // Fire bullets (bullets are automatically added to list with events)
-      a.tryBullet();
+      a.tryBullet(); // Fire bullets (bullets are automatically added to list with events)
     }
   }
 

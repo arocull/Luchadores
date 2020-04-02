@@ -2,6 +2,7 @@ import Vector from '../Vector';
 import Fighter from '../Fighter';
 import { FighterType } from '../Enums';
 import BBullet from '../projectiles/Bullet';
+import { MessageBus } from '../../messaging/bus';
 
 /* Deer - A general all-around character who can jump high and fire a constant stream of bullets
 
@@ -24,7 +25,9 @@ class Deer extends Fighter {
     this.BulletShock += 1.2;
     this.BulletCooldown += 0.125;
 
-    return new BBullet(this.Position, this.AimDirection, this);
+    const bullet = new BBullet(this.Position, this.AimDirection, this);
+    MessageBus.publish('NewProjectile', bullet);
+    return bullet;
   }
 }
 

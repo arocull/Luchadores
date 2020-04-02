@@ -47,3 +47,20 @@ test('vector unit-length zero test', () => {
   expect(vect3.y).toBe(0);
   expect(vect3.z).toBe(0);
 });
+
+test('vector compare-to test', () => {
+  const vect1 = new Vector(1, 2, 3);
+  const vect2 = new Vector(1, 2, 3); // New vector with same props
+  const vect3 = vect1; // Pointer to same vector
+  const vect4 = Vector.Clone(vect1); // Cloned vector
+
+  expect(vect1.equals(vect2)).toBe(true);
+  expect(vect1.equals(vect3)).toBe(true);
+  expect(vect1.equals(vect4)).toBe(true);
+
+  vect1.x = 0;
+
+  expect(vect1.equals(vect2)).toBe(false);
+  expect(vect1.equals(vect3)).toBe(true);
+  expect(vect1.equals(vect4)).toBe(false);
+});

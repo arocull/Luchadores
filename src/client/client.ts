@@ -1,5 +1,6 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
+import { MessageBus, Topics } from '../common/messaging/bus';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Fighter, Sheep, Deer, Flamingo } from '../common/engine/fighters/index';
@@ -28,7 +29,10 @@ world.Fighters.push(player);
 const particles: Particle[] = [];
 
 const Input = {
+  // CLIENTSIDE ONLY (this stuff should NOT be shared with the server)!
   ListOpen: false, // Opens player list GUI on local client--does not need to be networked
+
+  // FOR REPLICATION (this should be sent to the server for sure)
   MouseDown: false, // Is the player holding their mouse down?
   MouseDirection: new Vector(0, 0, 0), // Where are they aiming?
   Jump: false, // Are they strying to jump?
@@ -90,25 +94,48 @@ function OnDeath(died: number, killer: number) {
 }
 
 
+// Called when the player's input state changes
+function UpdateInput() {
+  const msg = {
+    ListOpen: false, // Only adding this here because of protobuff, should not be replicated in reality
+    MouseDown: Input.MouseDown,
+    MouseDirection: Input.MouseDirection,
+    Jump: Input.Jump,
+    MoveDirection: Input.MoveDirection,
+  };
+
+  // Attempt to send input to server
+  MessageBus.publish(Topics.ClientNetworkToServer, msg);
+}
 document.addEventListener('keydown', (event) => {
+  const old = Vector.Clone(Input.MouseDirection);
+
   if (event.key === 'a') Input.MoveDirection.x = -1;
   else if (event.key === 'd') Input.MoveDirection.x = 1;
   else if (event.key === 'w') Input.MoveDirection.y = 1;
   else if (event.key === 's') Input.MoveDirection.y = -1;
   else if (event.key === ' ') Input.Jump = true;
   else if (event.key === 'y') Input.ListOpen = true;
+
+  if (!old.equals(Input.MouseDirection)) UpdateInput();
 });
 document.addEventListener('keyup', (event) => {
+  const old = Vector.Clone(Input.MouseDirection);
+
   if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
   else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
   else if (event.key === ' ') Input.Jump = false;
   else if (event.key === 'y') Input.ListOpen = false;
+
+  if (!old.equals(Input.MouseDirection)) UpdateInput();
 });
 document.addEventListener('mousedown', () => {
   Input.MouseDown = true;
+  UpdateInput();
 });
 document.addEventListener('mouseup', () => {
   Input.MouseDown = false;
+  UpdateInput();
 });
 document.addEventListener('mousemove', (event) => {
   // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
@@ -117,6 +144,8 @@ document.addEventListener('mousemove', (event) => {
     dir.x *= -1;
 
     Input.MouseDirection = dir;
+    UpdateInput(); // We only care to send aim updates if this is a ranged fighter
+    // should we only send aim inputs if their mouse is down to help reduce traffic?
   } else {
     Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (viewport.width / 2), (viewport.height / 2) - event.clientY, 0);
   }
@@ -136,10 +165,7 @@ function DoFrame(tick: number) {
   player.aim(Input.MouseDirection);
   player.Firing = Input.MouseDown;
 
-  world.doUpdates(DeltaTime);
-
-  // Tick physics
-  world.TickPhysics(DeltaTime);
+  world.tick(DeltaTime);
 
   // Update Camera
   viewport.width = window.innerWidth;

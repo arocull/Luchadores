@@ -63,7 +63,7 @@ class Flamingo extends Fighter {
     dir.z = -1;
 
     const proj = new Fire(pos, dir, this);
-    MessageBus.publish('Bullets', proj);
+    MessageBus.publish('NewProjectile', proj);
     return proj;
   }
 
