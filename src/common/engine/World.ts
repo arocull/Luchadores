@@ -4,6 +4,7 @@ import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import Map from './Map';
 import { IPlayerInputState } from '../events/events';
+import { MessageBus } from '../messaging/bus';
 
 // World Class - Manages bullets and fighters
 /* General flow of things:
@@ -30,6 +31,13 @@ class World {
     this.Players = [];
     this.Fighters = [];
     this.Bullets = [];
+
+    MessageBus.subscribe('Bullets', (message) => {
+      const proj = <Projectile>(message); // Cast message to a projectile
+      if (proj) { // If it still works, add the projectile to the list
+        this.Bullets.push(proj);
+      }
+    });
   }
 
 
@@ -37,12 +45,15 @@ class World {
   /* eslint-disable class-methods-use-this, no-param-reassign */
   public applyAction(player: Player, action: IPlayerInputState) {
     const char = player.getCharacter();
-    if (!char || char.HP < 0) return; // If the player's character is currently dead or missing, do not apply inputs
+    if (!char || char.HP <= 0) return; // If the player's character is currently dead or missing, do not apply inputs
 
     char.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0)); // Apply movement input
     char.aim(Vector.UnitVectorFromXYZ(action.mouseDirection.x, action.mouseDirection.y, 0)); // Apply new aim
-    char.Firing = action.mouseDown; // Are they trying to fire bullets?
-    if (action.jump === true) char.Jump(); // Jump
+    char.Firing = char.isRanged() && action.mouseDown; // Are they trying to fire bullets, and can they?
+
+    if (action.jump === true) {
+      char.Jump(); // Jump
+    }
   }
   /* eslint-enable class-methods-use-this, no-param-reassign */
 
@@ -56,16 +67,8 @@ class World {
       a.tickCooldowns(DeltaTime);
 
 
-      // Fire bullets
-      if (a.Firing && a.isRanged()) {
-        const projs = a.tryBullet();
-        if (projs && projs.length > 0) {
-          for (let j = 0; j < projs.length; j++) {
-            // Should we put a BULLET FIRED event here (include bullet age)?
-            this.Bullets.push(projs[j]);
-          }
-        }
-      }
+      // Fire bullets (bullets are automatically added to list with events)
+      a.tryBullet();
     }
   }
 

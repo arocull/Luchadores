@@ -3,6 +3,7 @@ import Fighter from '../Fighter';
 import { FighterType } from '../Enums';
 import Random from '../Random';
 import Fire from '../projectiles/Fire';
+import { MessageBus } from '../../messaging/bus';
 
 /* Flamenacre - Flamenco + Acre (Flamingo + Spicy) - A taller character who breathes fire and is a general spaz
 
@@ -61,7 +62,9 @@ class Flamingo extends Fighter {
     );
     dir.z = -1;
 
-    return new Fire(pos, dir, this);
+    const proj = new Fire(pos, dir, this);
+    MessageBus.publish('Bullets', proj);
+    return proj;
   }
 
   public tickCooldowns(DelaTime: number) {

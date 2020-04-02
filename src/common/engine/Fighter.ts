@@ -33,7 +33,7 @@ class Fighter extends Entity {
   public JustLanded: boolean;
 
   protected ranged: boolean;
-  public AimDirection: Vector;
+  protected AimDirection: Vector;
   public Firing: boolean;
   protected BulletCooldown: number;
   public BulletShock: number;
@@ -104,8 +104,8 @@ class Fighter extends Entity {
   }
 
   // Attempt to fire a bullet--fires as many bullets as it can until the cooldown is positive or some other condition
-  public tryBullet(): any[] {
-    const bullets: any[] = []; // List of bullets generated (multiple may be produced at a time)
+  public tryBullet() {
+    if (!this.Firing) return;
 
     // Fire a bullet--if time had passed to the point where multiple bullets could have been fired, fire all of them and tick them accordingly
     while (this.canFirebullet()) {
@@ -113,13 +113,10 @@ class Fighter extends Entity {
 
       const b = this.fireBullet();
 
-      if (b === null) return bullets; // If no bullet was generated, stop here
+      if (b === null) return; // If no bullet was generated, stop here
 
       if (t > 0) b.Tick(t); // If a bullet was generated, tick it according to 'when' it was fired
-      bullets.push(b);
     }
-
-    return bullets;
   }
 
 
@@ -141,6 +138,9 @@ class Fighter extends Entity {
   // Sets aim direction of fighter
   public aim(direction: Vector) {
     this.AimDirection = direction;
+  }
+  public getAim(): Vector {
+    return this.AimDirection;
   }
 
   // Ticks the fighter by set amount of time, reduces cooldowns and resets states

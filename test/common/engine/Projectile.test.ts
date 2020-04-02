@@ -63,7 +63,7 @@ test('bullet jump-dodge test', () => {
   world.Map = new Map(20, 20, 0, '');
 
   const flam = new Flamingo(1, new Vector(0, 0, 0));
-  flam.AimDirection = new Vector(1, 0, 0);
+  flam.aim(new Vector(1, 0, 0));
   flam.Firing = true;
   const deer = new Deer(2, new Vector(4, 0, 0));
 
