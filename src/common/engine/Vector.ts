@@ -34,6 +34,10 @@ class Vector { // A structure that holds position data or direction and magnitud
     return this;
   }
 
+  public equals(compareTo: Vector): boolean {
+    return (this.x === compareTo.x && this.y === compareTo.y && this.z === compareTo.z);
+  }
+
   // Static methods--generates new vectors to avoid overriding old properties
   static Add(a: Vector, b: Vector):Vector {
     return new Vector(a.x + b.x, a.y + b.y, a.z + b.z);

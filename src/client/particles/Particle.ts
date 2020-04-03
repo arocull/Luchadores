@@ -1,5 +1,6 @@
 import Vector from '../../common/engine/Vector';
 import Entity from '../../common/engine/Entity';
+import { EntityType, ParticleType } from '../../common/engine/Enums';
 
 class Particle extends Entity {
   protected Lifetime: number;
@@ -16,13 +17,13 @@ class Particle extends Entity {
   protected Trail: number; // Should the tail of the particle slowly follow its head, or operate statically?
 
   constructor(
-    public ParticleType: string,
+    public particleType: ParticleType,
     public MaxLifetime: number,
     public RenderStyle: string,
     beginning: Vector,
     public End: Vector,
   ) {
-    super('Particle', beginning, new Vector(0, 0, 0), new Vector(0, 0, 0));
+    super(EntityType.Particle, beginning, new Vector(0, 0, 0), new Vector(0, 0, 0));
 
     this.Lifetime = 0;
     this.Finished = false;

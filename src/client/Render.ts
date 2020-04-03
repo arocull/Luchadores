@@ -1,8 +1,9 @@
 // Client only -- Renders stuff to the screen
 import Vector from '../common/engine/Vector';
+import { EntityType, ParticleType, ProjectileType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import Fighter from '../common/engine/Fighter';
-// import Animator from './animation/Animator';
+import Animator from './animation/Animator';
 import Projectile from '../common/engine/projectiles/Projectile';
 import Particle from './particles/Particle';
 import PLightning from './particles/Lightning';
@@ -13,9 +14,9 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
   const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
   for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
     const fi = fighters[i];
-    if (fi.Position.y - (fi.Radius * 2) < 0) {
+    if (fi.Position.y - fi.Radius < 0) {
       const pos = Vector.Clone(fi.Position);
-      pos.y -= fi.Radius * 2;
+      pos.y -= fi.Radius;
       corners.push(camera.PositionOffset(pos));
     }
   }
@@ -30,7 +31,12 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
   }
   corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
   for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    if (fighters[i].Position.y > map.Height) corners.push(camera.PositionOffset(fighters[i].Position));
+    const fi = fighters[i];
+    if (fi.Position.y + fi.Radius > map.Height) {
+      const pos = Vector.Clone(fi.Position);
+      pos.y += fi.Radius;
+      corners.push(camera.PositionOffset(pos));
+    }
   }
   corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
   for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
@@ -88,22 +94,26 @@ class Renderer {
 
     // Draw in fighters
     for (let i = 0; i < toDraw.length; i++) {
-      if (toDraw[i].Type === 'Fighter') {
+      if (toDraw[i].type === EntityType.Fighter) {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);
+
+        let upscaleoffset = 0;
+        if (a.Animator) upscaleoffset = Math.max(0, a.Animator.Upscale - 1);
 
         // First, draw shadow
         canvas.fillStyle = '#000000';
         canvas.globalAlpha = 0.5;
         canvas.fillRect(
           (-pos.x - a.Radius * 1.1) * zoom + offsetX,
-          (pos.y + a.Height / 1.5) * zoom + offsetY,
-          2 * a.Radius * 1.1 * zoom, (a.Height * zoom) / 2,
+          (pos.y + (pos.z / 2) + upscaleoffset) * zoom + offsetY,
+          2 * a.Radius * 1.1 * zoom,
+          -(a.Height / 2) * zoom,
         );
         canvas.globalAlpha = 1;
 
         if (a.Animator && a.Animator.SpriteSheet) { // If we can find an animator for this fighter, use it
-          const b = a.Animator;
+          const b: Animator = a.Animator;
 
           let row = b.row * 2;
           if (a.Flipped) row++;
@@ -114,10 +124,10 @@ class Renderer {
             b.FrameHeight * row,
             b.FrameWidth,
             b.FrameHeight,
-            (-pos.x - a.Radius * b.Upscale) * zoom + offsetX,
-            (pos.y + pos.z - (a.Height * (b.Upscale - 1))) * zoom + offsetY,
-            2 * a.Radius * b.Upscale * zoom,
-            a.Height * b.Upscale * zoom,
+            (-pos.x - (a.Height / 2) * b.Upscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
+            (pos.y + pos.z + (a.Height * (b.Upscale - 1))) * zoom + offsetY,
+            a.Height * b.Upscale * zoom, // 2 * Radius originally used in place of a.Height
+            -a.Height * b.Upscale * zoom,
           );
           canvas.resetTransform();
         } else { // Otherwise, draw a box
@@ -129,20 +139,28 @@ class Renderer {
             a.Height * zoom,
           );
         }
-      } else if (toDraw[i].Type === 'Projectile') {
+      } else if (toDraw[i].type === EntityType.Projectile) {
         const a = <Projectile>toDraw[i];
-        canvas.strokeStyle = a.RenderStyle;
-        canvas.globalAlpha = 1;
-        canvas.lineWidth = zoom * a.Width;
 
         const pos1 = camera.PositionOffset(Vector.Subtract(a.Position, Vector.Multiply(Vector.UnitVector(a.Velocity), a.Length)));
         const pos2 = camera.PositionOffset(a.Position);
+
+        if (a.projectileType === ProjectileType.Fire) { // Fire, despite being a bullet, needs to look cool, so generate its looks here on the client
+          const perc = Math.min(a.getLifePercentage(), 1);
+          canvas.globalAlpha = Math.sin(Math.PI * perc);
+          canvas.strokeStyle = Particle.RGBToHex(255, 250 * perc, 30 * perc);
+          canvas.lineWidth = zoom * a.Width * 2 * Math.sin(perc);
+        } else { // Otherwise, follow standard-issue bullet draw rules
+          canvas.strokeStyle = a.RenderStyle;
+          canvas.globalAlpha = 1;
+          canvas.lineWidth = zoom * a.Width;
+        }
 
         canvas.beginPath();
         canvas.moveTo(pos1.x, pos1.y);
         canvas.lineTo(pos2.x, pos2.y);
         canvas.stroke();
-      } else if (toDraw[i].Type === 'Particle') {
+      } else if (toDraw[i].type === EntityType.Particle) {
         const a = <Particle>toDraw[i];
         canvas.strokeStyle = a.RenderStyle;
         canvas.globalAlpha = a.Alpha;
@@ -153,7 +171,7 @@ class Renderer {
 
         canvas.beginPath();
         canvas.moveTo(pos1.x, pos1.y);
-        if (a.ParticleType === 'Lightning') {
+        if (a.particleType === ParticleType.Lightning) { // If it is lightning, draw all segments in center of path
           const l = <PLightning>(a);
           for (let j = 0; j < l.Segments.length; j++) {
             const seg = camera.PositionOffset(l.Segments[j]);

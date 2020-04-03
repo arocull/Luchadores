@@ -1,16 +1,32 @@
 import Vector from '../Vector';
 import Fighter from '../Fighter';
-import Projectile from '../projectiles/Projectile';
+import { FighterType } from '../Enums';
+import BBullet from '../projectiles/Bullet';
+import { MessageBus } from '../../messaging/bus';
 
-// La Oveja Grande - A tanky character that deals damage primarily off of momentum exchange (running into people at high velocities)
+/* Deer - A general all-around character who can jump high and fire a constant stream of bullets
+
+Properties that need to be replicated from server to client:
+- Class Type
+- Player ID
+- Position
+- Velocity
+- Acceleration
+- Firing
+- Aim Direction
+
+*/
 class Deer extends Fighter {
   constructor(id: number, position: Vector) {
-    super(100, 70, 800, 0.5, 1, 8, 40, 'Deer', id, position);
+    super(100, 100, 2000, 0.5, 1, 16, 30, FighterType.Deer, id, position);
   }
 
-  public FireBullet(): Projectile {
-    const bullet = new Projectile('Bullet', this, 5, 1, this.Position, Vector.Multiply(this.AimDirection, 10));
-    this.BulletShock += 10;
+  public fireBullet(): BBullet {
+    this.BulletShock += 1.2;
+    this.BulletCooldown += 0.125;
+
+    const bullet = new BBullet(this.Position, this.AimDirection, this);
+    MessageBus.publish('NewProjectile', bullet);
     return bullet;
   }
 }

@@ -1,21 +1,22 @@
-// import * as _ from 'lodash';
+/* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
+import { MessageBus, Topics } from '../common/messaging/bus';
+import { TypeEnum } from '../common/events/index';
 import Vector from '../common/engine/Vector';
-import Fighter from '../common/engine/Fighter';
-import Sheep from '../common/engine/fighters/Sheep';
+import Random from '../common/engine/Random';
+import { Fighter, Sheep, Deer, Flamingo } from '../common/engine/fighters/index';
+import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
 import Animator from './animation/Animator';
-import Particle from './particles/Particle';
-import PConfetti from './particles/Confetti';
-import PRosePetal from './particles/RosePetal';
-import PSmashEffect from './particles/SmashEffect';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import Renderer from './Render';
+/* eslint-enable object-curly-newline */
 
 
 // Generate World
 const world = new World();
+Random.randomSeed();
 
 
 // Get rendering viewport--browser only
@@ -24,22 +25,18 @@ const canvas = viewport.getContext('2d');
 const renderSettings = new RenderSettings(3, 5, true);
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 
-const player = new Sheep(1, new Vector(25, 25, 0));
+const player = new Flamingo(1, new Vector(25, 25, 0));
 world.Fighters.push(player);
-const particles: Particle[] = [];
 
-const Input = {
-  ListOpen: false,
-  MouseDown: false,
-  MouseDirection: new Vector(0, 0, 0),
-  Jump: false,
-  MoveDirection: new Vector(0, 0, 0),
-};
+// Particles
+const particles: Particle[] = [];
+MessageBus.subscribe('Effect_NewParticle', (msg) => {
+  particles.push(msg as Particle);
+});
 
 
 // Call for client to interpret packet data about specific fighters (reads off object version of Fighter.ToPacket())
 type VectorXYZ = [number, number, number];
-
 interface Packet {
   id: number;
   c: string;
@@ -47,19 +44,19 @@ interface Packet {
   v: VectorXYZ;
   a: VectorXYZ;
 }
-
-function UpdateFighter(packet: Packet) {
+function UpdateFighter(packet: Packet): Fighter {
   let newFighter: Fighter = null;
-  for (let i = 0; i < world.Fighters.length; i++) {
-    if (world.Fighters[i].ID === packet.id) {
-      newFighter = world.Fighters[i];
-      break;
-    }
+  for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
+    if (world.Fighters[i].getOwnerID() === packet.id) newFighter = world.Fighters[i];
   }
 
   if (!newFighter) { // If the fighter could not be found, generate a new one
     if (packet.c === 'Sheep') {
       newFighter = new Sheep(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
+    } else if (packet.c === 'Deer') {
+      newFighter = new Deer(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
+    } else if (packet.c === 'Flamingo') {
+      newFighter = new Flamingo(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
     } else {
       throw new Error(`Unknown fighter type: ${packet.c}`);
     }
@@ -70,19 +67,20 @@ function UpdateFighter(packet: Packet) {
 
   newFighter.Velocity = new Vector(packet.v[0], packet.v[1], packet.v[2]);
   newFighter.Acceleration = new Vector(packet.a[0], packet.a[1], packet.a[2]);
+  return newFighter;
 }
 // Example on how to use it
-UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,-5,0],"a":[0,0,0]}'));
+UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,0,0],"a":[0,0,0]}'));
 
 
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
-    if (world.Fighters[i].ID === died) {
+    if (world.Fighters[i].getOwnerID() === died) {
       PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
       world.Fighters.splice(i, 1);
       i--;
-    } else if (world.Fighters[i].ID === killer) {
+    } else if (world.Fighters[i].getOwnerID() === killer) {
       world.Fighters[i].EarnKill();
       if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 3;
     }
@@ -90,28 +88,69 @@ function OnDeath(died: number, killer: number) {
 }
 
 
+// User Input //
+const Input = {
+  // CLIENTSIDE ONLY
+  ListOpen: false, // Opens player list GUI on local client--does not need to be networked
+
+  // FOR REPLICATION (this should be sent to the server for sure)
+  MouseDown: false, // Is the player holding their mouse down?
+  MouseDirection: new Vector(0, 0, 0), // Where are they aiming?
+  Jump: false, // Are they strying to jump?
+  MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
+};
+// Called when the player's input state changes
+function UpdateInput() { // Attempts to send updated user input to server
+  MessageBus.publish(Topics.ClientNetworkToServer, {
+    type: TypeEnum.PlayerInputState,
+    jump: Input.Jump,
+    mouseDown: Input.MouseDown,
+    mouseDirection: Input.MouseDirection,
+    moveDirection: Input.MoveDirection,
+  });
+}
 document.addEventListener('keydown', (event) => {
+  const old = Vector.Clone(Input.MouseDirection);
+
   if (event.key === 'a') Input.MoveDirection.x = -1;
   else if (event.key === 'd') Input.MoveDirection.x = 1;
   else if (event.key === 'w') Input.MoveDirection.y = 1;
   else if (event.key === 's') Input.MoveDirection.y = -1;
   else if (event.key === ' ') Input.Jump = true;
   else if (event.key === 'y') Input.ListOpen = true;
+
+  if (!old.equals(Input.MouseDirection)) UpdateInput();
 });
 document.addEventListener('keyup', (event) => {
+  const old = Vector.Clone(Input.MouseDirection);
+
   if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
   else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
   else if (event.key === ' ') Input.Jump = false;
   else if (event.key === 'y') Input.ListOpen = false;
+
+  if (!old.equals(Input.MouseDirection)) UpdateInput();
 });
 document.addEventListener('mousedown', () => {
   Input.MouseDown = true;
+  UpdateInput();
 });
 document.addEventListener('mouseup', () => {
   Input.MouseDown = false;
+  UpdateInput();
 });
 document.addEventListener('mousemove', (event) => {
-  Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (cam.Width / 2), event.clientY - (cam.Height / 2), 0);
+  // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
+  if (player && player.isRanged()) {
+    const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(player.Position), new Vector(event.clientX, event.clientY, 0)));
+    dir.x *= -1;
+
+    Input.MouseDirection = dir;
+    UpdateInput(); // We only care to send aim updates if this is a ranged fighter
+    // should we only send aim inputs if their mouse is down to help reduce traffic?
+  } else {
+    Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (viewport.width / 2), (viewport.height / 2) - event.clientY, 0);
+  }
 });
 
 
@@ -122,12 +161,14 @@ function DoFrame(tick: number) {
   LastFrame = tick / 1000;
 
   // Use inputs
+  // if (dummy) dummy.Jump();
   if (Input.Jump) player.Jump();
   Input.MoveDirection.z = 0;
   player.Move(Input.MoveDirection);
+  player.aim(Input.MouseDirection);
+  player.Firing = Input.MouseDown;
 
-  // Tick physics
-  world.TickPhysics(DeltaTime);
+  world.tick(DeltaTime);
 
   // Update Camera
   viewport.width = window.innerWidth;
@@ -136,7 +177,7 @@ function DoFrame(tick: number) {
   if (player) cam.SetFocus(player);
   cam.UpdateFocus(DeltaTime);
 
-
+  // Apply visual effects
   for (let i = 0; i < world.Fighters.length; i++) {
     const a = world.Fighters[i];
     if (a) {
@@ -150,13 +191,13 @@ function DoFrame(tick: number) {
       }
 
       // Collision effects
-      if (a.JustHitMomentum > 0) {
+      if (a.JustHitMomentum > 700) {
         for (let j = 0; j < 3; j++) {
           particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000));
         }
 
         if (Vector.Distance(a.Position, player.Position) <= 2) {
-          cam.Shake += a.JustHitMomentum / 1000;
+          cam.Shake += a.JustHitMomentum / 1500;
         }
 
         a.JustHitMomentum = 0;
@@ -165,7 +206,7 @@ function DoFrame(tick: number) {
       // Normally shouldn't do this on client incase client simulates a kill but it does not occur on server
       // Currently here for visuals and testing, however
       if (a.HP <= 0) {
-        OnDeath(a.ID, a.LastHitBy);
+        OnDeath(a.getOwnerID(), a.LastHitBy);
         i--;
       }
     }
@@ -185,11 +226,10 @@ function DoFrame(tick: number) {
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
   if (Input.ListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
-  // PRosePetal.Burst(particles, player.Position, 0.2, 3, 1);
-
   return window.requestAnimationFrame(DoFrame);
 }
 
+/* eslint-disable no-console */
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
@@ -202,3 +242,4 @@ function DoFrame(tick: number) {
     .catch((err) => console.error('Failed to connect!', err))
     .finally(() => console.log('... and finally!'));
 }());
+/* eslint-enable no-console */
