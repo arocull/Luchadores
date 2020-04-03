@@ -1,6 +1,7 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
 import { MessageBus, Topics } from '../common/messaging/bus';
+import { TypeEnum } from '../common/events/index';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Fighter, Sheep, Deer, Flamingo } from '../common/engine/fighters/index';
@@ -29,7 +30,7 @@ world.Fighters.push(player);
 const particles: Particle[] = [];
 
 const Input = {
-  // CLIENTSIDE ONLY (this stuff should NOT be shared with the server)!
+  // CLIENTSIDE ONLY
   ListOpen: false, // Opens player list GUI on local client--does not need to be networked
 
   // FOR REPLICATION (this should be sent to the server for sure)
@@ -95,17 +96,14 @@ function OnDeath(died: number, killer: number) {
 
 
 // Called when the player's input state changes
-function UpdateInput() {
-  const msg = {
-    ListOpen: false, // Only adding this here because of protobuff, should not be replicated in reality
-    MouseDown: Input.MouseDown,
-    MouseDirection: Input.MouseDirection,
-    Jump: Input.Jump,
-    MoveDirection: Input.MoveDirection,
-  };
-
-  // Attempt to send input to server
-  MessageBus.publish(Topics.ClientNetworkToServer, msg);
+function UpdateInput() { // Attempts to send updated user input to server
+  MessageBus.publish(Topics.ClientNetworkToServer, {
+    type: TypeEnum.PlayerInputState,
+    jump: Input.Jump,
+    mouseDown: Input.MouseDown,
+    mouseDirection: Input.MouseDirection,
+    moveDirection: Input.MoveDirection,
+  });
 }
 document.addEventListener('keydown', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
