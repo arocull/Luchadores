@@ -18,8 +18,8 @@ test('physics collision test', () => {
   }
 
   // Velocity of 5 with bounceback added as well
-  expect(a.Velocity.y).toBe(-5 - 150 / a.Mass);
-  expect(b.Velocity.y).toBe(5 + 150 / b.Mass);
+  expect(a.Velocity.y).toBeCloseTo(-5);
+  expect(b.Velocity.y).toBeCloseTo(5);
 });
 
 test('physics friction and gravity test', () => {

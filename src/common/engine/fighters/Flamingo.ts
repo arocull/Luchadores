@@ -25,7 +25,7 @@ class Flamingo extends Fighter {
   private breathing: boolean;
 
   constructor(id: number, position: Vector) {
-    super(100, 120, 2200, 0.5, 2, 20, 30, FighterType.Flamingo, id, position);
+    super(100, 80, 1500, 0.4, 2, 20, 25, FighterType.Flamingo, id, position);
 
     // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;
@@ -36,7 +36,7 @@ class Flamingo extends Fighter {
     return (super.canFirebullet() && this.breath >= 1 && !this.breathing);
   }
   public fireBullet(): Fire {
-    this.BulletShock += 0.625;
+    this.BulletShock += 0.6;
     this.BulletCooldown += 0.05;
     this.breath -= 1;
 
@@ -45,12 +45,12 @@ class Flamingo extends Fighter {
 
     // Get position to fire from
     const pos = Vector.Clone(this.Position);
-    pos.z += this.Height * 0.75;
-    if (this.Flipped === true) pos.x -= this.Radius;
-    else pos.x += this.Radius;
+    pos.z += this.Height * 0.5;
+    if (this.Flipped === true) pos.x -= this.Radius * 1.2;
+    else pos.x += this.Radius * 1.2;
 
     // Recoil and sprite-flipping
-    this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(this.AimDirection, 0.2));
+    this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(this.AimDirection, 0.1));
     if (this.AimDirection.x < 0) this.Flipped = true;
     else if (this.AimDirection.x > 0) this.Flipped = false;
 

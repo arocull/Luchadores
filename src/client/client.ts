@@ -52,7 +52,7 @@ interface Packet {
   a: VectorXYZ;
 }
 
-function UpdateFighter(packet: Packet) {
+function UpdateFighter(packet: Packet): Fighter {
   let newFighter: Fighter = null;
   for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
     if (world.Fighters[i].getOwnerID() === packet.id) newFighter = world.Fighters[i];
@@ -75,9 +75,10 @@ function UpdateFighter(packet: Packet) {
 
   newFighter.Velocity = new Vector(packet.v[0], packet.v[1], packet.v[2]);
   newFighter.Acceleration = new Vector(packet.a[0], packet.a[1], packet.a[2]);
+  return newFighter;
 }
 // Example on how to use it
-UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,-5,0],"a":[0,0,0]}'));
+UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,0,0],"a":[0,0,0]}'));
 
 
 // Call when server says a fighter died, hand it player ID's
@@ -157,6 +158,7 @@ function DoFrame(tick: number) {
   LastFrame = tick / 1000;
 
   // Use inputs
+  // if (dummy) dummy.Jump();
   if (Input.Jump) player.Jump();
   Input.MoveDirection.z = 0;
   player.Move(Input.MoveDirection);
@@ -186,13 +188,13 @@ function DoFrame(tick: number) {
       }
 
       // Collision effects
-      if (a.JustHitMomentum > 0) {
+      if (a.JustHitMomentum > 700) {
         for (let j = 0; j < 3; j++) {
           particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000));
         }
 
         if (Vector.Distance(a.Position, player.Position) <= 2) {
-          cam.Shake += a.JustHitMomentum / 1000;
+          cam.Shake += a.JustHitMomentum / 1500;
         }
 
         a.JustHitMomentum = 0;

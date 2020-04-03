@@ -14,7 +14,7 @@ Properties that need to be replicated from server to client:
 */
 class Sheep extends Fighter {
   constructor(id: number, position: Vector) {
-    super(200, 200, 8000, 0.5, 1, 8, 20, FighterType.Sheep, id, position);
+    super(200, 200, 8000, 0.6, 1.2, 8, 20, FighterType.Sheep, id, position);
     this.ranged = false;
   }
 

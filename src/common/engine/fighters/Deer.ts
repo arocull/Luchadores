@@ -18,7 +18,7 @@ Properties that need to be replicated from server to client:
 */
 class Deer extends Fighter {
   constructor(id: number, position: Vector) {
-    super(100, 100, 2000, 0.5, 1, 14, 30, FighterType.Deer, id, position);
+    super(100, 100, 2000, 0.5, 1, 16, 30, FighterType.Deer, id, position);
   }
 
   public fireBullet(): BBullet {

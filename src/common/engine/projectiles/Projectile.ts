@@ -51,7 +51,10 @@ class Projectile extends Entity {
     this.Position = Vector.Add(this.Position, dif);
 
     // Bounce
-    if (this.Position.z <= 0) this.Velocity.z *= -this.BounceReturn;
+    if (this.Position.z <= 0) {
+      this.Position.z = 0;
+      this.Velocity.z *= -this.BounceReturn;
+    }
   }
 
   // Called when projectile hits a fighter--it does damage and then marks projectile to be destroyed

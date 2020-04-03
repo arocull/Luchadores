@@ -69,11 +69,10 @@ test('bullet jump-dodge test', () => {
 
   world.Fighters.push(flam, deer);
 
-  for (let i = 0; i < 80; i++) {
-    world.doUpdates(0.05);
-    world.TickPhysics(0.05);
+  for (let i = 0; i < 40; i++) {
+    world.tick(0.1);
 
-    if (i === 10) flam.Firing = false;
+    if (i === 5) flam.Firing = false;
   }
 
   expect(deer.HP).toBeLessThan(deer.MaxHP - 5); // Gets hit when no action is taken
@@ -81,14 +80,14 @@ test('bullet jump-dodge test', () => {
 
   deer.Jump();
   flam.Firing = true;
-  for (let i = 0; i < 60; i++) {
-    world.doUpdates(0.05);
-    world.TickPhysics(0.05);
+  for (let i = 0; i < 50; i++) {
+    world.tick(0.05);
 
-    if (i === 8) {
+    if (i === 5) {
       flam.Firing = false;
       expect(world.Bullets.length).toBeGreaterThan(0); // There should at least be some fire to dodge
     }
   }
+
   expect(deer.HP).toBe(hp); // Not hit when bullets are leaped over
 });

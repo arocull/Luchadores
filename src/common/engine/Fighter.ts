@@ -122,7 +122,7 @@ class Fighter extends Entity {
 
   // Jump if this character is currently on the ground
   public Jump() {
-    if (this.Position.z <= 0) this.Velocity.z += this.JumpVelocity;
+    if (this.Position.z <= 0 || this.JustLanded) this.Velocity.z += this.JumpVelocity;
   }
 
   // Sets the fighter's acceleration in the given vector
@@ -163,6 +163,9 @@ class Fighter extends Entity {
   }
   public getOwnerID(): number {
     return this.ID;
+  }
+  public inBulletCooldown(): boolean {
+    return this.BulletCooldown > 0;
   }
 }
 
