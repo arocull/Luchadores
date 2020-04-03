@@ -1,5 +1,8 @@
+import Vector from '../../common/engine/Vector';
 import Fighter from '../../common/engine/Fighter';
 import { FighterType } from '../../common/engine/Enums';
+import { MessageBus } from '../../common/messaging/bus';
+import { PFire } from '../particles/index';
 
 class Animator {
   public SpriteSheet: HTMLImageElement;
@@ -60,6 +63,19 @@ class Animator {
   }
   protected tickUniqueIdle() {
     if (this.timer >= 1) this.inUniqueIdle = false; // Idle timeout
+
+    if (this.owner.getCharacter() === FighterType.Flamingo) {
+      const fire = new PFire(
+        Vector.Add(this.owner.Position, new Vector(
+          (Math.random() - 0.5) * this.owner.Radius * 1.5,
+          this.owner.Radius / 2,
+          this.owner.Height * 0.75,
+        )),
+        new Vector(0, 0, 1),
+        0.75,
+      );
+      MessageBus.publish('Effect_NewParticle', fire);
+    }
   }
 
   public Tick(DeltaTime: number) {

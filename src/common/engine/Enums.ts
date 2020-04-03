@@ -19,6 +19,7 @@ enum ParticleType {
   Confetti,
   RosePetal,
   SmashEffect,
+  Fire,
   Lightning
 }
 

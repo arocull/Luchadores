@@ -27,23 +27,16 @@ const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 
 const player = new Flamingo(1, new Vector(25, 25, 0));
 world.Fighters.push(player);
+
+// Particles
 const particles: Particle[] = [];
-
-const Input = {
-  // CLIENTSIDE ONLY
-  ListOpen: false, // Opens player list GUI on local client--does not need to be networked
-
-  // FOR REPLICATION (this should be sent to the server for sure)
-  MouseDown: false, // Is the player holding their mouse down?
-  MouseDirection: new Vector(0, 0, 0), // Where are they aiming?
-  Jump: false, // Are they strying to jump?
-  MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
-};
+MessageBus.subscribe('Effect_NewParticle', (msg) => {
+  particles.push(msg as Particle);
+});
 
 
 // Call for client to interpret packet data about specific fighters (reads off object version of Fighter.ToPacket())
 type VectorXYZ = [number, number, number];
-
 interface Packet {
   id: number;
   c: string;
@@ -51,7 +44,6 @@ interface Packet {
   v: VectorXYZ;
   a: VectorXYZ;
 }
-
 function UpdateFighter(packet: Packet): Fighter {
   let newFighter: Fighter = null;
   for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
@@ -96,6 +88,17 @@ function OnDeath(died: number, killer: number) {
 }
 
 
+// User Input //
+const Input = {
+  // CLIENTSIDE ONLY
+  ListOpen: false, // Opens player list GUI on local client--does not need to be networked
+
+  // FOR REPLICATION (this should be sent to the server for sure)
+  MouseDown: false, // Is the player holding their mouse down?
+  MouseDirection: new Vector(0, 0, 0), // Where are they aiming?
+  Jump: false, // Are they strying to jump?
+  MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
+};
 // Called when the player's input state changes
 function UpdateInput() { // Attempts to send updated user input to server
   MessageBus.publish(Topics.ClientNetworkToServer, {
