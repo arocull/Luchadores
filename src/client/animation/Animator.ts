@@ -95,7 +95,7 @@ class Animator {
     if (state === 3 && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
     else this.timer += DeltaTime;
 
-    if (this.owner.inBulletCooldown()) { // If they are recovering from firing a bullet (likely shooting)
+    if (this.owner.getBulletCooldown() > 0) { // If they are recovering from firing a bullet (likely shooting)
       if (state === 3) state = 5; // If moving, do a moving attack animation
       else state = 4; // Otherwise, do a standard attack
     }
