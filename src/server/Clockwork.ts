@@ -1,29 +1,20 @@
 import _ from 'lodash';
 import Denque from 'denque';
-import { Moment } from 'moment';
+import * as Moment from 'moment'; // NOTE: this is a namespace, it contains the Moment type under it.
 import Player from '../common/engine/Player';
+import { MessageBus, Topics } from '../common/messaging/bus';
+import Logger from './Logger';
+import World from '../common/engine/World';
+import { IPlayerInputState } from '../common/events/index';
 
-// TODO: This will be replaced with a class after we figure out what this will
-// look like...
-//
-// An example would be:
-//      Maxattax tried to MOVE LEFT by 1 step at 23:59:59.999 UTC
 interface Action {
-  timestamp: Moment,
-  player: string,
-  type: string,
-  value: number,
-  direction: string
-}
-
-// TODO: To be replaced by class representing all physical data.
-interface World {
-  tick: Function
-  apply: Function
+  player: Player;
+  input: IPlayerInputState;
+  timestamp: Moment.Moment;
 }
 
 class Clockwork {
-  private connections: Array<Player> = [];
+  private connections: Player[] = [];
   private world: World;
   private running: boolean = false;
   private actions: Denque<Action>;
@@ -48,10 +39,10 @@ class Clockwork {
         // We're going to line the actions in the order they fired, apply each
         // to the world state, and tick the physics by the amount of time
         // between each action.
-        let lastTime: Moment = null;
+        let lastTime: Moment.Moment = null;
         _.each(sortedActions, (act) => {
           // Apply the action onto the world state.
-          this.world.apply(act);
+          this.world.applyAction(act.player, act.input);
 
           if (lastTime) {
             // Tick the world by the difference in time between the actions.
@@ -70,9 +61,25 @@ class Clockwork {
     }
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  busPlayerInputHook(message: IPlayerInputState) {
+    Logger.info('%j', message);
+
+    // TODO: Get the player from the connection / message bus.
+    const action: Action = {
+      player: null,
+      timestamp: Moment.utc(),
+      input: message,
+    };
+
+    this.pushAction(action);
+  }
+
   start() {
     if (!this.running) {
       this.running = true;
+      // TODO: How do I separate out my messages?
+      MessageBus.subscribe(Topics.ServerNetworkFromClient, this.busPlayerInputHook);
       this.tick(0);
     }
   }
@@ -80,6 +87,7 @@ class Clockwork {
   stop() {
     if (this.running) {
       this.running = false;
+      MessageBus.unsubscribe(Topics.ServerNetworkFromClient, this.busPlayerInputHook);
 
       clearTimeout(this.loop);
     }
