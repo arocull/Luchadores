@@ -1,7 +1,7 @@
 enum EntityType {
-  Fighter = 0,
-  Projectile = 1,
-  Particle = 2,
+  Fighter = 25,
+  Projectile = 50,
+  Particle = 0,
 }
 
 enum FighterType {

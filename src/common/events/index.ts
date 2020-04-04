@@ -60,6 +60,10 @@ export interface IEntityFighterFlamingo extends events.IEntityFighterFlamingo {
   type: TypeEnum.Entity_Fighter_Flamingo;
 }
 
+export interface IEntityProjectile extends events.IEntityProjectile {
+  type: TypeEnum.Entity_Projectile;
+}
+
 export type IEvent =
   | IClientAck
   | IClientConnect
@@ -70,4 +74,9 @@ export type IEvent =
   | IPlayerJoined
   | IPlayerInputState
   | IEntity
+  | IEntityFighter
+  | IEntityFighterSheep
+  | IEntityFighterDeer
+  | IEntityFighterFlamingo
+  | IEntityProjectile
   ;

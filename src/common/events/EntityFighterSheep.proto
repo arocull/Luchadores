@@ -1,4 +1,4 @@
-import "../Vector.proto";
+import "Vector.proto";
 
 message EntityFighterSheep {
     required int32 type = 1;
