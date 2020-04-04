@@ -2,6 +2,7 @@
 import NetworkClient from './network/client';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import { TypeEnum } from '../common/events/index';
+import { encoder } from '../common/messaging/serde';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Fighter, Sheep, Deer, Flamingo } from '../common/engine/fighters/index';
@@ -101,16 +102,17 @@ const Input = {
 };
 // Called when the player's input state changes
 function UpdateInput() { // Attempts to send updated user input to server
-  MessageBus.publish(Topics.ClientNetworkToServer, {
+  MessageBus.publish(Topics.ClientNetworkToServer, encoder({
     type: TypeEnum.PlayerInputState,
     jump: Input.Jump,
     mouseDown: Input.MouseDown,
     mouseDirection: Input.MouseDirection,
     moveDirection: Input.MoveDirection,
-  });
+  }));
 }
 document.addEventListener('keydown', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
+  const oldJ = Input.Jump;
 
   if (event.key === 'a') Input.MoveDirection.x = -1;
   else if (event.key === 'd') Input.MoveDirection.x = 1;
@@ -119,17 +121,18 @@ document.addEventListener('keydown', (event) => {
   else if (event.key === ' ') Input.Jump = true;
   else if (event.key === 'y') Input.ListOpen = true;
 
-  if (!old.equals(Input.MouseDirection)) UpdateInput();
+  if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
 });
 document.addEventListener('keyup', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
+  const oldJ = Input.Jump;
 
   if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
   else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
   else if (event.key === ' ') Input.Jump = false;
   else if (event.key === 'y') Input.ListOpen = false;
 
-  if (!old.equals(Input.MouseDirection)) UpdateInput();
+  if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
 });
 document.addEventListener('mousedown', () => {
   Input.MouseDown = true;
