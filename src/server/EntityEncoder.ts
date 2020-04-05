@@ -1,4 +1,6 @@
+import Random from '../common/engine/Random';
 import Entity from '../common/engine/Entity';
+import World from '../common/engine/World';
 import { Fighter, Flamingo } from '../common/engine/fighters/index';
 import { Projectile } from '../common/engine/projectiles/index';
 import { EntityType, FighterType } from '../common/engine/Enums';
@@ -16,21 +18,20 @@ function encodeEntity(obj: Entity): ArrayBuffer {
 
   if (obj.type === EntityType.Fighter) {
     const fight = <Fighter>obj;
-    result.type = TypeEnum.Entity_Fighter + fight.getCharacter(); // 425 + (1 to 3), automatically sets type based off of fighter class
+    result.type = TypeEnum.Entity_Fighter; // 425 + (1 to 3), automatically sets type based off of fighter class
 
     result.playerID = fight.getOwnerID();
     result.class = fight.getCharacter();
+    result.attacking = fight.Firing;
+    result.aim = fight.getAim();
+    result.cooldown = fight.getBulletCooldown();
+    result.specialNumber = 0;
+    result.specialBool = false;
 
-    if (fight.isRanged()) {
-      result.attacking = fight.Firing;
-      result.aim = fight.getAim();
-      result.cooldown = fight.getBulletCooldown();
-
-      if (fight.getCharacter() === FighterType.Flamingo) {
-        const flam = <Flamingo>fight;
-        result.breath = flam.getBreath();
-        result.breathing = flam.isBreathing();
-      }
+    if (fight.getCharacter() === FighterType.Flamingo) {
+      const flam = <Flamingo>fight;
+      result.specialNumber = flam.getBreath();
+      result.specialBool = flam.isBreathing();
     }
   } else if (obj.type === EntityType.Projectile) {
     const proj = <Projectile>obj;
@@ -43,4 +44,27 @@ function encodeEntity(obj: Entity): ArrayBuffer {
   return encoder(result);
 }
 
-export { encodeEntity as default };
+function encodeWorldState(world: World): ArrayBuffer {
+  const result: any = {
+    type: TypeEnum.WorldState,
+    randomSeed: Random.getSeed(),
+    randomIndex: Random.getIndex(),
+    mapWidth: world.Map.Width,
+    mapHeight: world.Map.Height,
+    mapFriction: world.Map.Friction,
+    mapId: 0,
+    fighters: [],
+    projectiles: [],
+  };
+
+  for (let i = 0; i < world.Fighters.length; i++) {
+    result.fighters.push(encodeEntity(world.Fighters[i]));
+  }
+  for (let i = 0; i < world.Bullets.length; i++) {
+    result.projectiles.push(encodeEntity(world.Bullets[i]));
+  }
+
+  return encoder(result);
+}
+
+export { encodeEntity, encodeWorldState };

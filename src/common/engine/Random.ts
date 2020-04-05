@@ -19,6 +19,13 @@ class Random {
     index++;
     return Math.sin(index * seed - index ** Math.PI + seed / index) / 2 + 0.5;
   }
+
+  static getSeed(): number {
+    return seed;
+  }
+  static getIndex(): number {
+    return index;
+  }
 }
 
 export { Random as default };

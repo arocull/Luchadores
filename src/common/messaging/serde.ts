@@ -26,6 +26,14 @@ function getProtobufType(object: IKind): ProtobufTypeSerde {
       return events.PlayerJoined;
     case TypeEnum.PlayerInputState:
       return events.PlayerInputState;
+    case TypeEnum.WorldState:
+      return events.WorldState;
+    case TypeEnum.Entity:
+      return events.Entity;
+    case TypeEnum.Entity_Fighter:
+      return events.EntityFighter;
+    case TypeEnum.Entity_Projectile:
+      return events.EntityProjectile;
     default:
       // TODO: Figure out how to make this an exhaustive switch
       // and produce a compile error if not all cases are covered.

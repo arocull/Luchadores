@@ -96,7 +96,7 @@ const Input = {
 
   // FOR REPLICATION (this should be sent to the server for sure)
   MouseDown: false, // Is the player holding their mouse down?
-  MouseDirection: new Vector(0, 0, 0), // Where are they aiming?
+  MouseDirection: new Vector(1, 0, 0), // Where are they aiming?
   Jump: false, // Are they strying to jump?
   MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
 };

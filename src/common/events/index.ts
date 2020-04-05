@@ -43,25 +43,8 @@ export interface IPlayerInputState extends events.IPlayerInputState {
   type: TypeEnum.PlayerInputState;
 }
 
-export interface IEntity extends events.IEntity {
-  type: TypeEnum.Entity;
-}
-
-export interface IEntityFighter extends events.IEntityFighter {
-  type: TypeEnum.Entity_Fighter;
-}
-export interface IEntityFighterSheep extends events.IEntityFighterSheep {
-  type: TypeEnum.Entity_Fighter_Sheep;
-}
-export interface IEntityFighterDeer extends events.IEntityFighterDeer {
-  type: TypeEnum.Entity_Fighter_Deer;
-}
-export interface IEntityFighterFlamingo extends events.IEntityFighterFlamingo {
-  type: TypeEnum.Entity_Fighter_Flamingo;
-}
-
-export interface IEntityProjectile extends events.IEntityProjectile {
-  type: TypeEnum.Entity_Projectile;
+export interface IWorldState extends events.IWorldState {
+  type: TypeEnum.WorldState;
 }
 
 export type IEvent =
@@ -73,10 +56,5 @@ export type IEvent =
   | IPlayerConnect
   | IPlayerJoined
   | IPlayerInputState
-  | IEntity
-  | IEntityFighter
-  | IEntityFighterSheep
-  | IEntityFighterDeer
-  | IEntityFighterFlamingo
-  | IEntityProjectile
+  | IWorldState
   ;

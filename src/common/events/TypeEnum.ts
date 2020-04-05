@@ -10,16 +10,11 @@ enum TypeEnum {
   PlayerJoined = 301,
   PlayerInputState = 302,
 
-  Entity = 400,
+  WorldState = 400,
 
-  Entity_Fighter = 425,
-  Entity_Fighter_Sheep = 426,
-  Entity_Fighter_Deer = 427,
-  Entity_Fighter_Flamingo = 428,
-  
-  Entity_Projectile = 450,
-  Entity_Projectile_Bullet = 451,
-  Entity_Projectile_Fire = 452,
+  Entity = 500,
+  Entity_Fighter = 501,
+  Entity_Projectile = 502,
 };
 
 export { TypeEnum as default };
