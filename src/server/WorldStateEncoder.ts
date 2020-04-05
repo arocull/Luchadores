@@ -5,6 +5,7 @@ import { Fighter, Flamingo } from '../common/engine/fighters/index';
 import { Projectile } from '../common/engine/projectiles/index';
 import { EntityType, FighterType } from '../common/engine/Enums';
 import { TypeEnum } from '../common/events/index';
+import { IWorldState } from '../common/events/events';
 import { encoder } from '../common/messaging/serde';
 
 function encodeEntity(obj: Entity): any {
@@ -43,7 +44,7 @@ function encodeEntity(obj: Entity): any {
 // Encodes the entire WorldState into a Protobuff
 // May need to include time packet was sent?
 function encodeWorldState(world: World): ArrayBuffer {
-  const result: any = {
+  const result: IWorldState = {
     type: TypeEnum.WorldState,
     randomSeed: Random.getSeed(),
     randomIndex: Random.getIndex(),

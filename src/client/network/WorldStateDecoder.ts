@@ -5,37 +5,11 @@ import World from '../../common/engine/World';
 import { Fighter, Sheep, Deer, Flamingo } from '../../common/engine/fighters/index';
 import { Projectile, BBullet, BFire } from '../../common/engine/projectiles/index';
 import { FighterType, ProjectileType } from '../../common/engine/Enums';
-import { IWorldState } from '../../common/events/events';
+import { IWorldState, IEntityFighter, IEntityProjectile } from '../../common/events/events';
 /* eslint-enable object-curly-newline */
 
-interface VectorXYZ {
-  x: number;
-  y: number;
-  z: number;
-}
-interface EntityFighter {
-  position: VectorXYZ;
-  velocity: VectorXYZ;
-  acceleration: VectorXYZ;
-  ownerId: number;
-  class: FighterType;
-  firing: boolean;
-  aim: VectorXYZ;
-  cooldown: number;
-  specialNumber: number;
-  specialBool: boolean;
-}
-interface EntityProjectile {
-  position: VectorXYZ;
-  velocity: VectorXYZ;
-  acceleration: VectorXYZ;
-  ownerId: number;
-  projectileType: ProjectileType;
-  lifetime: number;
-}
 
-
-function updateFighter(world: World, packet: EntityFighter): Fighter {
+function updateFighter(world: World, packet: IEntityFighter): Fighter {
   let newFighter: Fighter = null;
   for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
     if (world.Fighters[i].getOwnerID() === packet.ownerId) newFighter = world.Fighters[i];
@@ -60,14 +34,14 @@ function updateFighter(world: World, packet: EntityFighter): Fighter {
 
   if (packet.class === FighterType.Flamingo) {
     const flam = <Flamingo>newFighter;
-    flam.setBreath(packet.specialNumber, packet.specialBool);
+    flam.setBreath(packet.specialNumber, packet.specialBoolean);
   }
 
   return newFighter;
 }
 
 
-function generateProjectile(world: World, packet: EntityProjectile): Projectile {
+function generateProjectile(world: World, packet: IEntityProjectile): Projectile {
   const pos = new Vector(packet.position.x, packet.position.y, packet.position.z);
   const dir = Vector.UnitVectorFromXYZ(packet.velocity.x, packet.velocity.y, packet.velocity.z);
   let owner: Fighter = null;
@@ -102,12 +76,12 @@ function decodeWorldState(state: IWorldState, world: World) {
   // Map ID would be used to set map texture, but we only have one right now, so leave it as-is
 
   for (let i = 0; i < state.fighters.length; i++) {
-    updateFighter(world, state.fighters[i] as EntityFighter);
+    updateFighter(world, state.fighters[i] as IEntityFighter);
   }
 
   world.Bullets = []; // Clear bullet state and sync with new one
   for (let i = 0; i < state.projectiles.length; i++) {
-    world.Bullets.push(generateProjectile(world, state.projectiles[i] as EntityProjectile));
+    world.Bullets.push(generateProjectile(world, state.projectiles[i] as IEntityProjectile));
   }
 }
 /* eslint-enable no-param-reassign */
