@@ -17,7 +17,7 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
 
   const pos = new Vector(packet.position.x, packet.position.y, packet.position.z);
 
-  if (!newFighter) { // If the fighter could not be found, generate a new one
+  if (newFighter === null) { // If the fighter could not be found, generate a new one
     if (packet.class === FighterType.Sheep) newFighter = new Sheep(packet.ownerId, pos);
     else if (packet.class === FighterType.Deer) newFighter = new Deer(packet.ownerId, pos);
     else if (packet.class === FighterType.Flamingo) newFighter = new Flamingo(packet.ownerId, pos);
@@ -32,8 +32,8 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
   newFighter.aim(new Vector(packet.aim.x, packet.aim.y, packet.aim.z));
   newFighter.setBulletCooldown(packet.cooldown);
 
-  if (packet.class === FighterType.Flamingo) {
-    const flam = <Flamingo>newFighter;
+  if (newFighter.getCharacter() === FighterType.Flamingo) {
+    const flam: Flamingo = <Flamingo>(newFighter);
     flam.setBreath(packet.specialNumber, packet.specialBoolean);
   }
 

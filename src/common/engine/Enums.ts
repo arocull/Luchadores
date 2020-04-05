@@ -1,18 +1,18 @@
 enum EntityType {
-  Fighter = 25,
-  Projectile = 50,
-  Particle = 0,
+  Fighter = 0,
+  Projectile = 1,
+  Particle = 2,
 }
 
 enum FighterType {
-  Sheep = 1,
-  Deer = 2,
-  Flamingo = 3,
+  Sheep = 0,
+  Deer = 1,
+  Flamingo = 2,
 }
 
 enum ProjectileType {
-  Bullet = 1,
-  Fire = 2,
+  Bullet = 0,
+  Fire = 1,
 }
 
 enum ParticleType {

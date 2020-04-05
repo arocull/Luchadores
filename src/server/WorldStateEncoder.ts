@@ -18,13 +18,13 @@ function encodeEntity(obj: Entity): any {
   if (obj.type === EntityType.Fighter) {
     const fight = <Fighter>obj;
 
-    result.playerID = fight.getOwnerID();
+    result.ownerId = fight.getOwnerID();
     result.class = fight.getCharacter();
     result.attacking = fight.Firing;
     result.aim = fight.getAim();
     result.cooldown = fight.getBulletCooldown();
     result.specialNumber = 0;
-    result.specialBool = false;
+    result.specialBoolean = false;
 
     if (fight.getCharacter() === FighterType.Flamingo) {
       const flam = <Flamingo>fight;
