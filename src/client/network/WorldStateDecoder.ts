@@ -65,6 +65,7 @@ function generateProjectile(world: World, packet: IEntityProjectile): Projectile
 }
 
 
+// Decode world-state--hand it a WorldState event and then a world instance to apply the changes to
 /* eslint-disable no-param-reassign */
 function decodeWorldState(state: IWorldState, world: World) {
   Random.setSeed(state.randomSeed);

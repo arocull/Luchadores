@@ -3,6 +3,8 @@ import NetworkClient from './network/client';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import { TypeEnum } from '../common/events/index';
 import { encoder } from '../common/messaging/serde';
+import { IWorldState } from '../common/events/events';
+import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Flamingo } from '../common/engine/fighters/index';
@@ -119,11 +121,32 @@ document.addEventListener('mousemove', (event) => {
 });
 
 
+let stateUpdatePending = false;
+let stateUpdateLastPacketTime = 0;
+let stateUpdate: IWorldState = null;
+MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg) => {
+  if (msg.type === TypeEnum.WorldState) {
+    stateUpdatePending = true;
+    stateUpdate = msg;
+    // Packet timing??
+    if (stateUpdateLastPacketTime + 1 > stateUpdateLastPacketTime) { // Would really be if packet.timeSent > stateUpdateLastPacketTime
+      stateUpdateLastPacketTime += 1; // = packet.timeSent
+    }
+  }
+});
+
+
 let LastFrame = 0;
 function DoFrame(tick: number) {
   // Convert milliseconds to seconds
-  const DeltaTime = (tick / 1000) - LastFrame;
+  let DeltaTime = (tick / 1000) - LastFrame;
   LastFrame = tick / 1000;
+
+  if (stateUpdatePending && stateUpdate) {
+    stateUpdatePending = false;
+    decodeWorldState(stateUpdate, world);
+    DeltaTime += (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
+  }
 
   // Use inputs
   // if (dummy) dummy.Jump();
