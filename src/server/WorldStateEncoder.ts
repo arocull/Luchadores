@@ -40,6 +40,8 @@ function encodeEntity(obj: Entity): any {
   return result;
 }
 
+// Encodes the entire WorldState into a Protobuff
+// May need to include time packet was sent?
 function encodeWorldState(world: World): ArrayBuffer {
   const result: any = {
     type: TypeEnum.WorldState,

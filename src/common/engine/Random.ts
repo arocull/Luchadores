@@ -8,6 +8,9 @@ class Random {
     seed = newSeed;
     index = 0;
   }
+  static setIndex(newIndex: number) {
+    index = newIndex;
+  }
 
   // Creates a random seed based off of current time (randomized as well by previous use if there was any)
   static randomSeed() {

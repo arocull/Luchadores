@@ -5,7 +5,7 @@ import { TypeEnum } from '../common/events/index';
 import { encoder } from '../common/messaging/serde';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
-import { Fighter, Sheep, Deer, Flamingo } from '../common/engine/fighters/index';
+import { Flamingo } from '../common/engine/fighters/index';
 import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
 import Animator from './animation/Animator';
 import World from '../common/engine/World';
@@ -34,44 +34,6 @@ const particles: Particle[] = [];
 MessageBus.subscribe('Effect_NewParticle', (msg) => {
   particles.push(msg as Particle);
 });
-
-
-// Call for client to interpret packet data about specific fighters (reads off object version of Fighter.ToPacket())
-type VectorXYZ = [number, number, number];
-interface Packet {
-  id: number;
-  c: string;
-  p: VectorXYZ;
-  v: VectorXYZ;
-  a: VectorXYZ;
-}
-function UpdateFighter(packet: Packet): Fighter {
-  let newFighter: Fighter = null;
-  for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
-    if (world.Fighters[i].getOwnerID() === packet.id) newFighter = world.Fighters[i];
-  }
-
-  if (!newFighter) { // If the fighter could not be found, generate a new one
-    if (packet.c === 'Sheep') {
-      newFighter = new Sheep(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
-    } else if (packet.c === 'Deer') {
-      newFighter = new Deer(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
-    } else if (packet.c === 'Flamingo') {
-      newFighter = new Flamingo(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
-    } else {
-      throw new Error(`Unknown fighter type: ${packet.c}`);
-    }
-    world.Fighters.push(newFighter); // Otherwise, add them to the list
-  } else {
-    newFighter.Position = new Vector(packet.p[0], packet.p[1], packet.p[2]);
-  }
-
-  newFighter.Velocity = new Vector(packet.v[0], packet.v[1], packet.v[2]);
-  newFighter.Acceleration = new Vector(packet.a[0], packet.a[1], packet.a[2]);
-  return newFighter;
-}
-// Example on how to use it
-UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,0,0],"a":[0,0,0]}'));
 
 
 // Call when server says a fighter died, hand it player ID's

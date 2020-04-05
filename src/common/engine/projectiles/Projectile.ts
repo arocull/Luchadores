@@ -78,6 +78,9 @@ class Projectile extends Entity {
   public getLifetime() {
     return this.Lifetime;
   }
+  public setLifetime(newLifetime: number) {
+    this.Lifetime = newLifetime;
+  }
   public getLifePercentage() {
     return this.Lifetime / this.MaxLifetime;
   }
