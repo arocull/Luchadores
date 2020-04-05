@@ -1,11 +1,10 @@
 import "Vector.proto";
 
 message EntityProjectile {
-    required int32 type = 1;
-    required Vector position = 2;
-    required Vector velocity = 3;
-    required Vector acceleration = 4;
-    required int32 ownerId = 5;
-    required int32 projectileType = 6;
-    required float lifetime = 7;
+    required Vector position = 1;
+    required Vector velocity = 2;
+    required Vector acceleration = 3;
+    required int32 ownerId = 4;
+    required int32 projectileType = 5;
+    required float lifetime = 6;
 }

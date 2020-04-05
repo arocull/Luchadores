@@ -1,8 +1,7 @@
 import "Vector.proto";
 
 message Entity {
-    required int32 type = 1;
-    required Vector position = 2;
-    required Vector velocity = 3;
-    required Vector acceleration = 4;
+    required Vector position = 1;
+    required Vector velocity = 2;
+    required Vector acceleration = 3;
 }

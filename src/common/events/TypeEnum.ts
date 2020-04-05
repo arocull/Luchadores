@@ -11,10 +11,6 @@ enum TypeEnum {
   PlayerInputState = 302,
 
   WorldState = 400,
-
-  Entity = 500,
-  Entity_Fighter = 501,
-  Entity_Projectile = 502,
 };
 
 export { TypeEnum as default };

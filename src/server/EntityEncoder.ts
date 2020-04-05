@@ -7,10 +7,8 @@ import { EntityType, FighterType } from '../common/engine/Enums';
 import { TypeEnum } from '../common/events/index';
 import { encoder } from '../common/messaging/serde';
 
-
-function encodeEntity(obj: Entity): ArrayBuffer {
+function encodeEntity(obj: Entity): any {
   const result: any = {
-    type: TypeEnum.Entity,
     position: obj.Position,
     velocity: obj.Velocity,
     acceleration: obj.Acceleration,
@@ -18,7 +16,6 @@ function encodeEntity(obj: Entity): ArrayBuffer {
 
   if (obj.type === EntityType.Fighter) {
     const fight = <Fighter>obj;
-    result.type = TypeEnum.Entity_Fighter; // 425 + (1 to 3), automatically sets type based off of fighter class
 
     result.playerID = fight.getOwnerID();
     result.class = fight.getCharacter();
@@ -35,13 +32,12 @@ function encodeEntity(obj: Entity): ArrayBuffer {
     }
   } else if (obj.type === EntityType.Projectile) {
     const proj = <Projectile>obj;
-    result.type = TypeEnum.Entity_Projectile;
     result.ownerId = proj.getOwnerID();
     result.projectileType = proj.projectileType;
     result.lifetime = proj.getLifetime();
   }
 
-  return encoder(result);
+  return result;
 }
 
 function encodeWorldState(world: World): ArrayBuffer {
@@ -67,4 +63,4 @@ function encodeWorldState(world: World): ArrayBuffer {
   return encoder(result);
 }
 
-export { encodeEntity, encodeWorldState };
+export { encodeWorldState as default };
