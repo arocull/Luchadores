@@ -2,9 +2,12 @@
 import NetworkClient from './network/client';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import { TypeEnum } from '../common/events/index';
+import { encoder } from '../common/messaging/serde';
+import { IWorldState } from '../common/events/events';
+import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
-import { Fighter, Sheep, Deer, Flamingo } from '../common/engine/fighters/index';
+import { Flamingo } from '../common/engine/fighters/index';
 import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
 import Animator from './animation/Animator';
 import World from '../common/engine/World';
@@ -35,44 +38,6 @@ MessageBus.subscribe('Effect_NewParticle', (msg) => {
 });
 
 
-// Call for client to interpret packet data about specific fighters (reads off object version of Fighter.ToPacket())
-type VectorXYZ = [number, number, number];
-interface Packet {
-  id: number;
-  c: string;
-  p: VectorXYZ;
-  v: VectorXYZ;
-  a: VectorXYZ;
-}
-function UpdateFighter(packet: Packet): Fighter {
-  let newFighter: Fighter = null;
-  for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
-    if (world.Fighters[i].getOwnerID() === packet.id) newFighter = world.Fighters[i];
-  }
-
-  if (!newFighter) { // If the fighter could not be found, generate a new one
-    if (packet.c === 'Sheep') {
-      newFighter = new Sheep(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
-    } else if (packet.c === 'Deer') {
-      newFighter = new Deer(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
-    } else if (packet.c === 'Flamingo') {
-      newFighter = new Flamingo(packet.id, new Vector(packet.p[0], packet.p[1], packet.p[2]));
-    } else {
-      throw new Error(`Unknown fighter type: ${packet.c}`);
-    }
-    world.Fighters.push(newFighter); // Otherwise, add them to the list
-  } else {
-    newFighter.Position = new Vector(packet.p[0], packet.p[1], packet.p[2]);
-  }
-
-  newFighter.Velocity = new Vector(packet.v[0], packet.v[1], packet.v[2]);
-  newFighter.Acceleration = new Vector(packet.a[0], packet.a[1], packet.a[2]);
-  return newFighter;
-}
-// Example on how to use it
-UpdateFighter(JSON.parse('{"id":2,"c":"Sheep","p":[30,30,1],"v":[0,0,0],"a":[0,0,0]}'));
-
-
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
@@ -95,22 +60,23 @@ const Input = {
 
   // FOR REPLICATION (this should be sent to the server for sure)
   MouseDown: false, // Is the player holding their mouse down?
-  MouseDirection: new Vector(0, 0, 0), // Where are they aiming?
+  MouseDirection: new Vector(1, 0, 0), // Where are they aiming?
   Jump: false, // Are they strying to jump?
   MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
 };
 // Called when the player's input state changes
 function UpdateInput() { // Attempts to send updated user input to server
-  MessageBus.publish(Topics.ClientNetworkToServer, {
+  MessageBus.publish(Topics.ClientNetworkToServer, encoder({
     type: TypeEnum.PlayerInputState,
     jump: Input.Jump,
     mouseDown: Input.MouseDown,
     mouseDirection: Input.MouseDirection,
     moveDirection: Input.MoveDirection,
-  });
+  }));
 }
 document.addEventListener('keydown', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
+  const oldJ = Input.Jump;
 
   if (event.key === 'a') Input.MoveDirection.x = -1;
   else if (event.key === 'd') Input.MoveDirection.x = 1;
@@ -119,17 +85,18 @@ document.addEventListener('keydown', (event) => {
   else if (event.key === ' ') Input.Jump = true;
   else if (event.key === 'y') Input.ListOpen = true;
 
-  if (!old.equals(Input.MouseDirection)) UpdateInput();
+  if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
 });
 document.addEventListener('keyup', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
+  const oldJ = Input.Jump;
 
   if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
   else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
   else if (event.key === ' ') Input.Jump = false;
   else if (event.key === 'y') Input.ListOpen = false;
 
-  if (!old.equals(Input.MouseDirection)) UpdateInput();
+  if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
 });
 document.addEventListener('mousedown', () => {
   Input.MouseDown = true;
@@ -154,11 +121,32 @@ document.addEventListener('mousemove', (event) => {
 });
 
 
+let stateUpdatePending = false;
+let stateUpdateLastPacketTime = 0;
+let stateUpdate: IWorldState = null;
+MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg) => {
+  if (msg.type === TypeEnum.WorldState) {
+    stateUpdatePending = true;
+    stateUpdate = msg;
+    // Packet timing??
+    if (stateUpdateLastPacketTime + 1 > stateUpdateLastPacketTime) { // Would really be if packet.timeSent > stateUpdateLastPacketTime
+      stateUpdateLastPacketTime += 1; // = packet.timeSent
+    }
+  }
+});
+
+
 let LastFrame = 0;
 function DoFrame(tick: number) {
   // Convert milliseconds to seconds
-  const DeltaTime = (tick / 1000) - LastFrame;
+  let DeltaTime = (tick / 1000) - LastFrame;
   LastFrame = tick / 1000;
+
+  if (stateUpdatePending && stateUpdate) {
+    stateUpdatePending = false;
+    decodeWorldState(stateUpdate, world);
+    DeltaTime += (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
+  }
 
   // Use inputs
   // if (dummy) dummy.Jump();

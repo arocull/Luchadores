@@ -1,26 +1,26 @@
 enum EntityType {
-  Fighter,
-  Projectile,
-  Particle
+  Fighter = 0,
+  Projectile = 1,
+  Particle = 2,
 }
 
 enum FighterType {
-  Sheep,
-  Deer,
-  Flamingo
+  Sheep = 0,
+  Deer = 1,
+  Flamingo = 2,
 }
 
 enum ProjectileType {
-  Bullet,
-  Fire
+  Bullet = 0,
+  Fire = 1,
 }
 
 enum ParticleType {
-  Confetti,
-  RosePetal,
-  SmashEffect,
-  Fire,
-  Lightning
+  Confetti = 0,
+  RosePetal = 1,
+  SmashEffect = 2,
+  Fire = 3,
+  Lightning = 4,
 }
 
 export {

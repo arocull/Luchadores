@@ -1,0 +1,7 @@
+import "Vector.proto";
+
+message Entity {
+    required Vector position = 1;
+    required Vector velocity = 2;
+    required Vector acceleration = 3;
+}

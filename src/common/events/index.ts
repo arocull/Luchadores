@@ -43,6 +43,10 @@ export interface IPlayerInputState extends events.IPlayerInputState {
   type: TypeEnum.PlayerInputState;
 }
 
+export interface IWorldState extends events.IWorldState {
+  type: TypeEnum.WorldState;
+}
+
 export type IEvent =
   | IClientAck
   | IClientConnect
@@ -52,4 +56,5 @@ export type IEvent =
   | IPlayerConnect
   | IPlayerJoined
   | IPlayerInputState
+  | IWorldState
   ;
