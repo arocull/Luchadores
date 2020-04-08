@@ -56,7 +56,10 @@ function OnDeath(died: number, killer: number) {
 // User Input //
 const Input = {
   // CLIENTSIDE ONLY
-  ListOpen: false, // Opens player list GUI on local client--does not need to be networked
+  GUIMode: false,
+  PlayerListOpen: false, // Opens player list GUI on local client--does not need to be networked
+  MouseX: 0,
+  MouseY: 0,
 
   // FOR REPLICATION (this should be sent to the server for sure)
   MouseDown: false, // Is the player holding their mouse down?
@@ -66,6 +69,7 @@ const Input = {
 };
 // Called when the player's input state changes
 function UpdateInput() { // Attempts to send updated user input to server
+  if (Input.GUIMode) return; // Do not send input updates if the player is fiddling with UI
   MessageBus.publish(Topics.ClientNetworkToServer, encoder({
     type: TypeEnum.PlayerInputState,
     jump: Input.Jump,
@@ -83,7 +87,7 @@ document.addEventListener('keydown', (event) => {
   else if (event.key === 'w') Input.MoveDirection.y = 1;
   else if (event.key === 's') Input.MoveDirection.y = -1;
   else if (event.key === ' ') Input.Jump = true;
-  else if (event.key === 'y') Input.ListOpen = true;
+  else if (event.key === 'y') Input.PlayerListOpen = true;
 
   if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
 });
@@ -94,7 +98,7 @@ document.addEventListener('keyup', (event) => {
   if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
   else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
   else if (event.key === ' ') Input.Jump = false;
-  else if (event.key === 'y') Input.ListOpen = false;
+  else if (event.key === 'y') Input.PlayerListOpen = false;
 
   if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
 });
@@ -107,8 +111,12 @@ document.addEventListener('mouseup', () => {
   UpdateInput();
 });
 document.addEventListener('mousemove', (event) => {
+  if (Input.GUIMode) {
+    Input.MouseX = event.clientX;
+    Input.MouseY = event.clientY;
+
   // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
-  if (player && player.isRanged()) {
+  } else if (player && player.isRanged()) {
     const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(player.Position), new Vector(event.clientX, event.clientY, 0)));
     dir.x *= -1;
 
@@ -170,7 +178,7 @@ function DoFrame(tick: number) {
     const a = world.Fighters[i];
     if (a) {
       // Tick animators, prune and generate new ones based off of need
-      if (!a.Animator) a.Animator = new Animator(a);
+      if (!a.Animator) a.Animator = new Animator(a, renderSettings);
       else if (a.Animator) {
         a.Animator.Tick(DeltaTime);
         if (a.Animator.killEffectCountdown === 0) {
@@ -212,7 +220,7 @@ function DoFrame(tick: number) {
   }
 
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
-  if (Input.ListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
+  if (Input.PlayerListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
   return window.requestAnimationFrame(DoFrame);
 }

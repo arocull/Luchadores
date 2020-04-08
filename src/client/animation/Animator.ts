@@ -1,8 +1,9 @@
 import Vector from '../../common/engine/Vector';
+import RenderSettings from '../RenderSettings';
 import Fighter from '../../common/engine/Fighter';
 import { FighterType } from '../../common/engine/Enums';
 import { MessageBus } from '../../common/messaging/bus';
-import { PFire } from '../particles/index';
+import { PFire, PSmoke } from '../particles/index';
 
 class Animator {
   public SpriteSheet: HTMLImageElement;
@@ -15,13 +16,14 @@ class Animator {
   public row: number;
 
   public timer: number;
+  public timerTick: number;
   public lastState: number;
   protected timeToUniqueIdle: number;
   protected inUniqueIdle: boolean;
 
   public killEffectCountdown: number;
 
-  constructor(protected owner: Fighter) {
+  constructor(protected owner: Fighter, private settings: RenderSettings) {
     this.SpriteSheet = new Image();
 
     this.FrameWidth = 512;
@@ -46,6 +48,7 @@ class Animator {
     this.row = 0;
 
     this.timer = 0;
+    this.timerTick = 0;
     this.lastState = 0;
     this.timeToUniqueIdle = Math.random() * 13;
 
@@ -59,12 +62,14 @@ class Animator {
     this.row = 0;
     this.timer = 0;
     this.inUniqueIdle = true;
-    this.timeToUniqueIdle = Math.random() * 13;
+    this.timeToUniqueIdle = 8 + Math.random() * 5;
   }
+
+  // Tick special effects for unique idle animations
   protected tickUniqueIdle() {
     if (this.timer >= 1) this.inUniqueIdle = false; // Idle timeout
 
-    if (this.owner.getCharacter() === FighterType.Flamingo) {
+    if (this.owner.getCharacter() === FighterType.Flamingo && this.settings.nextParticle()) {
       const fire = new PFire(
         Vector.Add(this.owner.Position, new Vector(
           (Math.random() - 0.5) * this.owner.Radius * 1.5,
@@ -78,8 +83,38 @@ class Animator {
     }
   }
 
+  // Tick special effects for when the entity is attacking
+  protected tickAttacking() {
+    if (this.owner.getCharacter() === FighterType.Flamingo) {
+      if (this.timerTick % 3 === 1 && this.settings.nextParticle()) {
+        const fire = new PFire(
+          Vector.Add(this.owner.Position, new Vector(
+            (Math.random() - 0.5) * this.owner.Radius * 1.4,
+            this.owner.Radius / 2,
+            this.owner.Height * 0.75,
+          )),
+          new Vector(0, 0, 1),
+          0.75,
+        );
+        MessageBus.publish('Effect_NewParticle', fire);
+      } else if (this.timerTick % 5 === 4 && this.settings.nextParticle()) {
+        let dir = 1;
+        if (this.owner.Flipped === true) dir = -1;
+
+        const pos = Vector.Clone(this.owner.Position);
+        pos.z += this.owner.Height * 0.5;
+        pos.x += this.owner.Radius * 1.2 * dir;
+        pos.y -= 0.1;
+
+        const smoke = new PSmoke(pos, new Vector(3 * dir, 0, -1.75), 1);
+        MessageBus.publish('Effect_NewParticle', smoke);
+      }
+    }
+  }
+
   public Tick(DeltaTime: number) {
     let state = 0;
+    this.timerTick++;
 
     // If they are moving, set the state to that
     if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = 3;
@@ -124,11 +159,13 @@ class Animator {
       case 4: // Attack
         this.frame = Math.floor(this.timer * 5) % 5;
         this.row = 2;
+        this.tickAttacking();
         break;
 
       case 5: // Attack while moving
         this.frame = (Math.floor(this.timer * 5) % 5) + 5;
         this.row = 2;
+        this.tickAttacking();
         break;
 
       default: // Idle animation

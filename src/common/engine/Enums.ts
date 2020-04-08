@@ -20,7 +20,8 @@ enum ParticleType {
   RosePetal = 1,
   SmashEffect = 2,
   Fire = 3,
-  Lightning = 4,
+  Smoke = 4,
+  Lightning = 5,
 }
 
 export {

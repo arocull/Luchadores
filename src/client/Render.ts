@@ -2,11 +2,11 @@
 import Vector from '../common/engine/Vector';
 import { EntityType, ParticleType, ProjectileType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
-import Fighter from '../common/engine/Fighter';
+import { Fighter } from '../common/engine/fighters/index';
 import Animator from './animation/Animator';
-import Projectile from '../common/engine/projectiles/Projectile';
-import Particle from './particles/Particle';
-import PLightning from './particles/Lightning';
+import { Projectile } from '../common/engine/projectiles/index';
+import { Particle, PLightning } from './particles/index';
+import UIFrame from './ui/UIFrame';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
 
@@ -201,6 +201,32 @@ class Renderer {
     canvas.font = `${fontSize}px roboto`;
     canvas.textBaseline = 'hanging';
     canvas.fillText(data, cornerX, cornerY, sizeX);
+  }
+
+  public static DrawUIFrame(canvas: CanvasRenderingContext2D, cam: Camera, frame: UIFrame) {
+    canvas.resetTransform();
+
+    const startX = frame.cornerX * cam.Width;
+    const startY = frame.cornerY * cam.Height;
+    const width = frame.width * cam.Width;
+    const height = frame.height * cam.Height;
+
+    if (frame.alpha > 0) {
+      canvas.globalAlpha = frame.alpha;
+      canvas.fillStyle = frame.renderStyle;
+      canvas.fillRect(startX, startY, width, height);
+
+      if (frame.borderThickness > 0) {
+        canvas.strokeStyle = frame.borderRenderStyle;
+        canvas.lineWidth = frame.borderThickness * cam.Zoom;
+        canvas.strokeRect(startX, startY, width, height);
+      }
+    }
+
+    if (frame.image) {
+      canvas.globalAlpha = frame.imageAlpha;
+      canvas.drawImage(frame.image, startX, startY, width, height);
+    }
   }
   /* eslint-enable no-param-reassign */
 }
