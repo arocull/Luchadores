@@ -1,16 +1,22 @@
+import { UIFrameType } from '../../common/engine/Enums';
+
 class UIFrame {
+  public type: UIFrameType = UIFrameType.Basic;
+
   public alpha: number = 1;
   public color: string = '#ffffff';
   public colorHover: string = '#dddddd';
   public renderStyle: string = this.color;
 
-  public borderThickness = 0.01;
+  public borderThickness = 0;
   public borderColor: string = '#000000';
   public borderColorHover: string = '#000088';
   public borderRenderStyle: string = this.borderColor;
 
   public image: HTMLImageElement = null;
   public imageAlpha: number = 1;
+
+  public restrainAspect: boolean = false; // If true, draws image as a square
 
   constructor(
     public cornerX: number,

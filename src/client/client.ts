@@ -14,6 +14,7 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
+import { UIFrame, UIClassSelect } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 /* eslint-enable object-curly-newline */
@@ -37,6 +38,7 @@ renderSettings.FPScounter = true;
 const fpsCount: number[] = [];
 
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
+cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 
 let player: Player = null;
 let character: Fighter = null;
@@ -70,10 +72,13 @@ MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg: IPlayerDied) => {
 // User Input //
 const Input = {
   // CLIENTSIDE ONLY
-  GUIMode: false,
+  GUIMode: true,
+  UsernameSelectOpen: false,
+  ClassSelectOpen: true,
   PlayerListOpen: false, // Opens player list GUI on local client--does not need to be networked
   MouseX: 0,
   MouseY: 0,
+  MouseDownLastFrame: false,
 
   // FOR REPLICATION (this should be sent to the server for sure)
   MouseDown: false, // Is the player holding their mouse down?
@@ -149,6 +154,15 @@ document.addEventListener('mousemove', (event) => {
 
 
 // UI Management
+const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
+const uiClassSelect = new UIClassSelect(2, 2, 3);
+uiBackdrop.alpha = 0.25;
+uiBackdrop.renderStyle = '#000000';
+function doUIFrameInteraction(frame: UIFrame) {
+  const hovering = frame.checkMouse(Input.MouseX / viewport.width, Input.MouseY / viewport.height);
+  frame.onHover(hovering);
+  if (hovering && !Input.MouseDown && Input.MouseDownLastFrame) frame.onClick();
+}
 MessageBus.subscribe('PickUsername', (name: string) => {
   username = name;
 
@@ -157,17 +171,22 @@ MessageBus.subscribe('PickUsername', (name: string) => {
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   luchador = type;
 
+  Input.ClassSelectOpen = false;
+
+  /* // Disabled for now until message bus is fixed
   MessageBus.publish(Topics.ClientNetworkToServer, {
     type: TypeEnum.PlayerJoined,
     clientID,
     username,
     luchador,
   });
+  */
 
   character = world.spawnFighter(player, luchador);
 });
 
 
+// State Updates
 let stateUpdatePending = false;
 let stateUpdateLastPacketTime = 0;
 let stateUpdate: IWorldState = null;
@@ -205,6 +224,8 @@ function DoFrame(tick: number) {
   // Convert milliseconds to seconds
   let DeltaTime = (tick / 1000) - LastFrame;
   LastFrame = tick / 1000;
+
+  Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen || Input.PlayerListOpen);
 
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
@@ -279,6 +300,14 @@ function DoFrame(tick: number) {
   }
 
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
+
+  if (Input.GUIMode) Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
+  if (Input.ClassSelectOpen) {
+    for (let i = 0; i < uiClassSelect.frames.length; i++) {
+      doUIFrameInteraction(uiClassSelect.frames[i]);
+      Renderer.DrawUIFrame(canvas, cam, uiClassSelect.frames[i]);
+    }
+  }
   if (Input.PlayerListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
   if (renderSettings.FPScounter) {
@@ -294,13 +323,14 @@ function DoFrame(tick: number) {
     Renderer.DrawFPS(canvas, cam, avgDT);
   }
 
+  Input.MouseDownLastFrame = Input.MouseDown;
+
   return window.requestAnimationFrame(DoFrame);
 }
 
 
 // Currently, just go ahead and give the player a username and character to start with until server is hooked up
 MessageBus.publish('PickUsername', 'player1');
-MessageBus.publish('PickCharacter', FighterType.Sheep);
 
 
 /* eslint-disable no-console */

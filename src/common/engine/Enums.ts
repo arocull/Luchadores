@@ -25,6 +25,11 @@ enum ParticleType {
   Lightning = 5,
 }
 
+enum UIFrameType {
+  Basic = 0,
+  Text = 1,
+}
+
 const FighterTypeStrings = [
   'Sheep',
   'Deer',
@@ -41,5 +46,6 @@ export {
   FighterType,
   ProjectileType,
   ParticleType,
+  UIFrameType,
   fighterTypeToString,
 };
