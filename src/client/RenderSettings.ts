@@ -4,10 +4,12 @@ class RenderSettings {
   // --such as arena wall stretching or depth sorting--value should range between 0 and 3
 
   private particles: number;
+  public FPScounter: boolean;
 
   // Particle amount is actively used to tell how many particles to spawn--value should range between 0 and 5
   constructor(public Quality: number, public ParticleAmount: number, public EnableCameraShake: boolean) {
     this.particles = 0;
+    this.FPScounter = false;
   }
 
   public nextParticle(): boolean {

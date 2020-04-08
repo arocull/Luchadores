@@ -50,6 +50,9 @@ class Vector { // A structure that holds position data or direction and magnitud
   static Multiply(a: Vector, b: number):Vector { // A is a vector, b should be a scalar number
     return new Vector(a.x * b, a.y * b, a.z * b);
   }
+  static Divide(a: Vector, b: number):Vector {
+    return new Vector(a.x / b, a.y / b, a.z / b);
+  }
   static MultiplyVectors(a: Vector, b: Vector):Vector {
     return new Vector(a.x * b.x, a.y * b.y, a.z * b.z);
   }

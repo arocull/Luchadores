@@ -26,6 +26,10 @@ function getProtobufType(object: IKind): ProtobufTypeSerde {
       return events.PlayerJoined;
     case TypeEnum.PlayerInputState:
       return events.PlayerInputState;
+    case TypeEnum.PlayerDied:
+      return events.PlayerDied;
+    case TypeEnum.PlayerState:
+      return events.PlayerState;
     case TypeEnum.WorldState:
       return events.WorldState;
     default:

@@ -1,7 +1,7 @@
 import Vector from '../../common/engine/Vector';
 import RenderSettings from '../RenderSettings';
 import Fighter from '../../common/engine/Fighter';
-import { FighterType } from '../../common/engine/Enums';
+import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import { MessageBus } from '../../common/messaging/bus';
 import { PFire, PSmoke } from '../particles/index';
 
@@ -25,18 +25,14 @@ class Animator {
 
   constructor(protected owner: Fighter, private settings: RenderSettings) {
     this.SpriteSheet = new Image();
+    this.SpriteSheet.src = `Sprites/${fighterTypeToString(owner.getCharacter())}.png`;
 
     this.FrameWidth = 512;
     this.FrameHeight = 512;
     this.Upscale = 1;
     switch (owner.getCharacter()) {
       case FighterType.Sheep:
-        this.SpriteSheet.src = 'Sprites/Sheep.png';
         this.Upscale = 1.3;
-        break;
-      case FighterType.Flamingo:
-        this.SpriteSheet.src = 'Sprites/Flamingo.png';
-        this.Upscale = 1;
         break;
       case FighterType.Deer:
         this.SpriteSheet = null;

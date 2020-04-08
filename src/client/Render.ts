@@ -228,6 +228,19 @@ class Renderer {
       canvas.drawImage(frame.image, startX, startY, width, height);
     }
   }
+
+  public static DrawFPS(canvas: CanvasRenderingContext2D, cam: Camera, DeltaTime: number) {
+    canvas.globalAlpha = 1;
+    canvas.fillStyle = '#000000';
+    canvas.font = '48px roboto';
+    canvas.textBaseline = 'hanging';
+
+    const fps = Math.floor(10 / DeltaTime) / 10;
+    let str = fps.toString();
+    if (str.length === 2) str += '.0';
+
+    canvas.fillText(`${str} FPS`, 0, 0, cam.Width * 0.1);
+  }
   /* eslint-enable no-param-reassign */
 }
 

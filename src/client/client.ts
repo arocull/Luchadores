@@ -1,35 +1,45 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
 import { MessageBus, Topics } from '../common/messaging/bus';
-import { TypeEnum } from '../common/events/index';
+import { TypeEnum, IPlayerDied } from '../common/events/index';
 import { encoder } from '../common/messaging/serde';
-import { IWorldState } from '../common/events/events';
+import { IWorldState, PlayerState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
-import { Flamingo } from '../common/engine/fighters/index';
 import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
+import { Fighter } from '../common/engine/fighters/index';
 import Animator from './animation/Animator';
+import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import Renderer from './Render';
+import { FighterType } from '../common/engine/Enums';
 /* eslint-enable object-curly-newline */
+
+// Set up base client things
+let clientID = '';
+let username = '';
+let luchador: FighterType = FighterType.Sheep;
 
 
 // Generate World
 const world = new World();
 Random.randomSeed();
 
-
 // Get rendering viewport--browser only
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
+
 const renderSettings = new RenderSettings(3, 5, true);
+renderSettings.FPScounter = true;
+const fpsCount: number[] = [];
+
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 
-const player = new Flamingo(1, new Vector(25, 25, 0));
-world.Fighters.push(player);
+let player: Player = null;
+let character: Fighter = null;
 
 // Particles
 const particles: Particle[] = [];
@@ -51,6 +61,10 @@ function OnDeath(died: number, killer: number) {
     }
   }
 }
+MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg: IPlayerDied) => {
+  if (msg.type !== TypeEnum.PlayerDied) return;
+  OnDeath(msg.characterId, msg.killerId);
+});
 
 
 // User Input //
@@ -69,9 +83,14 @@ const Input = {
 };
 // Called when the player's input state changes
 function UpdateInput() { // Attempts to send updated user input to server
-  if (Input.GUIMode) return; // Do not send input updates if the player is fiddling with UI
+  if (Input.GUIMode || !character) return; // Do not send input updates if the player is fiddling with UI
+
+  Input.MoveDirection.z = 0; // The player should never have any move or aim input that points upward
+  Input.MouseDirection.z = 0;
+
   MessageBus.publish(Topics.ClientNetworkToServer, encoder({
     type: TypeEnum.PlayerInputState,
+    id: clientID,
     jump: Input.Jump,
     mouseDown: Input.MouseDown,
     mouseDirection: Input.MouseDirection,
@@ -116,8 +135,8 @@ document.addEventListener('mousemove', (event) => {
     Input.MouseY = event.clientY;
 
   // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
-  } else if (player && player.isRanged()) {
-    const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(player.Position), new Vector(event.clientX, event.clientY, 0)));
+  } else if (character && character.isRanged()) {
+    const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(character.Position), new Vector(event.clientX, event.clientY, 0)));
     dir.x *= -1;
 
     Input.MouseDirection = dir;
@@ -129,10 +148,30 @@ document.addEventListener('mousemove', (event) => {
 });
 
 
+// UI Management
+MessageBus.subscribe('PickUsername', (name: string) => {
+  username = name;
+
+  if (!player) player = new Player(clientID, username);
+});
+MessageBus.subscribe('PickCharacter', (type: FighterType) => {
+  luchador = type;
+
+  MessageBus.publish(Topics.ClientNetworkToServer, {
+    type: TypeEnum.PlayerJoined,
+    clientID,
+    username,
+    luchador,
+  });
+
+  character = world.spawnFighter(player, luchador);
+});
+
+
 let stateUpdatePending = false;
 let stateUpdateLastPacketTime = 0;
 let stateUpdate: IWorldState = null;
-MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg) => {
+MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg: IWorldState) => {
   if (msg.type === TypeEnum.WorldState) {
     stateUpdatePending = true;
     stateUpdate = msg;
@@ -140,6 +179,23 @@ MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg) => {
     if (stateUpdateLastPacketTime + 1 > stateUpdateLastPacketTime) { // Would really be if packet.timeSent > stateUpdateLastPacketTime
       stateUpdateLastPacketTime += 1; // = packet.timeSent
     }
+  }
+});
+MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg: PlayerState) => {
+  if (msg.type === TypeEnum.PlayerState) {
+    const mismatch = msg.characterID !== player.getCharacterID();
+    if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
+      character.HP = 0;
+      character.LastHitBy = null;
+    }
+
+    player.assignCharacterID(msg.characterID);
+
+    if (mismatch && character) { // If there was a mismatch and old character was killed, generate a new one
+      MessageBus.publish('PickCharacter', luchador);
+    }
+
+    character.HP = msg.health;
   }
 });
 
@@ -154,15 +210,19 @@ function DoFrame(tick: number) {
     stateUpdatePending = false;
     decodeWorldState(stateUpdate, world);
     DeltaTime += (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
+    // eslint-disable-next-line
+    console.log('Applied world state update with DeltaTime', DeltaTime);
   }
 
   // Use inputs
-  // if (dummy) dummy.Jump();
-  if (Input.Jump) player.Jump();
-  Input.MoveDirection.z = 0;
-  player.Move(Input.MoveDirection);
-  player.aim(Input.MouseDirection);
-  player.Firing = Input.MouseDown;
+  if (character) {
+    if (Input.Jump) character.Jump();
+    character.Move(Input.MoveDirection);
+    character.aim(Input.MouseDirection);
+    character.Firing = Input.MouseDown;
+
+    cam.SetFocus(character);
+  }
 
   world.tick(DeltaTime);
 
@@ -170,7 +230,6 @@ function DoFrame(tick: number) {
   viewport.width = window.innerWidth;
   viewport.height = window.innerHeight;
   cam.Scale(viewport.width, viewport.height);
-  if (player) cam.SetFocus(player);
   cam.UpdateFocus(DeltaTime);
 
   // Apply visual effects
@@ -192,7 +251,7 @@ function DoFrame(tick: number) {
           particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000));
         }
 
-        if (Vector.Distance(a.Position, player.Position) <= 2) {
+        if (Vector.Distance(a.Position, character.Position) <= 2) {
           cam.Shake += a.JustHitMomentum / 1500;
         }
 
@@ -207,7 +266,7 @@ function DoFrame(tick: number) {
       }
     }
   }
-  cam.Shake += player.BulletShock;
+  if (character) cam.Shake += character.BulletShock;
 
   // Tick and prune particles
   for (let i = 0; i < particles.length; i++) {
@@ -222,8 +281,27 @@ function DoFrame(tick: number) {
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
   if (Input.PlayerListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
+  if (renderSettings.FPScounter) {
+    if (fpsCount.length >= 30) fpsCount.shift();
+    fpsCount.push(DeltaTime);
+
+    let avgDT = 0;
+    for (let i = 0; i < fpsCount.length; i++) {
+      avgDT += fpsCount[i];
+    }
+    avgDT /= fpsCount.length;
+
+    Renderer.DrawFPS(canvas, cam, avgDT);
+  }
+
   return window.requestAnimationFrame(DoFrame);
 }
+
+
+// Currently, just go ahead and give the player a username and character to start with until server is hooked up
+MessageBus.publish('PickUsername', 'player1');
+MessageBus.publish('PickCharacter', FighterType.Sheep);
+
 
 /* eslint-disable no-console */
 (function setup() {
@@ -237,5 +315,7 @@ function DoFrame(tick: number) {
     .then(() => console.log('Connected OK!'))
     .catch((err) => console.error('Failed to connect!', err))
     .finally(() => console.log('... and finally!'));
+
+  clientID = ws.getId();
 }());
 /* eslint-enable no-console */

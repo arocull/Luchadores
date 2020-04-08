@@ -8,6 +8,7 @@ enum FighterType {
   Sheep = 0,
   Deer = 1,
   Flamingo = 2,
+  Toad = 3,
 }
 
 enum ProjectileType {
@@ -24,9 +25,21 @@ enum ParticleType {
   Lightning = 5,
 }
 
+const FighterTypeStrings = [
+  'Sheep',
+  'Deer',
+  'Flamingo',
+  'Toad',
+];
+
+function fighterTypeToString(type: FighterType) {
+  return FighterTypeStrings[type];
+}
+
 export {
   EntityType,
   FighterType,
   ProjectileType,
   ParticleType,
+  fighterTypeToString,
 };
