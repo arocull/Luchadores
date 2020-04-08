@@ -22,7 +22,6 @@ class SocketClient {
     private socket: WebSocket,
     private addressInfo: AddressInfo,
   ) {
-    this.socket.on('message', (data: Buffer) => this.onMessage(data));
     this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
 
     // If the client hasn't identified themselves in short order, close their connection.
@@ -40,22 +39,30 @@ class SocketClient {
           logger.info('Socket ClientConnect - this client is now %o', this.id);
 
           clearTimeout(awaitTimeout); // Cancel timeout connection killer
-          this.socket.off('message', awaitConsumer); // Remove this listener
+          this.socket.removeEventListener('message', awaitConsumer as any); // Remove this listener (there is no `socket.off`)
           this.subscribe(); // Subscribe to the client topic(s)
+          this.socket.on('message', (msgData: Buffer) => this.onMessage(msgData)); // Connect the primary message listener
 
-          MessageBus.publish(this.topicServerToClient, <events.IClientAck>{
+          // Notify listeners about new connections
+          const ack: events.IClientAck = {
             type: events.TypeEnum.ClientAck,
             id: this.id,
-          });
+          };
+          this.publishToClientConsumer(ack); // Reply to the client
+          MessageBus.publish('connections', ack); // Complete promises
         }
       };
 
       // Only listen for connection identifiers at this point
+      logger.info('Awaiting client ACK...');
       this.socket.on('message', awaitConsumer);
     }
 
-    this.publishToClientConsumer = (message: events.IEvent) => {
-      this.socket.send(encoder(message));
+    this.publishToClientConsumer = (message: any) => {
+      const data = !ArrayBuffer.isView(message)
+        ? encoder(message)
+        : message;
+      this.socket.send(data);
     };
   }
 
@@ -93,6 +100,28 @@ class SocketClient {
     MessageBus.unsubscribe(this.topicServerToClient, this.publishToClientConsumer);
   }
 
+  connect(): Promise<void> {
+    // Client ID already negotiated and...
+    if (this.id != null) {
+      // OPEN socket
+      if (this.socket.readyState === WebSocket.OPEN) {
+        return Promise.resolve();
+      }
+      // CLOSING or CLOSED
+      if (this.socket.readyState > WebSocket.OPEN) {
+        return Promise.reject(new Error('The connection is closed and cannot reopen.'));
+      }
+    }
+
+    // Still waiting to negotiate client ID
+    return MessageBus.await('connections', 2000, (message: any) => {
+      if (this.id != null && message.id === this.id) {
+        return message; // Handled
+      }
+      return null;
+    });
+  }
+
   onMessage(data: Buffer) {
     logger.info('Socket receiving data %j', data);
 
@@ -100,6 +129,11 @@ class SocketClient {
     logger.info('Socket message decoded %j', decoded);
 
     MessageBus.publish(this.topicClientToServer, decoded);
+    logger.info('Socket message sent to topic %j', this.topicServerToClient);
+  }
+
+  close() {
+    this.socket.close();
   }
 
   onClose(code: number, reason: string) {

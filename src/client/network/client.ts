@@ -17,7 +17,7 @@ class NetworkClient {
 
     // The consumer reads any messages on NetworkOutbound topic
     // and sends them back out of the WebSocket.
-    this.publishToServerConsumer = (message: Uint8Array) => this.send(message);
+    this.publishToServerConsumer = (message: any) => this.send(message);
   }
 
   getId() {
@@ -30,7 +30,7 @@ class NetworkClient {
       this.ws = new WebSocket(this.url);
       this.ws.binaryType = 'arraybuffer';
 
-      this.ws.addEventListener('open', resolve);
+      this.ws.addEventListener('open', resolve); // TODO: Don't fire this until ID negation is done
       this.ws.addEventListener('error', reject);
 
       this.ws.addEventListener('open', (e) => this.onOpen(e));
@@ -84,6 +84,7 @@ class NetworkClient {
     console.log('Opened web socket', openEvent);
 
     // Subscribe us to receive any events targeting outbound network
+    // TODO: Don't connect this until after ACK
     MessageBus.subscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
 
     // Add a timeout for if this event doesn't get ack'd
@@ -95,7 +96,10 @@ class NetworkClient {
           return null;
         }
 
+        // Subscribe us to receive any events targeting outbound network
         console.log('ClientAck and ID match - away we go!');
+        MessageBus.subscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
+
         return message;
       }
       return null;
@@ -105,21 +109,21 @@ class NetworkClient {
     });
 
     // Publish an event to the server that we have connected
-    MessageBus.publish(Topics.ClientNetworkToServer, encoder({
+    this.send({
       type: events.TypeEnum.ClientConnect,
       id: this.id,
-    }));
+    });
   }
   /* eslint-enable no-console */
 
   // TODO: Sending is awkward from other locations. Can we make it simpler?
   // Figure out how to create envelopes from incoming objects?
-  private send(message: Uint8Array) {
+  private send(message: any) {
     if (this.isConnected()) {
-      if (!ArrayBuffer.isView(message)) {
-        throw new Error(`message of unexpected type! ${typeof message}; ${JSON.stringify(message)}`);
-      }
-      this.ws.send(message);
+      const data = !ArrayBuffer.isView(message)
+        ? encoder(message)
+        : message;
+      this.ws.send(data);
     } else {
       console.warn('Dropped message send due to not being connected', message);
     }
