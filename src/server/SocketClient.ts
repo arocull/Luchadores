@@ -2,7 +2,7 @@ import * as WebSocket from 'ws';
 
 import logger from './Logger';
 import * as events from '../common/events';
-import { Consumer, MessageBus, Topics } from '../common/messaging/bus';
+import { Consumer, MessageBus } from '../common/messaging/bus';
 import { decoder, encoder } from '../common/messaging/serde';
 
 interface AddressInfo {
@@ -12,7 +12,9 @@ interface AddressInfo {
 }
 
 class SocketClient {
-  private id: string;
+  private _id: string;
+  private _topicServerToClient: string;
+  private _topicClientToServer: string;
 
   private publishToClientConsumer: Consumer;
 
@@ -24,40 +26,71 @@ class SocketClient {
     this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
 
     // If the client hasn't identified themselves in short order, close their connection.
-    MessageBus.await(Topics.ServerNetworkFromClient, 2000, (message: any) => {
-      // Our internal listener only cares about this event.
-      if (message.type === events.TypeEnum.ClientConnect) {
-        // Handle the event and unsubscribe. We shouldn't see this again.
-        this.id = message.id;
-        logger.info('Socket ClientConnect - this client is now %o', this.id);
+    {
+      const awaitTimeout = setTimeout(() => {
+        logger.error('Client did not ACK in time - disconnecting: %j, %j', this.addressInfo);
+        this.socket.close();
+      }, 2000);
 
-        MessageBus.publish(Topics.ServerNetworkToClient, <events.IClientAck>{
-          type: events.TypeEnum.ClientAck,
-          id: this.id,
-        });
-        return message;
-      }
-      return null;
-    }).catch((err) => {
-      logger.error('Client did not ACK in time - disconnecting: %j, %j', this.addressInfo, err);
-      socket.close();
-    });
+      const awaitConsumer = (data: Buffer) => {
+        const message = decoder(data);
+        if (message.type === events.TypeEnum.ClientConnect) {
+          // Handle the event and finish the connection setup
+          this.id = message.id;
+          logger.info('Socket ClientConnect - this client is now %o', this.id);
+
+          clearTimeout(awaitTimeout); // Cancel timeout connection killer
+          this.socket.off('message', awaitConsumer); // Remove this listener
+          this.subscribe(); // Subscribe to the client topic(s)
+
+          MessageBus.publish(this.topicServerToClient, <events.IClientAck>{
+            type: events.TypeEnum.ClientAck,
+            id: this.id,
+          });
+        }
+      };
+
+      // Only listen for connection identifiers at this point
+      this.socket.on('message', awaitConsumer);
+    }
 
     this.publishToClientConsumer = (message: events.IEvent) => {
       this.socket.send(encoder(message));
     };
   }
 
-  subscribe() {
-    MessageBus.subscribe(Topics.ServerNetworkToClient, this.publishToClientConsumer);
-
-    return this; // shut up linter
+  private get id() {
+    return this._id;
   }
 
-  unsubscribe() {
-    MessageBus.unsubscribe(Topics.ServerNetworkToClient, this.publishToClientConsumer);
+  private set id(value: string) {
+    this._id = value;
+    this._topicServerToClient = `server-to-client-${value}`;
+    this._topicClientToServer = `client-to-server-${value}`;
+  }
 
-    return this; // shut up linter
+  get topicServerToClient() {
+    return this._topicServerToClient;
+  }
+
+  get topicClientToServer() {
+    return this._topicClientToServer;
+  }
+
+  private subscribe() {
+    if (this.id == null) {
+      throw new Error('Cannot subscribe - no client id was negotiated yet');
+    }
+
+    MessageBus.subscribe(this.topicServerToClient, this.publishToClientConsumer);
+  }
+
+  private unsubscribe() {
+    if (this.id == null) {
+      throw new Error('Cannot unsubscribe - no client id was negotiated yet');
+    }
+
+    MessageBus.unsubscribe(this.topicServerToClient, this.publishToClientConsumer);
   }
 
   onMessage(data: Buffer) {
@@ -66,18 +99,20 @@ class SocketClient {
     const decoded = decoder(data);
     logger.info('Socket message decoded %j', decoded);
 
-    MessageBus.publish(Topics.ServerNetworkFromClient, decoded);
-
-    return this; // shut up linter
+    MessageBus.publish(this.topicClientToServer, decoded);
   }
 
   onClose(code: number, reason: string) {
     logger.info('Socket connection closed %j, %j', code, reason);
 
-    MessageBus.publish(Topics.ServerNetworkFromClient, <events.IClientDisconnect>{
-      type: events.TypeEnum.ClientDisconnect,
-      id: this.id,
-    });
+    // Only publish a disconnect event if this client managed to identify itself
+    if (this.id != null) {
+      this.unsubscribe();
+      MessageBus.publish(this.topicClientToServer, <events.IClientDisconnect>{
+        type: events.TypeEnum.ClientDisconnect,
+        id: this.id,
+      });
+    }
   }
 }
 

@@ -136,7 +136,6 @@ class NetworkClient {
 
     // Push it out onto the network topic for listeners
     MessageBus.publish(Topics.ClientNetworkFromServer, message);
-    return this; // shut up linter
   }
 
   private onClose(closeEvent: CloseEvent) {
@@ -150,7 +149,6 @@ class NetworkClient {
       type: events.TypeEnum.ClientDisconnect,
       id: this.id,
     });
-    return this; // shut up linter
   }
 
   private onError(errorEvent: Event) {
@@ -159,7 +157,6 @@ class NetworkClient {
     // We can rely on the `close` event for everything and might even remove
     // this handler entirely.
     console.error('Web socket error', errorEvent);
-    return this; // shut up linter
   }
 }
 

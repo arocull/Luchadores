@@ -18,8 +18,6 @@ export interface HandledConsumer<T> {
 export const Topics = {
   ClientNetworkFromServer: 'client-network-from-server',
   ClientNetworkToServer: 'client-network-to-server',
-  ServerNetworkFromClient: 'server-network-from-client',
-  ServerNetworkToClient: 'server-network-to-client',
 };
 
 /**
