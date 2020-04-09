@@ -3,7 +3,22 @@ import Player from './Player';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import Map from './Map';
+import { IPlayerInputState } from '../events/events';
+import { MessageBus } from '../messaging/bus';
 
+// World Class - Manages bullets and fighters
+/* General flow of things:
+
+- Apply player inputs
+
+- Fire bullets and handle character updates
+- Tick physics
+
+- Check for deaths
+
+- Distribute updates
+
+*/
 class World {
   public Fighters: Fighter[];
   public Bullets: Projectile[];
@@ -16,9 +31,52 @@ class World {
     this.Players = [];
     this.Fighters = [];
     this.Bullets = [];
+
+    MessageBus.subscribe('NewProjectile', (message) => {
+      this.Bullets.push(message as Projectile);
+    });
   }
 
+
+  // Apply player inputs to player's character
+  /* eslint-disable class-methods-use-this, no-param-reassign */
+  public applyAction(player: Player, action: IPlayerInputState) {
+    const char = player.getCharacter();
+    if (!char || char.HP <= 0) return; // If the player's character is currently dead or missing, do not apply inputs
+
+    char.Move(Vector.UnitVectorFromXYZ(action.moveDirection.x, action.moveDirection.y, 0)); // Apply movement input
+    char.aim(Vector.UnitVectorFromXYZ(action.mouseDirection.x, action.mouseDirection.y, 0)); // Apply new aim
+    char.Firing = char.isRanged() && action.mouseDown; // Are they trying to fire bullets, and can they?
+
+    if (action.jump === true) {
+      char.Jump(); // Jump
+    }
+  }
+  /* eslint-enable class-methods-use-this, no-param-reassign */
+
+
+  // Run all general world-tick functions
+  // Note that DeltaTime should be in seconds
+  public tick(DeltaTime: number) {
+    this.doUpdates(DeltaTime);
+    this.TickPhysics(DeltaTime);
+  }
+
+
+  // Do various updates that are not realted to physics
+  public doUpdates(DeltaTime: number) {
+    for (let i = 0; i < this.Fighters.length; i++) {
+      const a = this.Fighters[i];
+
+      a.tickCooldowns(DeltaTime);
+      a.tryBullet(); // Fire bullets (bullets are automatically added to list with events)
+    }
+  }
+
+
+  // Tick physics and collisions for fighters and bullets
   public TickPhysics(DeltaTime: number) {
+    // Tick general fighter physics
     for (let i = 0; i < this.Fighters.length; i++) {
       const obj = this.Fighters[i];
       const maxSpeed = obj.MaxMomentum / obj.Mass;
@@ -29,13 +87,12 @@ class World {
       // Gravity
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
-      // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls)
-      // Should it be proportional to distance outward?
-      if (obj.Position.x < 0) accel.x += 100;
-      else if (obj.Position.x > this.Map.Width) accel.x -= 100;
+      // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
+      if (obj.Position.x < 0) accel.x += this.Map.getWallStrength() * Math.abs(obj.Position.x);
+      else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.getWallStrength() * (obj.Position.x - this.Map.Width);
 
-      if (obj.Position.y < 0) accel.y += 100;
-      else if (obj.Position.y > this.Map.Height) accel.y -= 100;
+      if (obj.Position.y < 0) accel.y += this.Map.getWallStrength() * Math.abs(obj.Position.y);
+      else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.getWallStrength() * (obj.Position.y - this.Map.Height);
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
       if (obj.Position.z <= 0) {
@@ -74,11 +131,12 @@ class World {
       }
     }
 
+    // Tick bullets
     for (let i = 0; i < this.Bullets.length; i++) {
-      if (this.Bullets[i].Finished) {
+      if (this.Bullets[i].finished) { // Remove despawning bullets
         this.Bullets.splice(i, 1);
         i--;
-      } else this.Bullets[i].Tick(DeltaTime);
+      } else this.Bullets[i].Tick(DeltaTime); // Otherwise, tick bullet physics
     }
 
     // Compute collisions last after everything has moved (makes it slightly more "fair?")
@@ -90,9 +148,14 @@ class World {
       // Fighter collisions
       for (let j = i + 1; j < this.Fighters.length; j++) { // If the entity was already iterated through by main loop, should not need to do it again
         const b = this.Fighters[j];
+        const separation = Vector.DistanceXY(a.Position, b.Position);
+        const rad = a.Radius + b.Radius;
         if (
-          Vector.DistanceXY(a.Position, b.Position) <= a.Radius + b.Radius
-          && (a.Position.z <= b.Position.z + b.Height)
+          separation <= rad // First check if they're inside each other
+          && ( // Then check to make sure collision heights are within each other
+            (a.Position.z <= b.Position.z + b.Height && a.Position.z >= b.Position.z)
+            || (b.Position.z <= a.Position.z + a.Height && b.Position.z >= a.Position.z)
+          )
         ) { // If they are within collision range...
           const moment1 = a.Velocity.length() * a.Mass; // Momentum of fighter A
           const moment2 = b.Velocity.length() * b.Mass; // Momentum of fighter B
@@ -105,27 +168,46 @@ class World {
           b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / b.Mass);
           a.Velocity = aVelo;
 
-          const seperate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
-          a.Velocity = Vector.Add(a.Velocity, Vector.Multiply(seperate, -150 / a.Mass));
-          b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(seperate, 150 / b.Mass));
+          // Slight bounceback on air collisions used to prevent characters from getting stuck in eachother
+          if (a.Position.z > b.Position.z + b.Height / 2) { // A landed on B
+            const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
+            a.Velocity = Vector.Subtract(a.Velocity, Vector.Multiply(separate, 150 / a.Mass));
+            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / a.Mass));
+            a.Position.z = b.Position.z + b.Height;
+            a.JustLanded = true; // Allows jump
+          } else if (b.Position.z > a.Position.z + a.Height / 2) { // B landed on A
+            const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
+            a.Velocity = Vector.Subtract(a.Velocity, Vector.Multiply(separate, 150 / a.Mass));
+            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / a.Mass));
+            b.Position.z = a.Position.z + a.Height;
+            b.JustLanded = true; // Allows jumping
+          } else { // Otherwise just force them apart
+            const separate = Vector.UnitVectorXY(Vector.Subtract(b.Position, a.Position));
+            a.Position = Vector.Subtract(a.Position, Vector.Multiply(separate, (rad - separation) / 2));
+            b.Position = Vector.Add(b.Position, Vector.Multiply(separate, (rad - separation) / 2));
+          }
         }
       }
+    }
 
-      // Bullet collisions
-      for (let j = 0; j < this.Bullets.length; j++) {
-        const b = this.Bullets[j];
+    // Bullet collisions
+    for (let j = 0; j < this.Bullets.length; j++) {
+      const b = this.Bullets[j];
 
-        const start = Vector.Subtract(b.Position, b.DeltaPosition);
-        const len = b.DeltaPosition.length();
-        const dir = Vector.UnitVector(b.DeltaPosition);
+      const start = Vector.Subtract(b.Position, b.DeltaPosition);
+      const len = b.DeltaPosition.length();
+      const dir = Vector.UnitVector(b.DeltaPosition);
 
-        // Normally we would shoot a ray at a cylinder, but that's kind of difficult
-        // So instead, we will test 3 point along the bullet trajectory to check if has collided with the fighter or not
+      // Normally we would shoot a ray at a cylinder, but that's kind of difficult
+      // So instead, we will test 3 point along the bullet trajectory to check if has collided with the fighter or not
+      for (let i = 0; i < this.Fighters.length; i++) {
+        const a = this.Fighters[i];
         for (let q = 0; q < 3; q++) {
           const pos = Vector.Add(start, Vector.Multiply(dir, q * (len / 3)));
           if (
             Vector.DistanceXY(a.Position, pos) <= a.Radius
-            && (pos.z <= a.Position.z + a.Height)
+            && pos.z >= a.Position.z
+            && pos.z <= a.Position.z + a.Height
           ) {
             b.Hit(a);
             break;

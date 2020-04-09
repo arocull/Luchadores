@@ -1,0 +1,9 @@
+import "Vector.proto";
+
+message PlayerInputState {
+    required int32 type = 1;
+    required bool jump = 2;
+    required bool mouseDown = 3;
+    required Vector mouseDirection = 4;
+    required Vector moveDirection = 5;
+}

@@ -1,10 +1,11 @@
 import Vector from '../Vector';
 import Entity from '../Entity';
 import Fighter from '../Fighter';
+import { EntityType, ProjectileType } from '../Enums';
 
 class Projectile extends Entity {
   protected Lifetime: number;
-  public Finished: boolean;
+  public finished: boolean;
 
   public RenderStyle: string;
   public Width: number;
@@ -15,17 +16,17 @@ class Projectile extends Entity {
   public DeltaPosition: Vector;
 
   constructor(
-    public ProjectileType: string,
+    public projectileType: ProjectileType,
     public Owner: Fighter,
     public Damage: number,
-    public MaxLifetime: number,
+    protected MaxLifetime: number,
     position: Vector,
     velocity: Vector,
   ) {
-    super('Projectile', position, velocity, new Vector(0, 0, 0));
+    super(EntityType.Projectile, position, velocity, new Vector(0, 0, 0));
 
     this.Lifetime = 0;
-    this.Finished = false;
+    this.finished = false;
 
     this.RenderStyle = '#feef22';
     this.Width = 0.1;
@@ -39,7 +40,7 @@ class Projectile extends Entity {
     this.Lifetime += DeltaTime;
 
     if (this.Lifetime > this.MaxLifetime) {
-      this.Finished = true;
+      this.finished = true;
       return;
     }
 
@@ -50,23 +51,21 @@ class Projectile extends Entity {
     this.Position = Vector.Add(this.Position, dif);
 
     // Bounce
-    if (this.Position.z <= 0) this.Velocity.z *= -this.BounceReturn;
+    if (this.Position.z <= 0) {
+      this.Position.z = 0;
+      this.Velocity.z *= -this.BounceReturn;
+    }
   }
 
+  // Called when projectile hits a fighter--it does damage and then marks projectile to be destroyed
   Hit(hit: Fighter) {
-    if (this.Owner && hit.ID === this.Owner.ID) return;
+    if (this.Owner && hit.getOwnerID() === this.Owner.getOwnerID()) return;
     hit.TakeDamage(this.Damage, this.Owner);
-    this.Finished = true;
+    this.finished = true;
   }
 
-  // Create a string containing only necessary information about this projectile for use for sending to clients
-  public ToPacket():string {
-    let str = `{id:${this.Owner.ID},t:${this.Type},d:${this.Damage},`;
-    str += `p:[${this.Position.x},${this.Position.y},${this.Position.z}],`;
-    str += `v:[${this.Velocity.x},${this.Velocity.y},${this.Velocity.z}],`;
-    str += `a:[${this.Acceleration.x},${this.Acceleration.y},${this.Acceleration.z}]}`;
-
-    return str;
+  public getLifePercentage() {
+    return this.Lifetime / this.MaxLifetime;
   }
 }
 

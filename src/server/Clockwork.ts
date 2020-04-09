@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Denque from 'denque';
 import { Moment } from 'moment';
-import Connection from './Connection';
+import Player from '../common/engine/Player';
 
 // TODO: This will be replaced with a class after we figure out what this will
 // look like...
@@ -23,7 +23,7 @@ interface World {
 }
 
 class Clockwork {
-  private connections: Array<Connection> = [];
+  private connections: Array<Player> = [];
   private world: World;
   private running: boolean = false;
   private actions: Denque<Action>;

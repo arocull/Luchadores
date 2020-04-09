@@ -1,5 +1,6 @@
 import Vector from '../../common/engine/Vector';
 import Particle from './Particle';
+import { ParticleType } from '../../common/engine/Enums';
 
 class PConfetti extends Particle {
   constructor(position: Vector, strandSize: number, burstIntensity: number) {
@@ -11,7 +12,7 @@ class PConfetti extends Particle {
         strandSize,
       ),
     );
-    super('Confetti', 5, Particle.RGBToHex(Math.random() * 128 + 127, Math.random() * 128 + 127, Math.random() * 128 + 127), beginning, end);
+    super(ParticleType.Confetti, 5, Particle.RGBToHex(Math.random() * 128 + 127, Math.random() * 128 + 127, Math.random() * 128 + 127), beginning, end);
 
     const veloDir = new Vector(Math.random() - 0.5, Math.random() - 0.5, 0);
 

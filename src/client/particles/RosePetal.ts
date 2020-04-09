@@ -1,5 +1,6 @@
 import Vector from '../../common/engine/Vector';
 import Particle from './Particle';
+import { ParticleType } from '../../common/engine/Enums';
 
 class PRosePetal extends Particle {
   constructor(position: Vector, petalSize: number, burstIntensity: number) {
@@ -11,7 +12,7 @@ class PRosePetal extends Particle {
         petalSize,
       ),
     );
-    super('RosePetal', 5, Particle.RGBToHex(Math.random() * 55 + 200, Math.random() * 50, Math.random() * 50), beginning, end);
+    super(ParticleType.RosePetal, 5, Particle.RGBToHex(Math.random() * 55 + 200, Math.random() * 50, Math.random() * 50), beginning, end);
 
     const veloDir = new Vector(Math.random() - 0.5, Math.random() - 0.5, 0);
 

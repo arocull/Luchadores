@@ -27,14 +27,11 @@ class SocketHost {
     logger.info('New websocket connection %j', info);
 
     const client = new SocketClient(socket, info);
-    client.subscribe(); // Connect to message bus
-
     this.clients.push(client);
     logger.info('Updated client connection count: %o', this.clients.length);
 
     socket.on('close', (code, reason) => {
       logger.info('Closing websocket connection %j due to %o, %o', info, code, reason);
-      client.unsubscribe(); // Remove from message bus
       this.clients = this.clients.filter((x) => x !== client);
       logger.info('Updated client connection count: %o', this.clients.length);
     });
