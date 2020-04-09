@@ -11,10 +11,12 @@ module.exports = {
     'airbnb-typescript/base'
   ],
   rules: {
-    'max-len': 'off',
+    'class-methods-use-this': 'off',
+    'eol-last': 'off',
     'lines-between-class-members': 'off',
+    'max-len': 'off',
     'no-plusplus': 'off',
+    'no-underscore-dangle': 'off',
     'object-property-newline': 'error',
-    'eol-last': 'off'
   }
 };

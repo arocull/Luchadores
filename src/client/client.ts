@@ -1,6 +1,6 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
-import { MessageBus, Topics } from '../common/messaging/bus';
+import { MessageBus } from '../common/messaging/bus';
 import { TypeEnum } from '../common/events/index';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -18,6 +18,11 @@ import Renderer from './Render';
 const world = new World();
 Random.randomSeed();
 
+// TODO: HAX - get topics to use from web socket
+const topics = {
+  ClientNetworkToServer: null as string,
+  ClientNetworkFromServer: null as string,
+};
 
 // Get rendering viewport--browser only
 const viewport = <HTMLCanvasElement>document.getElementById('render');
@@ -101,7 +106,7 @@ const Input = {
 };
 // Called when the player's input state changes
 function UpdateInput() { // Attempts to send updated user input to server
-  MessageBus.publish(Topics.ClientNetworkToServer, {
+  MessageBus.publish(topics.ClientNetworkToServer, {
     type: TypeEnum.PlayerInputState,
     jump: Input.Jump,
     mouseDown: Input.MouseDown,
@@ -238,7 +243,11 @@ function DoFrame(tick: number) {
 
   const ws = new NetworkClient(`ws://${window.location.host}/socket`);
   ws.connect()
-    .then(() => console.log('Connected OK!'))
+    .then(() => {
+      topics.ClientNetworkFromServer = ws.topicClientFromServer;
+      topics.ClientNetworkToServer = ws.topicClientToServer;
+      console.log('Connected OK! Configured topics:', topics);
+    })
     .catch((err) => console.error('Failed to connect!', err))
     .finally(() => console.log('... and finally!'));
 }());
