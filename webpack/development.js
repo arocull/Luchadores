@@ -72,16 +72,18 @@ const serverConfig = _.defaultsDeep(_.cloneDeep(commonConfig), {
           ps.stderr.on('data', (data) => {
             process.stderr.write(data);
           });
+
+          // Automatically restart the server if it crashes.
+          ps.once('close', () => {
+            console.log('Crash detected, restarting ...');
+            startServer();
+          });
         }
 
         // https://webpack.js.org/api/compiler-hooks/
         compiler.hooks.afterEmit.tap('RunServer', () => {
           if (watchEnabled) {
             if (ps !== null) {
-              ps.once('close', () => {
-                startServer();
-              });
-
               console.log('Killing old process ...');
               ps.kill();
             } else {

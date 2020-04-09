@@ -9,6 +9,10 @@ enum TypeEnum {
   PlayerConnect = 300,
   PlayerJoined = 301,
   PlayerInputState = 302,
+  PlayerDied = 303,
+  PlayerState = 304,
+
+  WorldState = 400,
 };
 
 export { TypeEnum as default };
