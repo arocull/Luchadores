@@ -6,8 +6,10 @@ import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
 import World from '../common/engine/World';
 import encodeWorldState from './WorldStateEncoder';
-import { IPlayerInputState, TypeEnum } from '../common/events/index';
-import { IPlayerJoined } from '../common/events/events';
+import { IPlayerInputState, TypeEnum, IEvent } from '../common/events/index';
+import {
+  IPlayerSpawned, IClientConnect, IClientDisconnect, IPlayerConnect,
+} from '../common/events/events';
 
 interface Action {
   player: Player;
@@ -57,7 +59,8 @@ class Clockwork {
         this.world.tick(lastTime.diff(delta));
 
         // Finally, update world state for all clients
-        MessageBus.publish(Topics.ServerNetworkToClient, encodeWorldState(this.world));
+        this.broadcast(encodeWorldState(this.world));
+        this.broadcastList(this.world.reapKills());
       }
 
       // Kick off the interval.
@@ -66,18 +69,48 @@ class Clockwork {
     }
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  busPlayerInputHook(message: IPlayerInputState) {
-    if (message.type !== TypeEnum.PlayerInputState) return;
-    Logger.info('%j', message);
-
-    let plr: Player = null;
+  public broadcast(message: IEvent) {
     for (let i = 0; i < this.connections.length; i++) {
-      if (this.connections[i].getId()) {
-        plr = this.connections[i];
-        break;
-      }
+      MessageBus.publish(`server-to-client-${this.connections[i].getId()}`, message);
     }
+  }
+  public broadcastList(messages: IEvent[]) {
+    for (let i = 0; i < messages.length; i++) {
+      this.broadcast(messages[i]);
+    }
+  }
+
+  private getLowestUnusedCharacterID(): number {
+    let id = 1;
+    let interfered = false;
+    while (id <= World.MAX_LOBBY_SIZE) {
+      for (let i = 0; i < this.connections.length; i++) {
+        if (id === this.connections[i].getCharacterID()) {
+          interfered = true;
+          id++;
+        }
+      }
+
+      if (!interfered) return id;
+    }
+
+    return id;
+  }
+
+
+  // Player Interaction Hooks
+  busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
+    plr.setUsername(message.username);
+
+    this.broadcast(message); // Broadcast the username to all clients, they will all recieve a message of "player joined the game"
+  }
+  busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
+    if (!plr.getCharacter()) {
+      plr.assignCharacter(this.world.spawnFighter(plr, message.fighterClass)); // Spawn them a fighter
+    }
+  }
+  busPlayerInputHook(plr: Player, message: IPlayerInputState) {
+    Logger.info('%j', message);
 
     const action: Action = {
       player: plr,
@@ -88,40 +121,69 @@ class Clockwork {
     this.pushAction(action);
   }
 
-  busPlayerJoinedHook(message: IPlayerJoined) {
-    if (message.type !== TypeEnum.PlayerJoined) return;
 
-    let player: Player = null;
-    let exists = false;
+  // Player Setup
+  busPlayerConnect(message: IClientConnect) {
+    if (message.type !== TypeEnum.ClientConnect) return;
+
     for (let i = 0; i < this.connections.length; i++) { // Make sure player doesn't already exist
       if (this.connections[i].getId() === message.id) {
-        exists = true;
+        return; // Player was already present, ignore this request
+      }
+    }
+
+    const player = new Player(message.id); // Create player objects
+    player.assignCharacterID(this.getLowestUnusedCharacterID()); // Assign them a basic numeric ID for world-state synchronization
+
+    MessageBus.subscribe(`server-from-client-${message.id}`, (msg) => { // Hook up event for when the player sets their username
+      if (message.type === TypeEnum.PlayerConnect) this.busPlayerConnectHook(player, msg);
+    });
+    MessageBus.subscribe(`server-from-client-${message.id}`, (msg) => { // Hook up player spawn events for this player, with filter
+      if (message.type === TypeEnum.PlayerSpawned) this.busPlayerSpawnedHook(player, msg);
+    });
+    MessageBus.subscribe(`server-from-client-${message.id}`, (msg) => { // Hook up input events for this player, with filter
+      if (message.type === TypeEnum.PlayerInputState) this.busPlayerInputHook(player, msg);
+    });
+
+    MessageBus.publish(`server-to-client-${message.id}`, { // Update client-side player ID
+      type: TypeEnum.PlayerState,
+      characterID: player.getCharacterID(),
+      health: 0, // No character yet, just say they have 0 HP
+    });
+
+    this.connections.push(player); // Finally, add player to the connections list because they are set up
+  }
+  busPlayerDisconnect(message: IClientDisconnect) {
+    if (message.type !== TypeEnum.ClientDisconnect) return;
+
+    // Unsubscribe from all event hook-ups on this player's topic specifically
+    const subscribers: any[] = MessageBus.subscribers(`server-from-client-${message.id}`);
+    for (let i = 0; i < subscribers.length; i++) {
+      MessageBus.unsubscribe(`server-from-client-${message.id}`, subscribers[i]);
+    }
+
+    let player: Player = null; // Get the player based off of the ID
+    for (let i = 0; i < this.connections.length; i++) {
+      if (this.connections[i].getId() === message.id) {
         player = this.connections[i];
+        this.connections.splice(i, 1);
+        i--;
         break;
       }
     }
 
-    if (!exists) { // If they don't exist already, go ahead and create a player for them, and assign them a character ID
-      player = new Player(message.id, message.playerUsername);
-      player.assignCharacterID(this.world.getLowestUnusedCharacterID());
-      this.connections.push(player);
+    if (player && player.getCharacter()) { // If they exist and still have a character, kill the character
+      player.getCharacter().HP = -100; // Character will automatically be cleaned up by world in the next update
     }
-
-    // If they do not have a character, generate one
-    if (!player.getCharacter()) player.assignCharacter(this.world.spawnFighter(player, message.playerClass)); // Spawn them a fighter
   }
+
 
   start() {
     if (!this.running) {
       this.running = true;
 
-      // TODO: How do I separate out my messages? - Type checking is probably the easiest for simple direct messages
-      // - other more complex things can be separated
-      MessageBus.subscribe(Topics.ServerNetworkFromClient, this.busPlayerInputHook);
-      // TODO: Potentially make a separate topic for player joined events??
-      MessageBus.subscribe(Topics.ServerNetworkFromClient, this.busPlayerJoinedHook);
-
-      this.world.Players = this.connections;
+      MessageBus.subscribe(Topics.Connections, this.busPlayerConnect);
+      MessageBus.subscribe(Topics.Connections, this.busPlayerDisconnect);
 
       this.tick(0);
     }
@@ -130,7 +192,7 @@ class Clockwork {
   stop() {
     if (this.running) {
       this.running = false;
-      MessageBus.unsubscribe(Topics.ServerNetworkFromClient, this.busPlayerInputHook);
+      MessageBus.unsubscribe(Topics.Connections, this.busPlayerConnect);
 
       clearTimeout(this.loop);
     }

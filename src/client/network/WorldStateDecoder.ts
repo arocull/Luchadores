@@ -75,6 +75,7 @@ function decodeWorldState(state: IWorldState, world: World) {
   world.Map.Height = state.mapHeight;
   world.Map.Friction = state.mapFriction;
   // Map ID would be used to set map texture, but we only have one right now, so leave it as-is
+  world.Map.wallStrength = state.mapWallStrength;
 
   for (let i = 0; i < state.fighters.length; i++) {
     updateFighter(world, state.fighters[i] as IEntityFighter);

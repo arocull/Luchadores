@@ -7,7 +7,7 @@ enum TypeEnum {
   ClientDisconnect = 202,
 
   PlayerConnect = 300,
-  PlayerJoined = 301,
+  PlayerSpawned = 301,
   PlayerInputState = 302,
   PlayerDied = 303,
   PlayerState = 304,

@@ -1,0 +1,4 @@
+message PlayerSpawned {
+    required int32 type = 1;
+    required int32 fighterClass = 2;
+}

@@ -1,5 +1,3 @@
-import { decoder } from '../../../src/common/messaging/serde';
-import { IWorldState } from '../../../src/common/events/events';
 import encodeWorldState from '../../../src/server/WorldStateEncoder';
 import decodeWorldState from '../../../src/client/network/WorldStateDecoder';
 import Random from '../../../src/common/engine/Random';
@@ -28,7 +26,7 @@ test('world state encode / decode', () => {
   Random.setSeed(3);
   Random.setIndex(0);
 
-  decodeWorldState(decoder(encodedState) as IWorldState, end);
+  decodeWorldState(encodedState, end);
 
   expect(Random.getSeed()).toBe(10);
   expect(Random.getIndex()).toBe(5);

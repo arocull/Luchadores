@@ -1,6 +1,0 @@
-message PlayerJoined {
-    required int32 type = 1;
-    required string id = 2;
-    required int32 playerClass = 3;
-    required string playerUsername = 4;
-}

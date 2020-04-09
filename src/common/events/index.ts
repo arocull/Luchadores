@@ -35,8 +35,8 @@ export interface IPlayerConnect extends events.IPlayerConnect {
   type: TypeEnum.PlayerConnect;
 }
 
-export interface IPlayerJoined extends events.IPlayerJoined {
-  type: TypeEnum.PlayerJoined;
+export interface IPlayerSpawned extends events.IPlayerSpawned {
+  type: TypeEnum.PlayerSpawned;
 }
 
 export interface IPlayerInputState extends events.IPlayerInputState {
@@ -62,7 +62,7 @@ export type IEvent =
   | ILobbyRequest
   | ILobbyResponse
   | IPlayerConnect
-  | IPlayerJoined
+  | IPlayerSpawned
   | IPlayerInputState
   | IPlayerDied
   | IWorldState

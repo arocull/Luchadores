@@ -1,8 +1,7 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
-import { MessageBus, Topics } from '../common/messaging/bus';
+import { MessageBus } from '../common/messaging/bus';
 import { TypeEnum, IPlayerDied } from '../common/events/index';
-import { encoder } from '../common/messaging/serde';
 import { IWorldState, PlayerState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
@@ -20,9 +19,9 @@ import { FighterType } from '../common/engine/Enums';
 /* eslint-enable object-curly-newline */
 
 // Set up base client things
-let clientID = '';
-let username = '';
+const player = new Player('');
 let luchador: FighterType = FighterType.Sheep;
+let character: Fighter = null;
 
 
 // Generate World
@@ -46,8 +45,6 @@ const fpsCount: number[] = [];
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 
-let player: Player = null;
-let character: Fighter = null;
 
 // Particles
 const particles: Particle[] = [];
@@ -69,7 +66,7 @@ function OnDeath(died: number, killer: number) {
     }
   }
 }
-MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg: IPlayerDied) => {
+MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IPlayerDied) => {
   if (msg.type !== TypeEnum.PlayerDied) return;
   OnDeath(msg.characterId, msg.killerId);
 });
@@ -99,14 +96,13 @@ function UpdateInput() { // Attempts to send updated user input to server
   Input.MoveDirection.z = 0; // The player should never have any move or aim input that points upward
   Input.MouseDirection.z = 0;
 
-  MessageBus.publish(Topics.ClientNetworkToServer, encoder({
+  MessageBus.publish(topics.ClientNetworkToServer, {
     type: TypeEnum.PlayerInputState,
-    id: clientID,
     jump: Input.Jump,
     mouseDown: Input.MouseDown,
     mouseDirection: Input.MouseDirection,
     moveDirection: Input.MoveDirection,
-  }));
+  });
 }
 document.addEventListener('keydown', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
@@ -170,23 +166,21 @@ function doUIFrameInteraction(frame: UIFrame) {
   if (hovering && !Input.MouseDown && Input.MouseDownLastFrame) frame.onClick();
 }
 MessageBus.subscribe('PickUsername', (name: string) => {
-  username = name;
+  player.setUsername(name);
 
-  if (!player) player = new Player(clientID, username);
+  MessageBus.publish(topics.ClientNetworkToServer, {
+    type: TypeEnum.PlayerConnect,
+    username: name,
+  });
 });
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   luchador = type;
-
   Input.ClassSelectOpen = false;
 
-  /* // Disabled for now until message bus is fixed
-  MessageBus.publish(Topics.ClientNetworkToServer, {
-    type: TypeEnum.PlayerJoined,
-    clientID,
-    username,
-    luchador,
+  MessageBus.publish(topics.ClientNetworkToServer, {
+    type: TypeEnum.PlayerSpawned,
+    fighterClass: type,
   });
-  */
 
   character = world.spawnFighter(player, luchador);
 });
@@ -196,17 +190,14 @@ MessageBus.subscribe('PickCharacter', (type: FighterType) => {
 let stateUpdatePending = false;
 let stateUpdateLastPacketTime = 0;
 let stateUpdate: IWorldState = null;
-MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg: IWorldState) => {
+MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IWorldState) => {
   if (msg.type === TypeEnum.WorldState) {
     stateUpdatePending = true;
     stateUpdate = msg;
-    // Packet timing??
-    if (stateUpdateLastPacketTime + 1 > stateUpdateLastPacketTime) { // Would really be if packet.timeSent > stateUpdateLastPacketTime
-      stateUpdateLastPacketTime += 1; // = packet.timeSent
-    }
+    stateUpdateLastPacketTime = msg.timestamp;
   }
 });
-MessageBus.subscribe(Topics.ClientNetworkFromServer, (msg: PlayerState) => {
+MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: PlayerState) => {
   if (msg.type === TypeEnum.PlayerState) {
     const mismatch = msg.characterID !== player.getCharacterID();
     if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
@@ -236,7 +227,7 @@ function DoFrame(tick: number) {
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
     decodeWorldState(stateUpdate, world);
-    DeltaTime += (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
+    DeltaTime += Date.now() / 1000 - stateUpdateLastPacketTime; // Do we want to use a more accurate time than this?
     // eslint-disable-next-line
     console.log('Applied world state update with DeltaTime', DeltaTime);
   }
@@ -355,7 +346,5 @@ MessageBus.publish('PickUsername', 'player1');
     })
     .catch((err) => console.error('Failed to connect!', err))
     .finally(() => console.log('... and finally!'));
-
-  clientID = ws.getId();
 }());
 /* eslint-enable no-console */

@@ -22,8 +22,8 @@ function getProtobufType(object: IKind): ProtobufTypeSerde {
       return events.LobbyResponse;
     case TypeEnum.PlayerConnect:
       return events.PlayerConnect;
-    case TypeEnum.PlayerJoined:
-      return events.PlayerJoined;
+    case TypeEnum.PlayerSpawned:
+      return events.PlayerSpawned;
     case TypeEnum.PlayerInputState:
       return events.PlayerInputState;
     case TypeEnum.PlayerDied:

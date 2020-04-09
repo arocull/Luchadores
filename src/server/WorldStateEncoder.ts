@@ -1,3 +1,4 @@
+import * as Moment from 'moment';
 import Random from '../common/engine/Random';
 import Entity from '../common/engine/Entity';
 import World from '../common/engine/World';
@@ -6,7 +7,6 @@ import { Projectile } from '../common/engine/projectiles/index';
 import { EntityType, FighterType } from '../common/engine/Enums';
 import { TypeEnum } from '../common/events/index';
 import { IWorldState } from '../common/events/events';
-import { encoder } from '../common/messaging/serde';
 
 function encodeEntity(obj: Entity): any {
   const result: any = {
@@ -43,7 +43,7 @@ function encodeEntity(obj: Entity): any {
 
 // Encodes the entire WorldState into a Protobuff
 // May need to include time packet was sent?
-function encodeWorldState(world: World): ArrayBuffer {
+function encodeWorldState(world: World): IWorldState {
   const result: IWorldState = {
     type: TypeEnum.WorldState,
     randomSeed: Random.getSeed(),
@@ -52,6 +52,8 @@ function encodeWorldState(world: World): ArrayBuffer {
     mapHeight: world.Map.Height,
     mapFriction: world.Map.Friction,
     mapId: 0,
+    mapWallStrength: world.Map.wallStrength,
+    timestamp: Moment.utc().seconds(),
     fighters: [],
     projectiles: [],
   };
@@ -63,7 +65,7 @@ function encodeWorldState(world: World): ArrayBuffer {
     result.projectiles.push(encodeEntity(world.Bullets[i]));
   }
 
-  return encoder(result);
+  return result;
 }
 
 export { encodeWorldState as default };

@@ -3,10 +3,11 @@ import Player from './Player';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import Map from './Map';
-import { IPlayerInputState } from '../events/events';
+import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
 import { FighterType } from './Enums';
 import { Sheep, Deer, Flamingo } from './fighters';
+import { TypeEnum } from '../events';
 
 // World Class - Manages bullets and fighters
 /* General flow of things:
@@ -26,15 +27,17 @@ class World {
 
   public Fighters: Fighter[];
   public Bullets: Projectile[];
-  public Players: Player[];
   public Map: Map;
+
+  private kills: IPlayerDied[];
 
   constructor() {
     this.Map = new Map(50, 50, 10, 'Maps/Arena.png');
 
-    this.Players = [];
     this.Fighters = [];
     this.Bullets = [];
+
+    this.kills = [];
 
     MessageBus.subscribe('NewProjectile', (message) => {
       this.Bullets.push(message as Projectile);
@@ -60,22 +63,7 @@ class World {
   }
   /* eslint-enable class-methods-use-this */
 
-  public getLowestUnusedCharacterID(): number {
-    let id = 1;
-    let interfered = false;
-    while (id <= World.MAX_LOBBY_SIZE) {
-      for (let i = 0; i < this.Players.length; i++) {
-        if (id === this.Players[i].getCharacterID()) {
-          interfered = true;
-          id++;
-        }
-      }
 
-      if (!interfered) return id;
-    }
-
-    return id;
-  }
   public spawnFighter(player: Player, characterType: FighterType): Fighter {
     // Try to find a good spawn location
     let avgLocation = new Vector(0, 0, 0);
@@ -111,6 +99,15 @@ class World {
     return fight;
   }
 
+  // Returns a list of IPlayerDied events for every fighter that has died
+  // Also removes fighters from the Fighters list
+  public reapKills(): IPlayerDied[] {
+    const killList = this.kills;
+    this.kills = [];
+
+    return killList;
+  }
+
 
   // Normal World Things //
 
@@ -128,6 +125,18 @@ class World {
 
       a.tickCooldowns(DeltaTime);
       a.tryBullet(); // Fire bullets (bullets are automatically added to list with events)
+
+      // If they are dead, add them to the kill list, then remove them from future interactions
+      if (a.HP <= 0) {
+        this.kills.push({
+          type: TypeEnum.PlayerDied,
+          characterId: a.getOwnerID(),
+          killerId: a.LastHitBy,
+        });
+
+        this.Fighters.splice(i, 1);
+        i--;
+      }
     }
   }
 
@@ -145,11 +154,11 @@ class World {
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
       // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
-      if (obj.Position.x < 0) accel.x += this.Map.getWallStrength() * Math.abs(obj.Position.x);
-      else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.getWallStrength() * (obj.Position.x - this.Map.Width);
+      if (obj.Position.x < 0) accel.x += this.Map.wallStrength * Math.abs(obj.Position.x);
+      else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.wallStrength * (obj.Position.x - this.Map.Width);
 
-      if (obj.Position.y < 0) accel.y += this.Map.getWallStrength() * Math.abs(obj.Position.y);
-      else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.getWallStrength() * (obj.Position.y - this.Map.Height);
+      if (obj.Position.y < 0) accel.y += this.Map.wallStrength * Math.abs(obj.Position.y);
+      else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.wallStrength * (obj.Position.y - this.Map.Height);
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
       if (obj.Position.z <= 0) {
