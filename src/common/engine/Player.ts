@@ -3,11 +3,13 @@ import Fighter from './Fighter';
 
 class Player {
   private character: Fighter;
+  private characterID: number; // Used for keeping track between server and clients on who is who
   private pingHistory: Denque<number>;
   private pingHistoryCapacity: number = 30; // 30 is the rule of thumb for samples (Law of Large Numbers).
 
   constructor(private id: string, private username: string) {
     this.character = null;
+    this.characterID = -1;
     this.pingHistory = new Denque<number>();
   }
 
@@ -42,6 +44,16 @@ class Player {
 
   getCharacter() {
     return this.character;
+  }
+  assignCharacter(newCharacter: Fighter) {
+    this.character = newCharacter;
+  }
+
+  assignCharacterID(newCharacterID: number) {
+    this.characterID = newCharacterID;
+  }
+  getCharacterID() {
+    return this.characterID;
   }
 }
 
