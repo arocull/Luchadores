@@ -59,8 +59,9 @@ class Clockwork {
         this.world.tick(lastTime.diff(delta));
 
         // Finally, update world state for all clients
-        this.broadcast(encodeWorldState(this.world));
-        this.broadcastList(this.world.reapKills());
+        this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
+        this.broadcastList(this.world.reapKills()); // Tells players what fighters died and who to award kills to
+        this.updatePlayerStates(); // Update player states (tell players how much HP they have)
       }
 
       // Kick off the interval.
@@ -77,6 +78,19 @@ class Clockwork {
   public broadcastList(messages: IEvent[]) {
     for (let i = 0; i < messages.length; i++) {
       this.broadcast(messages[i]);
+    }
+  }
+  public updatePlayerStates() { // Iterates through all players and informs them of their character ID and health
+    for (let i = 0; i < this.connections.length; i++) {
+      // Only sends message if their character exists though (they shouldn't need it if they don't have a character)
+      const char = this.connections[i].getCharacter();
+      if (char && char.HP > 0) {
+        MessageBus.publish(`server-to-client-${this.connections[i].getId()}`, {
+          type: TypeEnum.PlayerState,
+          characterID: this.connections[i].getCharacterID(),
+          health: char.HP,
+        });
+      }
     }
   }
 
