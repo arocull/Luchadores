@@ -5,8 +5,6 @@ import Projectile from './projectiles/Projectile';
 import Map from './Map';
 import { IPlayerInputState } from '../events/events';
 import { MessageBus } from '../messaging/bus';
-import { FighterType } from './Enums';
-import { Sheep, Deer, Flamingo } from './fighters';
 
 // World Class - Manages bullets and fighters
 /* General flow of things:
@@ -22,8 +20,6 @@ import { Sheep, Deer, Flamingo } from './fighters';
 
 */
 class World {
-  public static MAX_LOBBY_SIZE: number = 20;
-
   public Fighters: Fighter[];
   public Bullets: Projectile[];
   public Players: Player[];
@@ -42,10 +38,8 @@ class World {
   }
 
 
-  // Network Interaction //
-
   // Apply player inputs to player's character
-  /* eslint-disable class-methods-use-this */
+  /* eslint-disable class-methods-use-this, no-param-reassign */
   public applyAction(player: Player, action: IPlayerInputState) {
     const char = player.getCharacter();
     if (!char || char.HP <= 0) return; // If the player's character is currently dead or missing, do not apply inputs
@@ -58,61 +52,8 @@ class World {
       char.Jump(); // Jump
     }
   }
-  /* eslint-enable class-methods-use-this */
+  /* eslint-enable class-methods-use-this, no-param-reassign */
 
-  public getLowestUnusedCharacterID(): number {
-    let id = 1;
-    let interfered = false;
-    while (id <= World.MAX_LOBBY_SIZE) {
-      for (let i = 0; i < this.Players.length; i++) {
-        if (id === this.Players[i].getCharacterID()) {
-          interfered = true;
-          id++;
-        }
-      }
-
-      if (!interfered) return id;
-    }
-
-    return id;
-  }
-  public spawnFighter(player: Player, characterType: FighterType): Fighter {
-    // Try to find a good spawn location
-    let avgLocation = new Vector(0, 0, 0);
-    if (this.Fighters.length > 0) { // Find one furthest from combat... (note, does not work well if combat is in center of arena)
-      for (let i = 0; i < this.Fighters.length; i++) {
-        avgLocation = Vector.Add(avgLocation, this.Fighters[i].Position);
-      }
-      avgLocation = Vector.Divide(avgLocation, this.Fighters.length);
-      avgLocation.x = this.Map.Width - avgLocation.x;
-      avgLocation.y = this.Map.Height - avgLocation.y;
-      avgLocation.z = 0;
-    } else { // Otherwise, just drop them in the middle of the map
-      avgLocation.x = this.Map.Width / 2;
-      avgLocation.y = this.Map.Height / 2;
-    }
-
-    let fight: Fighter = null;
-    switch (characterType) {
-      case FighterType.Sheep:
-      default:
-        fight = new Sheep(player.getCharacterID(), avgLocation);
-        break;
-      case FighterType.Deer:
-        fight = new Deer(player.getCharacterID(), avgLocation);
-        break;
-      case FighterType.Flamingo:
-        fight = new Flamingo(player.getCharacterID(), avgLocation);
-        break;
-    }
-
-    this.Fighters.push(fight);
-
-    return fight;
-  }
-
-
-  // Normal World Things //
 
   // Run all general world-tick functions
   // Note that DeltaTime should be in seconds
@@ -120,6 +61,7 @@ class World {
     this.doUpdates(DeltaTime);
     this.TickPhysics(DeltaTime);
   }
+
 
   // Do various updates that are not realted to physics
   public doUpdates(DeltaTime: number) {
@@ -130,6 +72,7 @@ class World {
       a.tryBullet(); // Fire bullets (bullets are automatically added to list with events)
     }
   }
+
 
   // Tick physics and collisions for fighters and bullets
   public TickPhysics(DeltaTime: number) {

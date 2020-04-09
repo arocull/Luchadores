@@ -36,7 +36,6 @@ test('encodes and decodes LobbyResponse', () => {
 test('encodes and decodes PlayerInputState', () => {
   const encoded = encoder({
     type: events.TypeEnum.PlayerInputState,
-    id: 'abc123',
     jump: true,
     mouseDown: true,
     mouseDirection: { x: 1.5, y: 2.5, z: 3.5 },
@@ -50,7 +49,6 @@ test('encodes and decodes PlayerInputState', () => {
   }
 
   expect(message.type).toBe(events.TypeEnum.PlayerInputState);
-  expect(message.id).toBe('abc123');
   expect(message.jump).toBe(true);
   expect(message.mouseDown).toBe(true);
   expect(message.mouseDirection).not.toBeNull();

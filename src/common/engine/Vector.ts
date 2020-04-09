@@ -1,5 +1,3 @@
-const TwoPI = Math.PI * 2;
-
 class Vector { // A structure that holds position data or direction and magnitude
   public x: number;
 
@@ -50,9 +48,6 @@ class Vector { // A structure that holds position data or direction and magnitud
   static Multiply(a: Vector, b: number):Vector { // A is a vector, b should be a scalar number
     return new Vector(a.x * b, a.y * b, a.z * b);
   }
-  static Divide(a: Vector, b: number):Vector {
-    return new Vector(a.x / b, a.y / b, a.z / b);
-  }
   static MultiplyVectors(a: Vector, b: Vector):Vector {
     return new Vector(a.x * b.x, a.y * b.y, a.z * b.z);
   }
@@ -73,9 +68,6 @@ class Vector { // A structure that holds position data or direction and magnitud
     if (len <= 0) return new Vector(0, 0, 0);
     return new Vector(x / len, y / len, z / len);
   }
-  static UnitVectorFromAngle(angle: number): Vector {
-    return this.UnitVectorFromXYZ(Math.cos(angle), Math.sin(angle), 0);
-  }
 
   static Distance(a: Vector, b:Vector):number {
     return Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2) + ((a.z - b.z) ** 2));
@@ -94,23 +86,6 @@ class Vector { // A structure that holds position data or direction and magnitud
 
   static Clone(a: Vector):Vector {
     return new Vector(a.x, a.y, a.z);
-  }
-
-  static AngleFromXY(a: Vector): number {
-    return Math.atan2(-a.y, a.x);
-  }
-  static AngleFromXYZ(a: Vector): number {
-    return Math.atan2(a.z - a.y, a.x);
-  }
-  static ConstrainAngle(angle: number, min: number = 0, max: number = TwoPI): number {
-    let a = angle;
-    while (a < 0) {
-      a += TwoPI;
-    }
-    while (a >= Math.PI * 2) {
-      a -= TwoPI;
-    }
-    return Math.max(min, Math.min(a, max));
   }
 }
 

@@ -1,16 +1,14 @@
 // Client only -- Renders stuff to the screen
-/* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
-import { EntityType, ParticleType, ProjectileType, UIFrameType } from '../common/engine/Enums';
+import { EntityType, ParticleType, ProjectileType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
-import { Fighter } from '../common/engine/fighters/index';
+import Fighter from '../common/engine/Fighter';
 import Animator from './animation/Animator';
-import { Projectile } from '../common/engine/projectiles/index';
-import { Particle, PLightning } from './particles/index';
-import { UIFrame, UITextBox } from './ui/index';
+import Projectile from '../common/engine/projectiles/Projectile';
+import Particle from './particles/Particle';
+import PLightning from './particles/Lightning';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
-/* eslint-enable object-curly-newline */
 
 function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
   const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
@@ -138,7 +136,7 @@ class Renderer {
             (-pos.x - a.Radius) * zoom + offsetX,
             (pos.y + pos.z) * zoom + offsetY,
             2 * a.Radius * zoom,
-            -a.Height * zoom,
+            a.Height * zoom,
           );
         }
       } else if (toDraw[i].type === EntityType.Projectile) {
@@ -202,67 +200,7 @@ class Renderer {
     canvas.fillStyle = '#000000';
     canvas.font = `${fontSize}px roboto`;
     canvas.textBaseline = 'hanging';
-    canvas.textAlign = 'left';
     canvas.fillText(data, cornerX, cornerY, sizeX);
-  }
-
-  public static DrawUIFrame(canvas: CanvasRenderingContext2D, cam: Camera, frame: UIFrame) {
-    canvas.resetTransform();
-    canvas.font = '48px roboto';
-    canvas.textBaseline = 'hanging';
-    canvas.textAlign = 'center';
-
-    let startX = frame.cornerX * cam.Width;
-    let startY = frame.cornerY * cam.Height;
-    let width = frame.width * cam.Width;
-    let height = frame.height * cam.Height;
-
-    if (frame.restrainAspect) {
-      const scale = Math.min(frame.width * cam.Width, frame.height * cam.Height);
-      startX += (width - scale) / 2;
-      startY -= (height - scale) / 2;
-      width = scale;
-      height = scale;
-    }
-
-    if (frame.alpha > 0) {
-      canvas.globalAlpha = frame.alpha;
-      canvas.fillStyle = frame.renderStyle;
-      canvas.fillRect(startX, startY, width, height);
-
-      if (frame.borderThickness > 0) {
-        canvas.strokeStyle = frame.borderRenderStyle;
-        canvas.lineWidth = frame.borderThickness * cam.Zoom;
-        canvas.strokeRect(startX, startY, width, height);
-      }
-    }
-
-    if (frame.image) {
-      canvas.globalAlpha = frame.imageAlpha;
-
-      canvas.drawImage(frame.image, startX, startY, width, height);
-    }
-
-    if (frame.type === UIFrameType.Text) {
-      const text = <UITextBox>(frame);
-      canvas.globalAlpha = frame.alpha;
-      canvas.fillStyle = text.textStyle;
-      canvas.fillText(text.text, startX + width / 2, startY, width);
-    }
-  }
-
-  public static DrawFPS(canvas: CanvasRenderingContext2D, cam: Camera, DeltaTime: number) {
-    canvas.globalAlpha = 1;
-    canvas.fillStyle = '#000000';
-    canvas.font = '48px roboto';
-    canvas.textBaseline = 'hanging';
-    canvas.textAlign = 'left';
-
-    const fps = Math.floor(10 / DeltaTime) / 10;
-    let str = fps.toString();
-    if (str.length === 2) str += '.0';
-
-    canvas.fillText(`${str} FPS`, 0, 0, cam.Width * 0.1);
   }
   /* eslint-enable no-param-reassign */
 }

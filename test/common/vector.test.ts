@@ -64,17 +64,3 @@ test('vector compare-to test', () => {
   expect(vect1.equals(vect3)).toBe(true);
   expect(vect1.equals(vect4)).toBe(false);
 });
-
-test('vector angles testing', () => {
-  const vect1 = new Vector(0, -1, 0);
-  const vect2 = new Vector(-1, 0, 0);
-  const vect3 = new Vector(0, 0, 3);
-
-  const res1 = Vector.AngleFromXY(vect1);
-  const res2 = Vector.ConstrainAngle(Vector.AngleFromXY(vect2));
-  const res3 = Vector.AngleFromXYZ(vect3);
-
-  expect(res1).toBeCloseTo(Math.PI / 2, 3);
-  expect(res2).toBeCloseTo(Math.PI, 3);
-  expect(res3).toBeCloseTo(Math.PI / 2, 3);
-});

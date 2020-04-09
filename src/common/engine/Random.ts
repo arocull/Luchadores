@@ -8,9 +8,6 @@ class Random {
     seed = newSeed;
     index = 0;
   }
-  static setIndex(newIndex: number) {
-    index = newIndex;
-  }
 
   // Creates a random seed based off of current time (randomized as well by previous use if there was any)
   static randomSeed() {
@@ -21,13 +18,6 @@ class Random {
   static getFloat(): number {
     index++;
     return Math.sin(index * seed - index ** Math.PI + seed / index) / 2 + 0.5;
-  }
-
-  static getSeed(): number {
-    return seed;
-  }
-  static getIndex(): number {
-    return index;
   }
 }
 
