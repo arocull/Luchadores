@@ -1,5 +1,0 @@
-message PlayerDied {
-    required int32 type = 1;
-    required int32 characterId = 2;
-    required int32 killerId = 3;
-}

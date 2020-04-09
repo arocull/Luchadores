@@ -65,10 +65,6 @@ class Camera {
     this.Focus = null;
     this.FocusPosition = newFocus;
   }
-  // Override current focus position, for use when no focus is present
-  public SetFocusPosition(position: Vector) {
-    this.FocusPosition = position;
-  }
   // Returns the current focus position of the camera
   public GetFocusPosition(): Vector {
     return this.FocusPosition;

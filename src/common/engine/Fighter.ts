@@ -164,11 +164,8 @@ class Fighter extends Entity {
   public getOwnerID(): number {
     return this.ID;
   }
-  public getBulletCooldown(): number {
-    return this.BulletCooldown;
-  }
-  public setBulletCooldown(newCooldown: number) {
-    this.BulletCooldown = newCooldown;
+  public inBulletCooldown(): boolean {
+    return this.BulletCooldown > 0;
   }
 }
 

@@ -3,17 +3,6 @@ import Entity from '../Entity';
 import Fighter from '../Fighter';
 import { EntityType, ProjectileType } from '../Enums';
 
-/*
-Default properties that should be replicated to client
-
-- Position
-- Velocity
-- Acceleration
-- Owner (as numeric Player ID)
-- ProjectileType
-- Lifetime
-
-*/
 class Projectile extends Entity {
   protected Lifetime: number;
   public finished: boolean;
@@ -75,19 +64,8 @@ class Projectile extends Entity {
     this.finished = true;
   }
 
-  public getLifetime() {
-    return this.Lifetime;
-  }
-  public setLifetime(newLifetime: number) {
-    this.Lifetime = newLifetime;
-  }
   public getLifePercentage() {
     return this.Lifetime / this.MaxLifetime;
-  }
-
-  public getOwnerID(): number { // Returns the numeric owner ID; returns -1 if there is no owner
-    if (this.Owner) return this.Owner.getOwnerID();
-    return -1;
   }
 }
 
