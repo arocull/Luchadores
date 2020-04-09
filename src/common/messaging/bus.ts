@@ -16,8 +16,7 @@ export interface HandledConsumer<T> {
  * However, any other topic name can be used on-demand.
  */
 export const Topics = {
-  ClientNetworkFromServer: 'client-network-from-server',
-  ClientNetworkToServer: 'client-network-to-server',
+  Connections: 'connections',
 };
 
 /**

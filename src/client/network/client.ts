@@ -8,7 +8,9 @@ const UNOPENED = -1;
 
 class NetworkClient {
   private ws: WebSocket;
-  private id: string;
+  private _id: string;
+  private _topicClientToServer: string;
+  private _topicClientFromServer: string;
 
   private publishToServerConsumer: Consumer;
 
@@ -20,30 +22,56 @@ class NetworkClient {
     this.publishToServerConsumer = (message: any) => this.send(message);
   }
 
-  getId() {
-    return this.id;
+  get id() {
+    return this._id;
+  }
+
+  set id(value: string) {
+    this._id = value;
+    this._topicClientToServer = `client-to-server-${value}`;
+    this._topicClientFromServer = `client-from-server-${value}`;
+  }
+
+  get topicClientToServer() {
+    return this._topicClientToServer;
+  }
+
+  get topicClientFromServer() {
+    return this._topicClientFromServer;
   }
 
   // TODO: Implement proper client library, reconnect, durability, etc.
-  connect() {
+  connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.url);
       this.ws.binaryType = 'arraybuffer';
-
-      this.ws.addEventListener('open', resolve); // TODO: Don't fire this until ID negation is done
-      this.ws.addEventListener('error', reject);
 
       this.ws.addEventListener('open', (e) => this.onOpen(e));
       this.ws.addEventListener('message', (e) => this.onMessage(e));
       this.ws.addEventListener('error', (e) => this.onError(e));
       this.ws.addEventListener('close', (e) => this.onClose(e));
+
+      // Do not resolve the promise until we see the client connection event
+      this.ws.addEventListener('error', () => reject(new Error('The connection had an error')));
+      this.ws.addEventListener('close', () => reject(new Error('The connection closed when attempting to connect')));
+      MessageBus.await(Topics.Connections, 2000,
+        (message: events.IEvent) => {
+          if (message.type === events.TypeEnum.ClientConnect) {
+            if (message.id === this.id) {
+              return message;
+            }
+          }
+          return null;
+        })
+        .then(() => resolve())
+        .catch((err) => reject(err)); // Timeout
     });
   }
 
-  close() {
+  close(): Promise<void> {
     return new Promise((resolve) => {
       if (!this.isClosed()) {
-        this.ws.addEventListener('close', resolve);
+        this.ws.addEventListener('close', () => resolve());
         this.ws.close();
       } else {
         resolve();
@@ -83,41 +111,42 @@ class NetworkClient {
   private onOpen(openEvent: Event) {
     console.log('Opened web socket', openEvent);
 
-    // Subscribe us to receive any events targeting outbound network
-    // TODO: Don't connect this until after ACK
-    MessageBus.subscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
-
-    // Add a timeout for if this event doesn't get ack'd
-    MessageBus.await(Topics.ClientNetworkFromServer, 2000, (message: any) => {
-      if (message.type === events.TypeEnum.ClientAck) {
-        if (message.id !== this.id) {
-          this.close();
-          console.error('Client ID mismatch! Disconnecting.');
-          return null;
-        }
-
-        // Subscribe us to receive any events targeting outbound network
-        console.log('ClientAck and ID match - away we go!');
-        MessageBus.subscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
-
-        return message;
-      }
-      return null;
-    }).catch((err) => {
-      this.close();
-      console.error('Client never ACK\'d. Disconnecting.', err);
-    });
-
-    // Publish an event to the server that we have connected
+    // Publish an event to the server that we have connected.
+    // We have not yet connected the bus listener because the server hasn't ack'd,
+    // so we send this using the internal send method.
     this.send({
       type: events.TypeEnum.ClientConnect,
       id: this.id,
     });
+
+    // Add a timeout for if this event doesn't get ack'd
+    MessageBus.await(this.topicClientFromServer, 2000, (message: events.IEvent) => {
+      if (message.type === events.TypeEnum.ClientAck) {
+        if (message.id === this.id) {
+          console.log('ClientAck and ID match - away we go!');
+
+          // Subscribe us to receive any events targeting outbound network
+          MessageBus.subscribe(this.topicClientToServer, this.publishToServerConsumer);
+
+          // Publish the new connection event to complete the connection after ack
+          MessageBus.publish(Topics.Connections, <events.IClientConnect>{
+            type: events.TypeEnum.ClientConnect,
+            id: this.id,
+          });
+          return message;
+        }
+        console.error('Client ID mismatch! Disconnecting.');
+        this.close();
+        return message;
+      }
+      return null;
+    }).catch((err) => {
+      console.error('Client never ACK\'d. Disconnecting.', err);
+      this.close();
+    });
   }
   /* eslint-enable no-console */
 
-  // TODO: Sending is awkward from other locations. Can we make it simpler?
-  // Figure out how to create envelopes from incoming objects?
   private send(message: any) {
     if (this.isConnected()) {
       const data = !ArrayBuffer.isView(message)
@@ -139,17 +168,17 @@ class NetworkClient {
     console.log('Message decoded. Content:', message);
 
     // Push it out onto the network topic for listeners
-    MessageBus.publish(Topics.ClientNetworkFromServer, message);
+    MessageBus.publish(this.topicClientFromServer, message);
   }
 
   private onClose(closeEvent: CloseEvent) {
     console.log('Closing web socket', closeEvent);
 
     // Unsubscribe event handlers
-    MessageBus.unsubscribe(Topics.ClientNetworkToServer, this.publishToServerConsumer);
+    MessageBus.unsubscribe(this.topicClientToServer, this.publishToServerConsumer);
 
     // Publish an event to the inbound listeners that we have disconnected
-    MessageBus.publish(Topics.ClientNetworkFromServer, <events.IClientDisconnect>{
+    MessageBus.publish(Topics.Connections, <events.IClientDisconnect>{
       type: events.TypeEnum.ClientDisconnect,
       id: this.id,
     });

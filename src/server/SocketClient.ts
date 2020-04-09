@@ -2,7 +2,7 @@ import * as WebSocket from 'ws';
 
 import logger from './Logger';
 import * as events from '../common/events';
-import { Consumer, MessageBus } from '../common/messaging/bus';
+import { Consumer, MessageBus, Topics } from '../common/messaging/bus';
 import { decoder, encoder } from '../common/messaging/serde';
 
 interface AddressInfo {
@@ -14,7 +14,7 @@ interface AddressInfo {
 class SocketClient {
   private _id: string;
   private _topicServerToClient: string;
-  private _topicClientToServer: string;
+  private _topicServerFromClient: string;
 
   private publishToClientConsumer: Consumer;
 
@@ -48,8 +48,9 @@ class SocketClient {
             type: events.TypeEnum.ClientAck,
             id: this.id,
           };
-          this.publishToClientConsumer(ack); // Reply to the client
-          MessageBus.publish('connections', ack); // Complete promises
+          // Reply to the client + announce new connection (completes any pending promises)
+          MessageBus.publish(Topics.Connections, ack);
+          MessageBus.publish(this.topicServerToClient, ack);
         }
       };
 
@@ -73,15 +74,15 @@ class SocketClient {
   private set id(value: string) {
     this._id = value;
     this._topicServerToClient = `server-to-client-${value}`;
-    this._topicClientToServer = `client-to-server-${value}`;
+    this._topicServerFromClient = `server-from-client-${value}`;
   }
 
   get topicServerToClient() {
     return this._topicServerToClient;
   }
 
-  get topicClientToServer() {
-    return this._topicClientToServer;
+  get topicServerFromClient() {
+    return this._topicServerFromClient;
   }
 
   private subscribe() {
@@ -128,7 +129,7 @@ class SocketClient {
     const decoded = decoder(data);
     logger.info('Socket message decoded %j', decoded);
 
-    MessageBus.publish(this.topicClientToServer, decoded);
+    MessageBus.publish(this.topicServerFromClient, decoded);
     logger.info('Socket message sent to topic %j', this.topicServerToClient);
   }
 
@@ -142,7 +143,7 @@ class SocketClient {
     // Only publish a disconnect event if this client managed to identify itself
     if (this.id != null) {
       this.unsubscribe();
-      MessageBus.publish(this.topicClientToServer, <events.IClientDisconnect>{
+      MessageBus.publish(this.topicServerFromClient, <events.IClientDisconnect>{
         type: events.TypeEnum.ClientDisconnect,
         id: this.id,
       });
