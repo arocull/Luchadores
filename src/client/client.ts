@@ -13,7 +13,7 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 /* eslint-enable object-curly-newline */
@@ -48,6 +48,7 @@ cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
 const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
+const uiHealthbar = new UIHealthbar();
 
 
 // Particles
@@ -68,6 +69,10 @@ function OnDeath(died: number, killer: number) {
       world.Fighters[i].EarnKill();
       if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 3;
     }
+  }
+
+  if (died === player.getCharacterID()) {
+    uiHealthbar.collapse();
   }
 }
 MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IPlayerDied) => {
@@ -319,7 +324,15 @@ function DoFrame(tick: number) {
 
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
 
-  if (Input.GUIMode) Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
+  if (Input.GUIMode) {
+    Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
+  } else if ((character && character.HP > 0) || uiHealthbar.collapsing) {
+    if (character) uiHealthbar.healthPercentage = character.HP / character.MaxHP;
+    uiHealthbar.tick(DeltaTime);
+
+    Renderer.DrawUIFrame(canvas, cam, uiHealthbar.base);
+    Renderer.DrawUIFrame(canvas, cam, uiHealthbar.bar);
+  }
   if (Input.ClassSelectOpen) {
     for (let i = 0; i < uiClassSelect.frames.length; i++) {
       doUIFrameInteraction(uiClassSelect.frames[i]);
