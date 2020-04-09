@@ -208,9 +208,6 @@ class Renderer {
 
   public static DrawUIFrame(canvas: CanvasRenderingContext2D, cam: Camera, frame: UIFrame) {
     canvas.resetTransform();
-    canvas.font = '48px roboto';
-    canvas.textBaseline = 'hanging';
-    canvas.textAlign = 'center';
 
     let startX = frame.cornerX * cam.Width;
     let startY = frame.cornerY * cam.Height;
@@ -245,9 +242,19 @@ class Renderer {
 
     if (frame.type === UIFrameType.Text) {
       const text = <UITextBox>(frame);
-      canvas.globalAlpha = frame.alpha;
+
+      let fontSize = 48;
+      if (text.textFontSize > 0) fontSize = text.textFontSize;
+      canvas.font = `${fontSize}px ${text.textFont}`;
+      canvas.textBaseline = 'middle';
+      canvas.textAlign = text.textAlignment;
+
+      let offset = 0;
+      if (text.textAlignment === 'center') offset = width / 2;
+
+      canvas.globalAlpha = text.textAlpha;
       canvas.fillStyle = text.textStyle;
-      canvas.fillText(text.text, startX + width / 2, startY, width);
+      canvas.fillText(text.text, startX + offset, startY + height / 2, width);
     }
   }
 

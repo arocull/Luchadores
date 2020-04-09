@@ -13,7 +13,7 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 /* eslint-enable object-curly-newline */
@@ -45,6 +45,10 @@ const fpsCount: number[] = [];
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 
+const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
+const uiClassSelect = new UIClassSelect(2, 2, 3);
+const uiUsernameSelect = new UIUsernameSelect();
+
 
 // Particles
 const particles: Particle[] = [];
@@ -75,9 +79,9 @@ MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IPlayerDied) => {
 // User Input //
 const Input = {
   // CLIENTSIDE ONLY
-  GUIMode: true,
-  UsernameSelectOpen: false,
-  ClassSelectOpen: true,
+  GUIMode: false,
+  UsernameSelectOpen: true,
+  ClassSelectOpen: false,
   PlayerListOpen: false, // Opens player list GUI on local client--does not need to be networked
   MouseX: 0,
   MouseY: 0,
@@ -108,6 +112,15 @@ document.addEventListener('keydown', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
   const oldJ = Input.Jump;
 
+  if (Input.UsernameSelectOpen) { // Type into username textbox
+    if (event.key.length === 1) uiUsernameSelect.typeCharacter(event.key);
+    else if (event.key === 'Backspace') uiUsernameSelect.backspace();
+    else if (event.key === 'Enter') uiUsernameSelect.enter();
+  }
+  if (event.shiftKey) {
+    uiUsernameSelect.shift(true);
+  }
+
   if (event.key === 'a') Input.MoveDirection.x = -1;
   else if (event.key === 'd') Input.MoveDirection.x = 1;
   else if (event.key === 'w') Input.MoveDirection.y = 1;
@@ -120,6 +133,10 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('keyup', (event) => {
   const old = Vector.Clone(Input.MouseDirection);
   const oldJ = Input.Jump;
+
+  if (event.shiftKey) {
+    uiUsernameSelect.shift(false);
+  }
 
   if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
   else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
@@ -156,10 +173,11 @@ document.addEventListener('mousemove', (event) => {
 
 
 // UI Management
-const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
-const uiClassSelect = new UIClassSelect(2, 2, 3);
 uiBackdrop.alpha = 0.25;
 uiBackdrop.renderStyle = '#000000';
+uiBackdrop.onClick = (() => {
+  uiUsernameSelect.deselect();
+});
 function doUIFrameInteraction(frame: UIFrame) {
   const hovering = frame.checkMouse(Input.MouseX / viewport.width, Input.MouseY / viewport.height);
   frame.onHover(hovering);
@@ -172,6 +190,9 @@ MessageBus.subscribe('PickUsername', (name: string) => {
     type: TypeEnum.PlayerConnect,
     username: name,
   });
+
+  Input.UsernameSelectOpen = false;
+  Input.ClassSelectOpen = true;
 });
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   luchador = type;
@@ -222,7 +243,7 @@ function DoFrame(tick: number) {
   let DeltaTime = (tick / 1000) - LastFrame;
   LastFrame = tick / 1000;
 
-  Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen || Input.PlayerListOpen);
+  Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen);
 
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
@@ -305,6 +326,13 @@ function DoFrame(tick: number) {
       Renderer.DrawUIFrame(canvas, cam, uiClassSelect.frames[i]);
     }
   }
+  if (Input.UsernameSelectOpen) {
+    doUIFrameInteraction(uiBackdrop); // Enable clicking on backdrop to disable clicking
+    for (let i = 0; i < uiUsernameSelect.frames.length; i++) {
+      doUIFrameInteraction(uiUsernameSelect.frames[i]);
+      Renderer.DrawUIFrame(canvas, cam, uiUsernameSelect.frames[i]);
+    }
+  }
   if (Input.PlayerListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
   if (renderSettings.FPScounter) {
@@ -324,10 +352,6 @@ function DoFrame(tick: number) {
 
   return window.requestAnimationFrame(DoFrame);
 }
-
-
-// Currently, just go ahead and give the player a username and character to start with until server is hooked up
-MessageBus.publish('PickUsername', 'player1');
 
 
 /* eslint-disable no-console */
