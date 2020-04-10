@@ -2,7 +2,7 @@ import * as WebSocket from 'ws';
 
 import logger from './Logger';
 import * as events from '../common/events';
-import { Consumer, MessageBus, Topics } from '../common/messaging/bus';
+import { MessageBus, Subscriber, Topics } from '../common/messaging/bus';
 import { decoder, encoder } from '../common/messaging/serde';
 
 interface AddressInfo {
@@ -16,7 +16,7 @@ class SocketClient {
   private _topicServerToClient: string;
   private _topicServerFromClient: string;
 
-  private publishToClientConsumer: Consumer;
+  private busSubscribers: Subscriber[] = [];
 
   constructor(
     private socket: WebSocket,
@@ -58,13 +58,6 @@ class SocketClient {
       logger.debug('Awaiting client ACK...');
       this.socket.on('message', awaitConsumer);
     }
-
-    this.publishToClientConsumer = (message: any) => {
-      const data = !ArrayBuffer.isView(message)
-        ? encoder(message)
-        : message;
-      this.socket.send(data);
-    };
   }
 
   private get id() {
@@ -90,7 +83,8 @@ class SocketClient {
       throw new Error('Cannot subscribe - no client id was negotiated yet');
     }
 
-    MessageBus.subscribe(this.topicServerToClient, this.publishToClientConsumer);
+    const publishSubscriber = MessageBus.subscribe(this.topicServerToClient, (msg) => this.send(msg));
+    this.busSubscribers.push(publishSubscriber);
   }
 
   private unsubscribe() {
@@ -98,7 +92,8 @@ class SocketClient {
       throw new Error('Cannot unsubscribe - no client id was negotiated yet');
     }
 
-    MessageBus.unsubscribe(this.topicServerToClient, this.publishToClientConsumer);
+    this.busSubscribers.forEach(MessageBus.removeSubscriber);
+    this.busSubscribers = [];
   }
 
   connect(): Promise<void> {
@@ -121,6 +116,13 @@ class SocketClient {
       }
       return null;
     });
+  }
+
+  send(message: any): void {
+    const data = !ArrayBuffer.isView(message)
+      ? encoder(message)
+      : message;
+    this.socket.send(data);
   }
 
   onMessage(data: Buffer) {
