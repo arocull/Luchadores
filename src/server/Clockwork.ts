@@ -8,7 +8,7 @@ import World from '../common/engine/World';
 import encodeWorldState from './WorldStateEncoder';
 import { IPlayerInputState, TypeEnum, IEvent } from '../common/events/index';
 import {
-  IPlayerSpawned, IClientConnect, IClientDisconnect, IPlayerConnect,
+  IPlayerSpawned, IClientDisconnect, IPlayerConnect, IClientAck,
 } from '../common/events/events';
 
 interface Action {
@@ -23,6 +23,13 @@ class Clockwork {
   private running: boolean = false;
   private actions: Denque<Action>;
   private loop: NodeJS.Timeout;
+
+  constructor() {
+    this.world = new World();
+    this.world.doReaping = true;
+
+    this.actions = new Denque<Action>();
+  }
 
   tick(delta: number) {
     this.loop = null;
@@ -137,9 +144,7 @@ class Clockwork {
 
 
   // Player Setup
-  busPlayerConnect(message: IClientConnect) {
-    if (message.type !== TypeEnum.ClientConnect) return;
-
+  busPlayerConnect(message: IClientAck) {
     for (let i = 0; i < this.connections.length; i++) { // Make sure player doesn't already exist
       if (this.connections[i].getId() === message.id) {
         return; // Player was already present, ignore this request
@@ -172,13 +177,13 @@ class Clockwork {
       health: 0, // No character yet, just say they have 0 HP
     });
 
+    // TODO: Update player pings
+
     Logger.info(`Connected player ${message.id}`);
 
     this.connections.push(player); // Finally, add player to the connections list because they are set up
   }
   busPlayerDisconnect(message: IClientDisconnect) {
-    if (message.type !== TypeEnum.ClientDisconnect) return;
-
     // Unsubscribe from all event hook-ups on this player's topic specifically
     const subscribers: any[] = MessageBus.subscribers(`server-from-client-${message.id}`);
     for (let i = 0; i < subscribers.length; i++) {
@@ -203,13 +208,21 @@ class Clockwork {
 
   start() {
     if (!this.running) {
-      this.world = new World();
-      this.world.doReaping = true;
-
       this.running = true;
 
-      MessageBus.subscribe(Topics.Connections, this.busPlayerConnect);
-      MessageBus.subscribe(Topics.Connections, this.busPlayerDisconnect);
+      MessageBus.subscribe(Topics.Connections, ((message) => {
+        switch (message.type) {
+          case TypeEnum.ClientAck:
+            this.busPlayerConnect(message);
+            break;
+          case TypeEnum.ClientDisconnect:
+            this.busPlayerDisconnect(message);
+            break;
+          default: // Nothing
+        }
+      }));
+      // MessageBus subscriptions like below cause errors as anything referring to 'this' is thought to be referring to the message bus
+      // MessageBus.subscribe(Topics.Connections, this.busPlayerDisconnect);
 
       this.tick(0);
     }
@@ -218,7 +231,7 @@ class Clockwork {
   stop() {
     if (this.running) {
       this.running = false;
-      MessageBus.unsubscribe(Topics.Connections, this.busPlayerConnect);
+      // MessageBus.unsubscribe(Topics.Connections, this.busPlayerConnect);
 
       clearTimeout(this.loop);
     }

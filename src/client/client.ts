@@ -26,6 +26,7 @@ let character: Fighter = null;
 
 // Generate World
 const world = new World();
+world.Map.loadTexture();
 Random.randomSeed();
 
 // TODO: HAX - get topics to use from web socket
