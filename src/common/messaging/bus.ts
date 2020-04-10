@@ -11,6 +11,11 @@ export interface HandledConsumer<T> {
   (message: any): T;
 }
 
+export interface Subscriber {
+  topic: string;
+  consumer: Consumer;
+}
+
 /**
  * A list of common topics to use.
  * However, any other topic name can be used on-demand.
@@ -25,9 +30,10 @@ export const Topics = {
  * type information we want to expose.
 */
 interface IMessageBus {
-  subscribe(topic: string, consumer: Consumer): void;
+  subscribe(topic: string, consumer: Consumer | Subscriber): Subscriber;
   await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T>;
   unsubscribe(topic: string, consumer: Consumer): void;
+  removeSubscriber(subscriber: Subscriber): void;
   subscribers(topic: string): Consumer[];
   clearSubscribers(): void;
   publish(topic: string, message: any): void;
@@ -37,8 +43,12 @@ interface IMessageBus {
  * The private MessageBus implementation
  */
 class MessageBusImpl extends EventEmitter implements IMessageBus {
-  subscribe(topic: string, consumer: Consumer) {
+  subscribe(topic: string, consumer: Consumer): Subscriber {
     this.on(topic, consumer);
+    return {
+      topic,
+      consumer,
+    };
   }
 
   await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T> {
@@ -60,19 +70,25 @@ class MessageBusImpl extends EventEmitter implements IMessageBus {
     });
   }
 
-  unsubscribe(topic: string, consumer: Consumer) {
+  // TODO: Should this be deprecated?
+  //       Didn't want to break a bunch of code now, but consider removing.
+  unsubscribe(topic: string, consumer: Consumer): void {
     this.off(topic, consumer);
+  }
+
+  removeSubscriber(subscriber: Subscriber): void {
+    this.unsubscribe(subscriber.topic, subscriber.consumer);
   }
 
   subscribers(topic: string): Consumer[] {
     return this.listeners(topic) as Consumer[];
   }
 
-  clearSubscribers() {
+  clearSubscribers(): void {
     this.removeAllListeners();
   }
 
-  publish(topic: string, message: any) {
+  publish(topic: string, message: any): void {
     this.emit(topic, message);
   }
 }
