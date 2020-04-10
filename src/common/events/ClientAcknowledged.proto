@@ -1,4 +1,4 @@
-message ClientDisconnect {
+message ClientAcknowledged {
   required int32 type = 1;
   required string id = 2;
 }

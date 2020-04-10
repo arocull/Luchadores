@@ -1,0 +1,6 @@
+message ClientConnected {
+  required int32 type = 1;
+  required string id = 2;
+  required string topicInbound = 3; // Traffic to this side (e.g. client from server)
+  required string topicOutbound = 4; // Traffic out to other side (e.g client to server)
+}

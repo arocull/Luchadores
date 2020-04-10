@@ -6,21 +6,20 @@ import * as events from './events';
 export { default as TypeEnum } from './TypeEnum';
 import TypeEnum from './TypeEnum';
 
-// Erases underlying events.IKind type with more specific enum
-export interface IKind {
-  type: TypeEnum;
+export interface IClientConnecting extends events.IClientConnecting {
+  type: TypeEnum.ClientConnecting;
 }
 
-export interface IClientAck extends events.IClientAck {
-  type: TypeEnum.ClientAck;
+export interface IClientAcknowledged extends events.IClientAcknowledged {
+  type: TypeEnum.ClientAcknowledged;
 }
 
-export interface IClientConnect extends events.IClientConnect {
-  type: TypeEnum.ClientConnect;
+export interface IClientConnected extends events.IClientConnected {
+  type: TypeEnum.ClientConnected;
 }
 
-export interface IClientDisconnect extends events.IClientDisconnect {
-  type: TypeEnum.ClientDisconnect;
+export interface IClientDisconnected extends events.IClientDisconnected {
+  type: TypeEnum.ClientDisconnected;
 }
 
 export interface ILobbyRequest extends events.ILobbyRequest {
@@ -56,14 +55,16 @@ export interface IWorldState extends events.IWorldState {
 }
 
 export type IEvent =
-  | IClientAck
-  | IClientConnect
-  | IClientDisconnect
+  | IClientConnecting
+  | IClientAcknowledged
+  | IClientConnected
+  | IClientDisconnected
   | ILobbyRequest
   | ILobbyResponse
   | IPlayerConnect
   | IPlayerSpawned
   | IPlayerInputState
   | IPlayerDied
+  | IPlayerState
   | IWorldState
   ;
