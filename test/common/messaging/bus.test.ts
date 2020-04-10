@@ -1,4 +1,12 @@
-import { Consumer, HandledConsumer, MessageBus } from '../../../src/common/messaging/bus';
+import {
+  Consumer,
+  HandledConsumer,
+  MessageBus,
+} from '../../../src/common/messaging/bus';
+
+afterEach(() => {
+  MessageBus.clearSubscribers();
+});
 
 test('send and receive to subscribers', () => {
   const topic = 'topic';
@@ -18,6 +26,25 @@ test('send and receive to subscribers', () => {
   MessageBus.unsubscribe(topic, consumer);
   MessageBus.publish(topic, 'hello');
   expect(messages).toEqual([]);
+});
+
+test('subscription objects work', () => {
+  const topic = 'topic';
+  const messages: any[] = [];
+
+  const subscriber = MessageBus.subscribe(topic, (message: any) => {
+    messages.push(message);
+  });
+  expect(subscriber).not.toBeNull();
+  expect(subscriber.consumer).not.toBeNull();
+  expect(subscriber.topic).toBe(topic);
+
+  MessageBus.publish(topic, 'hello');
+  expect(messages[0]).toBe('hello');
+
+  MessageBus.removeSubscriber(subscriber);
+  MessageBus.publish(topic, 'hello2');
+  expect(messages.length).toBe(1); // No new messages
 });
 
 test('await message', async () => {
