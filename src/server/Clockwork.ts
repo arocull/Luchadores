@@ -149,14 +149,21 @@ class Clockwork {
     const player = new Player(message.id); // Create player objects
     player.assignCharacterID(this.getLowestUnusedCharacterID()); // Assign them a basic numeric ID for world-state synchronization
 
-    MessageBus.subscribe(`server-from-client-${message.id}`, (msg) => { // Hook up event for when the player sets their username
-      if (message.type === TypeEnum.PlayerConnect) this.busPlayerConnectHook(player, msg);
-    });
-    MessageBus.subscribe(`server-from-client-${message.id}`, (msg) => { // Hook up player spawn events for this player, with filter
-      if (message.type === TypeEnum.PlayerSpawned) this.busPlayerSpawnedHook(player, msg);
-    });
-    MessageBus.subscribe(`server-from-client-${message.id}`, (msg) => { // Hook up input events for this player, with filter
-      if (message.type === TypeEnum.PlayerInputState) this.busPlayerInputHook(player, msg);
+    // TODO: Implement topic names into connection events
+    // TODO: Make message bus return a consumer upon subscription
+    MessageBus.subscribe(`server-from-client-${message.id}`, (msg: IEvent) => { // Hook up event for when the player sets their username
+      switch (msg.type) {
+        case TypeEnum.PlayerConnect:
+          this.busPlayerConnectHook(player, msg);
+          break;
+        case TypeEnum.PlayerSpawned:
+          this.busPlayerSpawnedHook(player, msg);
+          break;
+        case TypeEnum.PlayerInputState:
+          this.busPlayerInputHook(player, msg);
+          break;
+        default: // Nothing
+      }
     });
 
     MessageBus.publish(`server-to-client-${message.id}`, { // Update client-side player ID
@@ -164,6 +171,8 @@ class Clockwork {
       characterID: player.getCharacterID(),
       health: 0, // No character yet, just say they have 0 HP
     });
+
+    Logger.info(`Connected player ${message.id}`);
 
     this.connections.push(player); // Finally, add player to the connections list because they are set up
   }
@@ -194,6 +203,9 @@ class Clockwork {
 
   start() {
     if (!this.running) {
+      this.world = new World();
+      this.world.doReaping = true;
+
       this.running = true;
 
       MessageBus.subscribe(Topics.Connections, this.busPlayerConnect);

@@ -29,6 +29,7 @@ class World {
   public Bullets: Projectile[];
   public Map: Map;
 
+  public doReaping: boolean;
   private kills: IPlayerDied[];
 
   constructor() {
@@ -37,6 +38,7 @@ class World {
     this.Fighters = [];
     this.Bullets = [];
 
+    this.doReaping = false;
     this.kills = [];
 
     MessageBus.subscribe('NewProjectile', (message) => {
@@ -127,7 +129,7 @@ class World {
       a.tryBullet(); // Fire bullets (bullets are automatically added to list with events)
 
       // If they are dead, add them to the kill list, then remove them from future interactions
-      if (a.HP <= 0) {
+      if (this.doReaping && a.HP <= 0) {
         this.kills.push({
           type: TypeEnum.PlayerDied,
           characterId: a.getOwnerID(),

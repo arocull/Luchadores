@@ -253,6 +253,7 @@ function DoFrame(tick: number) {
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
     decodeWorldState(stateUpdate, world);
+    // TODO: Get server time in client-server handshake and use that for time calculations
     DeltaTime += Date.now() / 1000 - stateUpdateLastPacketTime; // Do we want to use a more accurate time than this?
     // eslint-disable-next-line
     console.log('Applied world state update with DeltaTime', DeltaTime);
@@ -300,13 +301,6 @@ function DoFrame(tick: number) {
         }
 
         a.JustHitMomentum = 0;
-      }
-
-      // Normally shouldn't do this on client incase client simulates a kill but it does not occur on server
-      // Currently here for visuals and testing, however
-      if (a.HP <= 0) {
-        OnDeath(a.getOwnerID(), a.LastHitBy);
-        i--;
       }
     }
   }
