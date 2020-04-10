@@ -30,13 +30,28 @@ export const Topics = {
  * type information we want to expose.
 */
 interface IMessageBus {
-  subscribe(topic: string, consumer: Consumer | Subscriber): Subscriber;
-  await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T>;
+  subscribe(topic: string, consumer: Consumer): Subscriber;
   unsubscribe(topic: string, consumer: Consumer): void;
+  addSubscriber(subscriber: Subscriber): void;
   removeSubscriber(subscriber: Subscriber): void;
   subscribers(topic: string): Consumer[];
   clearSubscribers(): void;
   publish(topic: string, message: any): void;
+  await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T>;
+}
+
+function deferred<T>() {
+  let resolve: (value: T) => void;
+  let reject: (reason?: any) => void;
+  const promise = new Promise<T>((_resolve, _reject) => {
+    resolve = _resolve;
+    reject = _reject;
+  });
+  return {
+    resolve,
+    reject,
+    promise,
+  };
 }
 
 /**
@@ -51,29 +66,12 @@ class MessageBusImpl extends EventEmitter implements IMessageBus {
     };
   }
 
-  await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T> {
-    return new Promise((resolve, reject) => {
-      let wrappedConsumer: Consumer;
-      const timeout = setTimeout(() => {
-        this.off(topic, wrappedConsumer);
-        reject(new Error(`Expected message did not arrive in ${timeoutMs}ms on topic ${topic}`));
-      }, timeoutMs);
-
-      wrappedConsumer = (message: any) => {
-        if (consumer(message) != null) {
-          clearTimeout(timeout);
-          this.off(topic, wrappedConsumer);
-          resolve(message);
-        }
-      };
-      this.on(topic, wrappedConsumer);
-    });
-  }
-
-  // TODO: Should this be deprecated?
-  //       Didn't want to break a bunch of code now, but consider removing.
   unsubscribe(topic: string, consumer: Consumer): void {
     this.off(topic, consumer);
+  }
+
+  addSubscriber(subscriber: Subscriber): void {
+    this.subscribe(subscriber.topic, subscriber.consumer);
   }
 
   removeSubscriber(subscriber: Subscriber): void {
@@ -90,6 +88,25 @@ class MessageBusImpl extends EventEmitter implements IMessageBus {
 
   publish(topic: string, message: any): void {
     this.emit(topic, message);
+  }
+
+  await<T>(topic: string, timeoutMs: number, consumer: HandledConsumer<T>): Promise<T> {
+    const future = deferred<T>();
+    let timeout: NodeJS.Timeout;
+    const subscriber = this.subscribe(topic, (message: any) => {
+      if (consumer(message) != null) {
+        this.removeSubscriber(subscriber);
+        clearTimeout(timeout);
+        future.resolve(message as T);
+      }
+    });
+
+    timeout = setTimeout(() => {
+      this.removeSubscriber(subscriber);
+      future.reject(new Error(`Expected message did not arrive in ${timeoutMs}ms on topic ${topic}`));
+    }, timeoutMs);
+
+    return future.promise;
   }
 }
 
