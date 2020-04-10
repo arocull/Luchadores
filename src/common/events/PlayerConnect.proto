@@ -1,5 +1,4 @@
 message PlayerConnect {
     required int32 type = 1;
-    required string id = 2;
-    required string playerClass = 3;
+    required string username = 2;
 }

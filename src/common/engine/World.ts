@@ -3,8 +3,11 @@ import Player from './Player';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import Map from './Map';
-import { IPlayerInputState } from '../events/events';
+import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
+import { FighterType } from './Enums';
+import { Sheep, Deer, Flamingo } from './fighters';
+import { TypeEnum } from '../events';
 
 // World Class - Manages bullets and fighters
 /* General flow of things:
@@ -20,17 +23,23 @@ import { MessageBus } from '../messaging/bus';
 
 */
 class World {
+  public static MAX_LOBBY_SIZE: number = 20;
+
   public Fighters: Fighter[];
   public Bullets: Projectile[];
-  public Players: Player[];
   public Map: Map;
+
+  public doReaping: boolean;
+  private kills: IPlayerDied[];
 
   constructor() {
     this.Map = new Map(50, 50, 10, 'Maps/Arena.png');
 
-    this.Players = [];
     this.Fighters = [];
     this.Bullets = [];
+
+    this.doReaping = false;
+    this.kills = [];
 
     MessageBus.subscribe('NewProjectile', (message) => {
       this.Bullets.push(message as Projectile);
@@ -38,8 +47,10 @@ class World {
   }
 
 
+  // Network Interaction //
+
   // Apply player inputs to player's character
-  /* eslint-disable class-methods-use-this, no-param-reassign */
+  /* eslint-disable class-methods-use-this */
   public applyAction(player: Player, action: IPlayerInputState) {
     const char = player.getCharacter();
     if (!char || char.HP <= 0) return; // If the player's character is currently dead or missing, do not apply inputs
@@ -52,8 +63,55 @@ class World {
       char.Jump(); // Jump
     }
   }
-  /* eslint-enable class-methods-use-this, no-param-reassign */
+  /* eslint-enable class-methods-use-this */
 
+
+  public spawnFighter(player: Player, characterType: FighterType): Fighter {
+    // Try to find a good spawn location
+    let avgLocation = new Vector(0, 0, 0);
+    if (this.Fighters.length > 0) { // Find one furthest from combat... (note, does not work well if combat is in center of arena)
+      for (let i = 0; i < this.Fighters.length; i++) {
+        avgLocation = Vector.Add(avgLocation, this.Fighters[i].Position);
+      }
+      avgLocation = Vector.Divide(avgLocation, this.Fighters.length);
+      avgLocation.x = this.Map.Width - avgLocation.x;
+      avgLocation.y = this.Map.Height - avgLocation.y;
+      avgLocation.z = 0;
+    } else { // Otherwise, just drop them in the middle of the map
+      avgLocation.x = this.Map.Width / 2;
+      avgLocation.y = this.Map.Height / 2;
+    }
+
+    let fight: Fighter = null;
+    switch (characterType) {
+      case FighterType.Sheep:
+      default:
+        fight = new Sheep(player.getCharacterID(), avgLocation);
+        break;
+      case FighterType.Deer:
+        fight = new Deer(player.getCharacterID(), avgLocation);
+        break;
+      case FighterType.Flamingo:
+        fight = new Flamingo(player.getCharacterID(), avgLocation);
+        break;
+    }
+
+    this.Fighters.push(fight);
+
+    return fight;
+  }
+
+  // Returns a list of IPlayerDied events for every fighter that has died
+  // Also removes fighters from the Fighters list
+  public reapKills(): IPlayerDied[] {
+    const killList = this.kills;
+    this.kills = [];
+
+    return killList;
+  }
+
+
+  // Normal World Things //
 
   // Run all general world-tick functions
   // Note that DeltaTime should be in seconds
@@ -62,7 +120,6 @@ class World {
     this.TickPhysics(DeltaTime);
   }
 
-
   // Do various updates that are not realted to physics
   public doUpdates(DeltaTime: number) {
     for (let i = 0; i < this.Fighters.length; i++) {
@@ -70,9 +127,20 @@ class World {
 
       a.tickCooldowns(DeltaTime);
       a.tryBullet(); // Fire bullets (bullets are automatically added to list with events)
+
+      // If they are dead, add them to the kill list, then remove them from future interactions
+      if (this.doReaping && a.HP <= 0) {
+        this.kills.push({
+          type: TypeEnum.PlayerDied,
+          characterId: a.getOwnerID(),
+          killerId: a.LastHitBy,
+        });
+
+        this.Fighters.splice(i, 1);
+        i--;
+      }
     }
   }
-
 
   // Tick physics and collisions for fighters and bullets
   public TickPhysics(DeltaTime: number) {
@@ -88,11 +156,11 @@ class World {
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
       // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
-      if (obj.Position.x < 0) accel.x += this.Map.getWallStrength() * Math.abs(obj.Position.x);
-      else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.getWallStrength() * (obj.Position.x - this.Map.Width);
+      if (obj.Position.x < 0) accel.x += this.Map.wallStrength * Math.abs(obj.Position.x);
+      else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.wallStrength * (obj.Position.x - this.Map.Width);
 
-      if (obj.Position.y < 0) accel.y += this.Map.getWallStrength() * Math.abs(obj.Position.y);
-      else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.getWallStrength() * (obj.Position.y - this.Map.Height);
+      if (obj.Position.y < 0) accel.y += this.Map.wallStrength * Math.abs(obj.Position.y);
+      else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.wallStrength * (obj.Position.y - this.Map.Height);
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
       if (obj.Position.z <= 0) {

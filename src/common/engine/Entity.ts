@@ -6,6 +6,7 @@ Default properties that should be replicated to client
 
 - Position
 - Velocity
+- Acceleration
 
 */
 class Entity {
