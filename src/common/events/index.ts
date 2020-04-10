@@ -6,12 +6,6 @@ import * as events from './events';
 export { default as TypeEnum } from './TypeEnum';
 import TypeEnum from './TypeEnum';
 
-// Erases underlying events.IKind type with more specific enum
-// TODO: Is this still useful? Can this be removed? Should it be removed? Serde only interface?
-export interface IKind {
-  type: TypeEnum;
-}
-
 export interface IClientConnecting extends events.IClientConnecting {
   type: TypeEnum.ClientConnecting;
 }
@@ -71,5 +65,6 @@ export type IEvent =
   | IPlayerSpawned
   | IPlayerInputState
   | IPlayerDied
+  | IPlayerState
   | IWorldState
   ;
