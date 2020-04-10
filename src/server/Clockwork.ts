@@ -8,7 +8,7 @@ import World from '../common/engine/World';
 import encodeWorldState from './WorldStateEncoder';
 import { IPlayerInputState, TypeEnum, IEvent } from '../common/events/index';
 import {
-  IPlayerSpawned, IClientConnect, IClientDisconnect, IPlayerConnect,
+  IPlayerSpawned, IClientConnected, IClientDisconnected, IPlayerConnect,
 } from '../common/events/events';
 
 interface Action {
@@ -135,10 +135,11 @@ class Clockwork {
     this.pushAction(action);
   }
 
-
   // Player Setup
-  busPlayerConnect(message: IClientConnect) {
-    if (message.type !== TypeEnum.ClientConnect) return;
+  busPlayerConnect(message: IClientConnected) {
+    if (message.type !== TypeEnum.ClientConnected) {
+      return;
+    }
 
     for (let i = 0; i < this.connections.length; i++) { // Make sure player doesn't already exist
       if (this.connections[i].getId() === message.id) {
@@ -149,9 +150,9 @@ class Clockwork {
     const player = new Player(message.id); // Create player objects
     player.assignCharacterID(this.getLowestUnusedCharacterID()); // Assign them a basic numeric ID for world-state synchronization
 
-    // TODO: Implement topic names into connection events
     // TODO: Make message bus return a consumer upon subscription
-    MessageBus.subscribe(`server-from-client-${message.id}`, (msg: IEvent) => { // Hook up event for when the player sets their username
+    // TODO: Move message handling responsibility directly into `Player`?
+    MessageBus.subscribe(message.topicInbound, (msg: IEvent) => { // Hook up event for when the player sets their username
       switch (msg.type) {
         case TypeEnum.PlayerConnect:
           this.busPlayerConnectHook(player, msg);
@@ -166,7 +167,7 @@ class Clockwork {
       }
     });
 
-    MessageBus.publish(`server-to-client-${message.id}`, { // Update client-side player ID
+    MessageBus.publish(message.topicOutbound, { // Update client-side player ID
       type: TypeEnum.PlayerState,
       characterID: player.getCharacterID(),
       health: 0, // No character yet, just say they have 0 HP
@@ -176,11 +177,14 @@ class Clockwork {
 
     this.connections.push(player); // Finally, add player to the connections list because they are set up
   }
-  busPlayerDisconnect(message: IClientDisconnect) {
-    if (message.type !== TypeEnum.ClientDisconnect) return;
+
+  busPlayerDisconnect(message: IClientDisconnected) {
+    if (message.type !== TypeEnum.ClientDisconnected) {
+      return;
+    }
 
     // Unsubscribe from all event hook-ups on this player's topic specifically
-    const subscribers: any[] = MessageBus.subscribers(`server-from-client-${message.id}`);
+    const subscribers: any[] = MessageBus.subscribers(message.topicInbound);
     for (let i = 0; i < subscribers.length; i++) {
       MessageBus.unsubscribe(`server-from-client-${message.id}`, subscribers[i]);
     }
@@ -199,7 +203,6 @@ class Clockwork {
       player.getCharacter().HP = -100; // Character will automatically be cleaned up by world in the next update
     }
   }
-
 
   start() {
     if (!this.running) {

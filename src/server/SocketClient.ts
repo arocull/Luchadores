@@ -32,8 +32,8 @@ class SocketClient {
       }, 2000);
 
       const awaitConsumer = (data: Buffer) => {
-        const message = decoder(data);
-        if (message.type === events.TypeEnum.ClientConnect) {
+        const message = decoder(data); // TODO: Yuck, can this manual decoder start to go away now?
+        if (message.type === events.TypeEnum.ClientConnecting) {
           // Handle the event and finish the connection setup
           this.id = message.id;
           logger.info('Socket ClientConnect - this client is now %o', this.id);
@@ -43,14 +43,18 @@ class SocketClient {
           this.subscribe(); // Subscribe to the client topic(s)
           this.socket.on('message', (msgData: Buffer) => this.onMessage(msgData)); // Connect the primary message listener
 
-          // Notify listeners about new connections
-          const ack: events.IClientAck = {
-            type: events.TypeEnum.ClientAck,
+          // Reply to the client
+          MessageBus.publish(this.topicServerToClient, <events.IClientAcknowledged>{
+            type: events.TypeEnum.ClientAcknowledged,
             id: this.id,
-          };
-          // Reply to the client + announce new connection (completes any pending promises)
-          MessageBus.publish(Topics.Connections, ack);
-          MessageBus.publish(this.topicServerToClient, ack);
+          });
+          // Announce new connection (completes any pending promises)
+          MessageBus.publish(Topics.Connections, <events.IClientConnected>{
+            type: events.TypeEnum.ClientConnected,
+            id: this.id,
+            topicInbound: this.topicServerFromClient,
+            topicOutbound: this.topicServerToClient,
+          });
         }
       };
 
@@ -143,9 +147,11 @@ class SocketClient {
     // Only publish a disconnect event if this client managed to identify itself
     if (this.id != null) {
       this.unsubscribe();
-      MessageBus.publish(this.topicServerFromClient, <events.IClientDisconnect>{
-        type: events.TypeEnum.ClientDisconnect,
+      MessageBus.publish(this.topicServerFromClient, <events.IClientDisconnected>{
+        type: events.TypeEnum.ClientDisconnected,
         id: this.id,
+        topicInbound: this.topicServerFromClient,
+        topicOutbound: this.topicServerToClient,
       });
     }
   }

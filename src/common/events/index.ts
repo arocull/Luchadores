@@ -7,20 +7,25 @@ export { default as TypeEnum } from './TypeEnum';
 import TypeEnum from './TypeEnum';
 
 // Erases underlying events.IKind type with more specific enum
+// TODO: Is this still useful? Can this be removed? Should it be removed? Serde only interface?
 export interface IKind {
   type: TypeEnum;
 }
 
-export interface IClientAck extends events.IClientAck {
-  type: TypeEnum.ClientAck;
+export interface IClientConnecting extends events.IClientConnecting {
+  type: TypeEnum.ClientConnecting;
 }
 
-export interface IClientConnect extends events.IClientConnect {
-  type: TypeEnum.ClientConnect;
+export interface IClientAcknowledged extends events.IClientAcknowledged {
+  type: TypeEnum.ClientAcknowledged;
 }
 
-export interface IClientDisconnect extends events.IClientDisconnect {
-  type: TypeEnum.ClientDisconnect;
+export interface IClientConnected extends events.IClientConnected {
+  type: TypeEnum.ClientConnected;
+}
+
+export interface IClientDisconnected extends events.IClientDisconnected {
+  type: TypeEnum.ClientDisconnected;
 }
 
 export interface ILobbyRequest extends events.ILobbyRequest {
@@ -56,9 +61,10 @@ export interface IWorldState extends events.IWorldState {
 }
 
 export type IEvent =
-  | IClientAck
-  | IClientConnect
-  | IClientDisconnect
+  | IClientConnecting
+  | IClientAcknowledged
+  | IClientConnected
+  | IClientDisconnected
   | ILobbyRequest
   | ILobbyResponse
   | IPlayerConnect

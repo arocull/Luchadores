@@ -2,9 +2,10 @@ enum TypeEnum {
   LobbyRequest = 100,
   LobbyResponse = 101,
 
-  ClientConnect = 200,
-  ClientAck = 201,
-  ClientDisconnect = 202,
+  ClientConnecting = 200,
+  ClientAcknowledged = 201,
+  ClientConnected = 202,
+  ClientDisconnected = 203,
 
   PlayerConnect = 300,
   PlayerSpawned = 301,

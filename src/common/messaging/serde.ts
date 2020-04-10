@@ -10,12 +10,14 @@ interface ProtobufTypeSerde {
 
 function getProtobufType(object: IKind): ProtobufTypeSerde {
   switch (object.type) {
-    case TypeEnum.ClientConnect:
-      return events.ClientConnect;
-    case TypeEnum.ClientAck:
-      return events.ClientAck;
-    case TypeEnum.ClientDisconnect:
-      return events.ClientDisconnect;
+    case TypeEnum.ClientConnecting:
+      return events.ClientConnecting;
+    case TypeEnum.ClientAcknowledged:
+      return events.ClientAcknowledged;
+    case TypeEnum.ClientConnected:
+      return events.ClientConnected;
+    case TypeEnum.ClientDisconnected:
+      return events.ClientDisconnected;
     case TypeEnum.LobbyRequest:
       return events.LobbyRequest;
     case TypeEnum.LobbyResponse:

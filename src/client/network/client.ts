@@ -41,7 +41,7 @@ class NetworkClient {
   }
 
   // TODO: Implement proper client library, reconnect, durability, etc.
-  connect(): Promise<void> {
+  connect(): Promise<events.IClientConnected> {
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.url);
       this.ws.binaryType = 'arraybuffer';
@@ -56,14 +56,14 @@ class NetworkClient {
       this.ws.addEventListener('close', () => reject(new Error('The connection closed when attempting to connect')));
       MessageBus.await(Topics.Connections, 2000,
         (message: events.IEvent) => {
-          if (message.type === events.TypeEnum.ClientConnect) {
+          if (message.type === events.TypeEnum.ClientConnected) {
             if (message.id === this.id) {
               return message;
             }
           }
           return null;
         })
-        .then(() => resolve())
+        .then((connected) => resolve(connected))
         .catch((err) => reject(err)); // Timeout
     });
   }
@@ -115,13 +115,13 @@ class NetworkClient {
     // We have not yet connected the bus listener because the server hasn't ack'd,
     // so we send this using the internal send method.
     this.send({
-      type: events.TypeEnum.ClientConnect,
+      type: events.TypeEnum.ClientConnecting,
       id: this.id,
     });
 
     // Add a timeout for if this event doesn't get ack'd
     MessageBus.await(this.topicClientFromServer, 2000, (message: events.IEvent) => {
-      if (message.type === events.TypeEnum.ClientAck) {
+      if (message.type === events.TypeEnum.ClientAcknowledged) {
         if (message.id === this.id) {
           console.log('ClientAck and ID match - away we go!');
 
@@ -129,9 +129,11 @@ class NetworkClient {
           MessageBus.subscribe(this.topicClientToServer, this.publishToServerConsumer);
 
           // Publish the new connection event to complete the connection after ack
-          MessageBus.publish(Topics.Connections, <events.IClientConnect>{
-            type: events.TypeEnum.ClientConnect,
+          MessageBus.publish(Topics.Connections, <events.IClientConnected>{
+            type: events.TypeEnum.ClientConnected,
             id: this.id,
+            topicInbound: this.topicClientFromServer,
+            topicOutbound: this.topicClientToServer,
           });
           return message;
         }
@@ -175,9 +177,11 @@ class NetworkClient {
     MessageBus.unsubscribe(this.topicClientToServer, this.publishToServerConsumer);
 
     // Publish an event to the inbound listeners that we have disconnected
-    MessageBus.publish(Topics.Connections, <events.IClientDisconnect>{
-      type: events.TypeEnum.ClientDisconnect,
+    MessageBus.publish(Topics.Connections, <events.IClientDisconnected>{
+      type: events.TypeEnum.ClientDisconnected,
       id: this.id,
+      topicInbound: this.topicClientFromServer,
+      topicOutbound: this.topicClientToServer,
     });
   }
 
