@@ -161,11 +161,8 @@ class NetworkClient {
   private onMessage(msgEvent: MessageEvent) {
     const data = new Uint8Array(msgEvent.data as ArrayBuffer);
 
-    console.log('WebSocket message', data);
-
     // Decode the type of the message
     const message = decoder(data);
-    console.log('Message decoded. Content:', message);
 
     // Push it out onto the network topic for listeners
     MessageBus.publish(this.topicClientFromServer, message);

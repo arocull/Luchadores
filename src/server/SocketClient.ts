@@ -55,7 +55,7 @@ class SocketClient {
       };
 
       // Only listen for connection identifiers at this point
-      logger.info('Awaiting client ACK...');
+      logger.debug('Awaiting client ACK...');
       this.socket.on('message', awaitConsumer);
     }
 
@@ -124,13 +124,13 @@ class SocketClient {
   }
 
   onMessage(data: Buffer) {
-    logger.info('Socket receiving data %j', data);
+    logger.silly('Socket receiving data %j', data);
 
     const decoded = decoder(data);
-    logger.info('Socket message decoded %j', decoded);
+    logger.silly('Socket message decoded %j', decoded);
 
     MessageBus.publish(this.topicServerFromClient, decoded);
-    logger.info('Socket message sent to topic %j', this.topicServerToClient);
+    logger.silly('Socket message sent to topic %j', this.topicServerToClient);
   }
 
   close() {

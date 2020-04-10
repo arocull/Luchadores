@@ -19,7 +19,6 @@ class UILuchadorPortrait extends UIFrame {
 
     this.image = new Image();
     this.image.src = `Portraits/${fighterTypeToString(luchador)}.png`;
-    console.log(this.image.src);
   }
 
   onClick() {

@@ -124,7 +124,7 @@ class Clockwork {
     }
   }
   busPlayerInputHook(plr: Player, message: IPlayerInputState) {
-    Logger.info('%j', message);
+    Logger.info('Player %j InputState %j', plr.getId(), message);
 
     const action: Action = {
       player: plr,

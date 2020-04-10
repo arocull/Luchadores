@@ -20,7 +20,7 @@ const logger = winston.createLogger({
     }),
     new winston.transports.File({
       filename: 'luchadores.log',
-      level: 'silly',
+      level: 'debug',
       format: winston.format.logstash(),
     }),
   ],
