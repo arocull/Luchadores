@@ -2,7 +2,8 @@ import * as WebSocket from 'ws';
 
 import logger from './Logger';
 import * as events from '../common/events';
-import { MessageBus, Subscriber, Topics } from '../common/messaging/bus';
+import { MessageBus, Topics } from '../common/messaging/bus';
+import { SubscriberContainer } from '../common/messaging/container';
 import { decoder, encoder } from '../common/messaging/serde';
 
 interface AddressInfo {
@@ -15,49 +16,14 @@ class SocketClient {
   private _id: string;
   private _topicServerToClient: string;
   private _topicServerFromClient: string;
-
-  private busSubscribers: Subscriber[] = [];
+  private subscribers: SubscriberContainer;
 
   constructor(
     private socket: WebSocket,
     private addressInfo: AddressInfo,
   ) {
-    this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
-
-    // If the client hasn't identified themselves in short order, close their connection.
-    {
-      const awaitTimeout = setTimeout(() => {
-        logger.error('Client did not ACK in time - disconnecting: %j, %j', this.addressInfo);
-        this.socket.close();
-      }, 2000);
-
-      const awaitConsumer = (data: Buffer) => {
-        const message = decoder(data);
-        if (message.type === events.TypeEnum.ClientConnect) {
-          // Handle the event and finish the connection setup
-          this.id = message.id;
-          logger.info('Socket ClientConnect - this client is now %o', this.id);
-
-          clearTimeout(awaitTimeout); // Cancel timeout connection killer
-          this.socket.removeEventListener('message', awaitConsumer as any); // Remove this listener (there is no `socket.off`)
-          this.subscribe(); // Subscribe to the client topic(s)
-          this.socket.on('message', (msgData: Buffer) => this.onMessage(msgData)); // Connect the primary message listener
-
-          // Notify listeners about new connections
-          const ack: events.IClientAck = {
-            type: events.TypeEnum.ClientAck,
-            id: this.id,
-          };
-          // Reply to the client + announce new connection (completes any pending promises)
-          MessageBus.publish(Topics.Connections, ack);
-          MessageBus.publish(this.topicServerToClient, ack);
-        }
-      };
-
-      // Only listen for connection identifiers at this point
-      logger.debug('Awaiting client ACK...');
-      this.socket.on('message', awaitConsumer);
-    }
+    this.subscribers = new SubscriberContainer();
+    this.initialize();
   }
 
   private get id() {
@@ -78,22 +44,55 @@ class SocketClient {
     return this._topicServerFromClient;
   }
 
+  private initialize() {
+    this.socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
+
+    // If the client hasn't identified themselves in short order, close their connection.
+    const awaitTimeout = setTimeout(() => {
+      logger.error('Client did not ACK in time - disconnecting: %j, %j', this.addressInfo);
+      this.socket.close();
+    }, 2000);
+
+    const awaitConsumer = (data: Buffer) => {
+      const message = decoder(data);
+      if (message.type === events.TypeEnum.ClientConnect) {
+        // Handle the event and finish the connection setup
+        this.id = message.id;
+        logger.info('Socket ClientConnect - this client is now %o', this.id);
+
+        clearTimeout(awaitTimeout); // Cancel timeout connection killer
+        this.socket.removeEventListener('message', awaitConsumer as any); // Remove this listener (there is no `socket.off`)
+        this.subscribe(); // Subscribe to the client topic(s)
+        this.socket.on('message', (msgData: Buffer) => this.onMessage(msgData)); // Connect the primary message listener
+
+        // Notify listeners about new connections
+        const ack: events.IClientAck = {
+          type: events.TypeEnum.ClientAck,
+          id: this.id,
+        };
+        // Reply to the client + announce new connection (completes any pending promises)
+        MessageBus.publish(Topics.Connections, ack);
+        MessageBus.publish(this.topicServerToClient, ack);
+      }
+    };
+
+    // Only listen for connection identifiers at this point
+    logger.debug('Awaiting client ACK...');
+    this.socket.on('message', awaitConsumer);
+  }
+
   private subscribe() {
     if (this.id == null) {
       throw new Error('Cannot subscribe - no client id was negotiated yet');
     }
-
-    const publishSubscriber = MessageBus.subscribe(this.topicServerToClient, (msg) => this.send(msg));
-    this.busSubscribers.push(publishSubscriber);
+    this.subscribers.attach(this.topicServerToClient, (msg) => this.send(msg));
   }
 
   private unsubscribe() {
     if (this.id == null) {
       throw new Error('Cannot unsubscribe - no client id was negotiated yet');
     }
-
-    this.busSubscribers.forEach(MessageBus.removeSubscriber);
-    this.busSubscribers = [];
+    this.subscribers.detachAll();
   }
 
   connect(): Promise<void> {
