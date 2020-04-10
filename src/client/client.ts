@@ -164,7 +164,7 @@ document.addEventListener('mousemove', (event) => {
     Input.MouseX = event.clientX;
     Input.MouseY = event.clientY;
 
-  // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
+    // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
   } else if (character && character.isRanged()) {
     const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(character.Position), new Vector(event.clientX, event.clientY, 0)));
     dir.x *= -1;
@@ -366,15 +366,12 @@ function DoFrame(tick: number) {
 (function setup() {
   window.requestAnimationFrame(DoFrame);
 
-  const wsUrl = `ws://${window.location.host}/socket`;
-  console.log('Attempting WebSocket at URL', wsUrl);
-
-  const ws = new NetworkClient(`ws://${window.location.host}/socket`);
-  ws.connect()
-    .then(() => {
-      topics.ClientNetworkFromServer = ws.topicClientFromServer;
-      topics.ClientNetworkToServer = ws.topicClientToServer;
-      console.log('Connected OK! Configured topics:', topics);
+  new NetworkClient(`ws://${window.location.host}/socket`)
+    .connect()
+    .then((connected) => {
+      topics.ClientNetworkFromServer = connected.topicInbound;
+      topics.ClientNetworkToServer = connected.topicOutbound;
+      console.log('Connected OK!', connected);
     })
     .catch((err) => console.error('Failed to connect!', err))
     .finally(() => console.log('... and finally!'));

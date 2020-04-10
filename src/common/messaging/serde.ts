@@ -1,6 +1,6 @@
 // "serde" is shorthand for "serializer / deserializer"
 
-import { IEvent, IKind, TypeEnum } from '../events'; // The public interface types
+import { IEvent, TypeEnum } from '../events'; // The public interface types
 import * as events from '../events/events'; // The private Protobuf classes
 
 interface ProtobufTypeSerde {
@@ -8,14 +8,16 @@ interface ProtobufTypeSerde {
   decode(data: Uint8Array): any;
 }
 
-function getProtobufType(object: IKind): ProtobufTypeSerde {
+function getProtobufType(object: IEvent): ProtobufTypeSerde {
   switch (object.type) {
-    case TypeEnum.ClientConnect:
-      return events.ClientConnect;
-    case TypeEnum.ClientAck:
-      return events.ClientAck;
-    case TypeEnum.ClientDisconnect:
-      return events.ClientDisconnect;
+    case TypeEnum.ClientConnecting:
+      return events.ClientConnecting;
+    case TypeEnum.ClientAcknowledged:
+      return events.ClientAcknowledged;
+    case TypeEnum.ClientConnected:
+      return events.ClientConnected;
+    case TypeEnum.ClientDisconnected:
+      return events.ClientDisconnected;
     case TypeEnum.LobbyRequest:
       return events.LobbyRequest;
     case TypeEnum.LobbyResponse:
@@ -36,7 +38,7 @@ function getProtobufType(object: IKind): ProtobufTypeSerde {
       // TODO: Figure out how to make this an exhaustive switch
       // and produce a compile error if not all cases are covered.
       // https://www.typescriptlang.org/docs/handbook/advanced-types.html#exhaustiveness-checking
-      throw new Error(`Unexpected TypeEnum in serde: ${object.type}`);
+      throw new Error(`Unexpected TypeEnum in serde: ${(object as IEvent).type}`);
   }
 }
 

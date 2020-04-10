@@ -1,0 +1,7 @@
+message ClientDisconnected {
+  required int32 type = 1;
+  required string id = 2;
+  // These are optional on disconnect because they may have never been negotiated
+  optional string topicInbound = 3; // Traffic to this side (e.g. client from server)
+  optional string topicOutbound = 4; // Traffic out to other side (e.g client to server)
+}

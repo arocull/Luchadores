@@ -6,10 +6,16 @@ import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
 import World from '../common/engine/World';
 import encodeWorldState from './WorldStateEncoder';
-import { IPlayerInputState, TypeEnum, IEvent } from '../common/events/index';
 import {
-  IPlayerSpawned, IClientDisconnect, IPlayerConnect, IClientAck,
-} from '../common/events/events';
+  TypeEnum,
+  IEvent,
+  IClientConnected,
+  IClientDisconnected,
+  IPlayerConnect,
+  IPlayerInputState,
+  IPlayerSpawned,
+} from '../common/events';
+import { SubscriberContainer } from '../common/messaging/container';
 
 interface Action {
   player: Player;
@@ -23,12 +29,14 @@ class Clockwork {
   private running: boolean = false;
   private actions: Denque<Action>;
   private loop: NodeJS.Timeout;
+  private subscribers: SubscriberContainer;
 
   constructor() {
     this.world = new World();
     this.world.doReaping = true;
 
     this.actions = new Denque<Action>();
+    this.subscribers = new SubscriberContainer();
   }
 
   tick(delta: number) {
@@ -142,9 +150,12 @@ class Clockwork {
     this.pushAction(action);
   }
 
-
   // Player Setup
-  busPlayerConnect(message: IClientAck) {
+  busPlayerConnect(message: IClientConnected) {
+    if (message.type !== TypeEnum.ClientConnected) {
+      return;
+    }
+
     for (let i = 0; i < this.connections.length; i++) { // Make sure player doesn't already exist
       if (this.connections[i].getId() === message.id) {
         return; // Player was already present, ignore this request
@@ -154,9 +165,8 @@ class Clockwork {
     const player = new Player(message.id); // Create player objects
     player.assignCharacterID(this.getLowestUnusedCharacterID()); // Assign them a basic numeric ID for world-state synchronization
 
-    // TODO: Implement topic names into connection events
-    // TODO: Make message bus return a consumer upon subscription
-    MessageBus.subscribe(`server-from-client-${message.id}`, (msg: IEvent) => { // Hook up event for when the player sets their username
+    // TODO: Move message handling responsibility directly into `Player`?
+    this.subscribers.attachSpecific(message.id, message.topicInbound, (msg: IEvent) => { // Hook up event for when the player sets their username
       switch (msg.type) {
         case TypeEnum.PlayerConnect:
           this.busPlayerConnectHook(player, msg);
@@ -171,7 +181,7 @@ class Clockwork {
       }
     });
 
-    MessageBus.publish(`server-to-client-${message.id}`, { // Update client-side player ID
+    MessageBus.publish(message.topicOutbound, { // Update client-side player ID
       type: TypeEnum.PlayerState,
       characterID: player.getCharacterID(),
       health: 0, // No character yet, just say they have 0 HP
@@ -183,12 +193,14 @@ class Clockwork {
 
     this.connections.push(player); // Finally, add player to the connections list because they are set up
   }
-  busPlayerDisconnect(message: IClientDisconnect) {
-    // Unsubscribe from all event hook-ups on this player's topic specifically
-    const subscribers: any[] = MessageBus.subscribers(`server-from-client-${message.id}`);
-    for (let i = 0; i < subscribers.length; i++) {
-      MessageBus.unsubscribe(`server-from-client-${message.id}`, subscribers[i]);
+
+  busPlayerDisconnect(message: IClientDisconnected) {
+    if (message.type !== TypeEnum.ClientDisconnected) {
+      return;
     }
+
+    // Unsubscribe from all event hook-ups associated with this player's id
+    this.subscribers.detachAllSpecific(message.id);
 
     let player: Player = null; // Get the player based off of the ID
     for (let i = 0; i < this.connections.length; i++) {
@@ -205,24 +217,21 @@ class Clockwork {
     }
   }
 
-
   start() {
     if (!this.running) {
       this.running = true;
 
-      MessageBus.subscribe(Topics.Connections, ((message) => {
+      this.subscribers.attach(Topics.Connections, ((message: IEvent) => {
         switch (message.type) {
-          case TypeEnum.ClientAck:
+          case TypeEnum.ClientConnected:
             this.busPlayerConnect(message);
             break;
-          case TypeEnum.ClientDisconnect:
+          case TypeEnum.ClientDisconnected:
             this.busPlayerDisconnect(message);
             break;
           default: // Nothing
         }
       }));
-      // MessageBus subscriptions like below cause errors as anything referring to 'this' is thought to be referring to the message bus
-      // MessageBus.subscribe(Topics.Connections, this.busPlayerDisconnect);
 
       this.tick(0);
     }
@@ -231,7 +240,8 @@ class Clockwork {
   stop() {
     if (this.running) {
       this.running = false;
-      // MessageBus.unsubscribe(Topics.Connections, this.busPlayerConnect);
+
+      this.subscribers.detachAll();
 
       clearTimeout(this.loop);
     }
