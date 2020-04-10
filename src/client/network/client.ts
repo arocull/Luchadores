@@ -1,7 +1,8 @@
 import { v4 as uuid } from 'uuid';
 
 import * as events from '../../common/events';
-import { Consumer, MessageBus, Topics } from '../../common/messaging/bus';
+import { SubscriberContainer } from '../../common/messaging/container';
+import { MessageBus, Topics } from '../../common/messaging/bus';
 import { decoder, encoder } from '../../common/messaging/serde';
 
 const UNOPENED = -1;
@@ -11,15 +12,11 @@ class NetworkClient {
   private _id: string;
   private _topicClientToServer: string;
   private _topicClientFromServer: string;
-
-  private publishToServerConsumer: Consumer;
+  private subscribers: SubscriberContainer;
 
   constructor(private url: string) {
     this.id = uuid();
-
-    // The consumer reads any messages on NetworkOutbound topic
-    // and sends them back out of the WebSocket.
-    this.publishToServerConsumer = (message: any) => this.send(message);
+    this.subscribers = new SubscriberContainer();
   }
 
   get id() {
@@ -126,7 +123,7 @@ class NetworkClient {
           console.log('ClientAck and ID match - away we go!');
 
           // Subscribe us to receive any events targeting outbound network
-          MessageBus.subscribe(this.topicClientToServer, this.publishToServerConsumer);
+          this.subscribers.attach(this.topicClientToServer, (msg) => this.send(msg));
 
           // Publish the new connection event to complete the connection after ack
           MessageBus.publish(Topics.Connections, <events.IClientConnect>{
@@ -172,7 +169,7 @@ class NetworkClient {
     console.log('Closing web socket', closeEvent);
 
     // Unsubscribe event handlers
-    MessageBus.unsubscribe(this.topicClientToServer, this.publishToServerConsumer);
+    this.subscribers.detachAll();
 
     // Publish an event to the inbound listeners that we have disconnected
     MessageBus.publish(Topics.Connections, <events.IClientDisconnect>{
