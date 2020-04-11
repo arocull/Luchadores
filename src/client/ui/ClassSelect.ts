@@ -17,8 +17,8 @@ class UIClassSelect {
 
     const sidebar = new UIFrame(UIClassSelect.INNER_WIDTH, 0, UIClassSelect.SIDEBAR_WIDTH, 1, false);
     sidebar.renderStyle = '#b5651d';
-    sidebar.borderRenderStyle = '#ee0011';
-    sidebar.borderThickness = 0.1;
+    sidebar.borderRenderStyle = '#a4540c';
+    sidebar.borderThickness = 0.05;
     this.frames.push(sidebar);
 
     const scaleX = UIClassSelect.INNER_WIDTH / (columns + 1);
@@ -57,7 +57,29 @@ class UIClassSelect {
     portrait.image = new Image();
     portrait.image.src = `Portraits/${fighterTypeToString(this.selected)}.png`;
     portrait.restrainAspect = true;
+    portrait.borderThickness = 0.1;
     this.frames.push(portrait);
+
+    const fighterName = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.075, UIClassSelect.SIDEBAR_WIDTH, 0.05, false, 'Name');
+    fighterName.textFontSize = 56;
+    fighterName.alpha = 0;
+    fighterName.textStyle = '#ffffff';
+    this.frames.push(fighterName);
+
+    const flavorText = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.125, UIClassSelect.SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
+    flavorText.textFontSize = 16;
+    flavorText.alpha = 0;
+    flavorText.textStyle = '#dddddd';
+    this.frames.push(flavorText);
+
+    const descript = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.16, UIClassSelect.SIDEBAR_WIDTH, 0.045, false, 'Description');
+    descript.textFontSize = 24;
+    descript.alpha = 0;
+    descript.textStyle = '#eeeeee';
+    descript.textWrapping = true;
+    descript.textAlignment = 'left';
+    descript.textInnerWidth = 0.95;
+    this.frames.push(descript);
 
     // Select button
     const button = new UITextBox(
@@ -68,6 +90,11 @@ class UIClassSelect {
       true,
       'Select',
     );
+    button.color = '#11dd33';
+    button.colorHover = '#22ee44';
+    button.borderColor = '#22ee44';
+    button.borderColorHover = '#33ff55';
+    button.borderThickness = 0.05;
     button.onClick = (() => {
       MessageBus.publish('PickCharacter', this.selected);
     });
@@ -76,7 +103,33 @@ class UIClassSelect {
     MessageBus.subscribe('UI_ClickLuchador', (clickedLuchador: FighterType) => {
       this.selected = clickedLuchador;
       portrait.image.src = `Portraits/${fighterTypeToString(this.selected)}.png`;
+
+      switch (clickedLuchador) {
+        default:
+        case FighterType.Sheep:
+          fighterName.text = 'La Oveja Grande';
+          flavorText.text = 'She really, REALLY likes chocolate.';
+          descript.text = '\tRoll around and build momentum, before slamming into enemies and crushing them under your immense weight.';
+          break;
+        case FighterType.Deer:
+          fighterName.text = 'El Ciervo something';
+          flavorText.text = 'Don\'t ask where he got the gun.';
+          descript.text = '\tFire a constant stream of bullets with high precision.';
+          break;
+        case FighterType.Flamingo:
+          fighterName.text = 'El Flamenacre';
+          flavorText.text = 'On fire 90% of the time and freaking out the other 10%.';
+          descript.text = '\tReign terror upon your foes by setting them ablaze--just don\'t run out of breath.';
+          break;
+        case FighterType.Toad:
+          fighterName.text = 'spanish pun about electricity + toad';
+          flavorText.text = 'He\'s always feeling a bit ecstatic.';
+          descript.text = '\tBuild up static charge by hopping around, before discharing massive voltage on opponents by wandering close.';
+          break;
+      }
     });
+
+    MessageBus.publish('UI_ClickLuchador', FighterType.Sheep); // Use sheep defaults
   }
 }
 
