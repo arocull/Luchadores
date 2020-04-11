@@ -109,23 +109,20 @@ class Clockwork {
     }
   }
 
+  // TODO: Needs tests?
   private getLowestUnusedCharacterID(): number {
-    let id = 1;
-    let interfered = false;
-    while (id <= World.MAX_LOBBY_SIZE) {
-      for (let i = 0; i < this.connections.length; i++) {
-        if (id === this.connections[i].getCharacterID()) {
-          interfered = true;
-          id++;
+    // iterates over character IDs (generated from map)
+    // comparing against previous (accumulator),
+    // starting with World.MAX_LOBBY_SIZE (seed value)
+    return this.connections
+      .map((conn) => conn.getCharacterID())
+      .reduce((acc, id) => {
+        if (id < acc) {
+          return id;
         }
-      }
-
-      if (!interfered) return id;
-    }
-
-    return id;
+        return acc;
+      }, World.MAX_LOBBY_SIZE);
   }
-
 
   // Player Interaction Hooks
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
