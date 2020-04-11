@@ -1,4 +1,3 @@
-import * as Moment from 'moment';
 import Random from '../common/engine/Random';
 import Entity from '../common/engine/Entity';
 import World from '../common/engine/World';
@@ -53,7 +52,7 @@ function encodeWorldState(world: World): IWorldState {
     mapFriction: world.Map.Friction,
     mapId: 0,
     mapWallStrength: world.Map.wallStrength,
-    timestamp: Moment.utc().seconds(),
+    timestamp: Date.now(),
     fighters: [],
     projectiles: [],
   };

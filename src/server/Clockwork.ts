@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import Denque from 'denque';
-import * as Moment from 'moment'; // NOTE: this is a namespace, it contains the Moment type under it.
 import Player from '../common/engine/Player';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
@@ -20,7 +19,7 @@ import { SubscriberContainer } from '../common/messaging/container';
 interface Action {
   player: Player;
   input: IPlayerInputState;
-  timestamp: Moment.Moment;
+  timestamp: number;
 }
 
 class Clockwork {
@@ -43,35 +42,43 @@ class Clockwork {
     this.loop = null;
 
     if (this.running) {
-      const pings: number[] = [];
-      _.each(this.connections, (conn) => {
-        pings.push(conn.getPing());
-      });
+      // const pings: number[] = [];
+      // _.each(this.connections, (conn) => {
+      //   pings.push(conn.getPing());
+      // });
 
       // Worst of *average* pings! This way we even the playing field so the
       // player with fiber doesn't whoop on the guy with dialup.
-      const worstPing = _.max(pings);
+      const worstPing = 100; // _.max(pings);
 
       if (delta > 0) {
-        const sortedActions = _.sortBy(this.actions.toArray(), (act) => act.timestamp);
+        const actionArray = this.actions.toArray();
+        this.actions.clear(); // Reset the list of actions for next tick
+
+        const sortedActions = _.sortBy(actionArray, (act) => act.timestamp);
+        const span = sortedActions.length > 0
+          ? _.last(sortedActions).timestamp - _.first(sortedActions).timestamp
+          : 0;
 
         // We're going to line the actions in the order they fired, apply each
         // to the world state, and tick the physics by the amount of time
         // between each action.
-        let lastTime: Moment.Moment = null;
+        let lastTime = 0;
         _.each(sortedActions, (act) => {
           // Apply the action onto the world state.
           this.world.applyAction(act.player, act.input);
 
           if (lastTime) {
             // Tick the world by the difference in time between the actions.
-            this.world.tick(lastTime.diff(act.timestamp));
+            this.world.tick((lastTime - act.timestamp) / 1000);
           }
 
           lastTime = act.timestamp;
         });
 
-        this.world.tick(lastTime.diff(delta));
+        // Get remainder time
+        const remainder = worstPing - span;
+        this.world.tick(remainder / 1000); // Decimal seconds
 
         // Finally, update world state for all clients
         this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
@@ -140,7 +147,7 @@ class Clockwork {
 
     const action: Action = {
       player: plr,
-      timestamp: Moment.utc(),
+      timestamp: Date.now(),
       input: message,
     };
 
