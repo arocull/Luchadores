@@ -11,7 +11,7 @@ message WorldState {
     required float mapFriction = 6;
     required int32 mapId = 7;
     required int32 mapWallStrength = 8;
-    required float timestamp = 9;
+    required int64 timestamp = 9;
     repeated EntityFighter fighters = 10;
     repeated EntityProjectile projectiles = 11;
 }

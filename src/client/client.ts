@@ -353,7 +353,7 @@ function DoFrame(tick: number) {
         if (msg.type === TypeEnum.WorldState) {
           stateUpdatePending = true;
           stateUpdate = msg;
-          stateUpdateLastPacketTime = msg.timestamp;
+          stateUpdateLastPacketTime = msg.timestamp as number;
         } else if (msg.type === TypeEnum.PlayerState) {
           const mismatch = msg.characterID !== player.getCharacterID();
           if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
