@@ -136,7 +136,7 @@ class Clockwork {
     }
   }
   busPlayerInputHook(plr: Player, message: IPlayerInputState) {
-    Logger.info('Player %j InputState %j', plr.getId(), message);
+    Logger.silly('Player %j InputState %j', plr.getId(), message);
 
     const action: Action = {
       player: plr,
