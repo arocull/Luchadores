@@ -240,7 +240,19 @@ function DoFrame(tick: number) {
 
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
+
+    for (let i = 0; i < world.Fighters.length; i++) { // Keeps track of how many WorldState updates each fighters missed
+      world.Fighters[i].UpdatesMissed++;
+    }
+
     decodeWorldState(stateUpdate, world);
+
+    for (let i = 0; i < world.Fighters.length; i++) { // Prune fighters who have not been included in the world state 5 consecutive times
+      if (world.Fighters[i].UpdatesMissed > 5) {
+        OnDeath(world.Fighters[i].getOwnerID(), -1);
+      }
+    }
+
     // TODO: Get server time in client-server handshake and use that for time calculations
     DeltaTime = (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
     // eslint-disable-next-line

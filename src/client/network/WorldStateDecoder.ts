@@ -25,6 +25,8 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
     world.Fighters.push(newFighter); // Otherwise, add them to the list
   } else newFighter.Position = pos;
 
+  newFighter.UpdatesMissed = 0; // Reset tracker on fighter so they aren't pruned
+
   newFighter.Velocity = new Vector(packet.velocity.x, packet.velocity.y, packet.velocity.z);
   newFighter.Acceleration = new Vector(packet.acceleration.x, packet.acceleration.y, packet.acceleration.z);
 
