@@ -1,8 +1,8 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
-import { TypeEnum, IPlayerDied } from '../common/events/index';
-import { IWorldState, PlayerState } from '../common/events/events';
+import { IEvent, TypeEnum, IPlayerDied } from '../common/events/index';
+import { IWorldState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -217,31 +217,7 @@ MessageBus.subscribe('PickCharacter', (type: FighterType) => {
 let stateUpdatePending = false;
 let stateUpdateLastPacketTime = 0;
 let stateUpdate: IWorldState = null;
-MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IWorldState) => {
-  if (msg.type === TypeEnum.WorldState) {
-    stateUpdatePending = true;
-    stateUpdate = msg;
-    stateUpdateLastPacketTime = msg.timestamp;
-  }
-});
-MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: PlayerState) => {
-  if (msg.type === TypeEnum.PlayerState) {
-    const mismatch = msg.characterID !== player.getCharacterID();
-    if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
-      character.HP = 0;
-      character.LastHitBy = null;
-    }
-
-    player.assignCharacterID(msg.characterID);
-
-    if (mismatch && character) { // If there was a mismatch and old character was killed, generate a new one
-      MessageBus.publish('PickCharacter', luchador);
-    }
-
-    character.HP = msg.health;
-  }
-});
-
+// SEE SETUP \/ \/ \/ \/
 
 let LastFrame = 0;
 function DoFrame(tick: number) {
@@ -372,6 +348,28 @@ function DoFrame(tick: number) {
       topics.ClientNetworkFromServer = connected.topicInbound;
       topics.ClientNetworkToServer = connected.topicOutbound;
       console.log('Connected OK!', connected);
+
+      MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IEvent) => {
+        if (msg.type === TypeEnum.WorldState) {
+          stateUpdatePending = true;
+          stateUpdate = msg;
+          stateUpdateLastPacketTime = msg.timestamp;
+        } else if (msg.type === TypeEnum.PlayerState) {
+          const mismatch = msg.characterID !== player.getCharacterID();
+          if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
+            character.HP = 0;
+            character.LastHitBy = null;
+          }
+
+          player.assignCharacterID(msg.characterID);
+
+          if (mismatch && character) { // If there was a mismatch and old character was killed, generate a new one
+            MessageBus.publish('PickCharacter', luchador);
+          }
+
+          character.HP = msg.health;
+        }
+      });
     })
     .catch((err) => console.error('Failed to connect!', err))
     .finally(() => console.log('... and finally!'));
