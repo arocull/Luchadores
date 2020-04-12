@@ -118,17 +118,22 @@ class Clockwork {
 
   // TODO: Needs tests?
   private getLowestUnusedCharacterID(): number {
-    // iterates over character IDs (generated from map)
-    // comparing against previous (accumulator),
-    // starting with World.MAX_LOBBY_SIZE (seed value)
-    return this.connections
-      .map((conn) => conn.getCharacterID())
-      .reduce((acc, id) => {
-        if (id < acc) {
-          return id;
-        }
-        return acc;
-      }, World.MAX_LOBBY_SIZE);
+    const available = []; // Get list of all possible numbers
+    for (let i = 1; i <= World.MAX_LOBBY_SIZE; i++) {
+      available.push(i);
+    }
+
+    // Remove numbers that are taken
+    for (let i = 0; i < this.connections.length; i++) {
+      const ind = available.indexOf(this.connections[i].getCharacterID());
+      if (ind !== -1) {
+        available.splice(ind, 1);
+      }
+    }
+
+    if (available.length === 0) return -1; // No character ID was available
+
+    return available[0]; // Return first unused number
   }
 
   // Player Interaction Hooks

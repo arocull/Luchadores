@@ -12,6 +12,7 @@ test('vector arithematic test', () => {
   expect(Vector.Subtract(vect1, vect2).x).toBe(-1);
 
   expect(Vector.Multiply(vect2, 3).x).toBe(3);
+  expect(Vector.Divide(vect2, 2).x).toBe(0.5);
   expect(Vector.MultiplyVectors(vect1, vect2).x).toBe(0);
 
   expect(Vector.Distance(vect1, vect2)).toBe(1);
