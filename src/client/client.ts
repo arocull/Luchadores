@@ -226,7 +226,7 @@ function UpdatePlayerState(msg: IPlayerState) {
     MessageBus.publish('PickCharacter', luchador);
   }
 
-  character.HP = msg.health;
+  if (character) character.HP = msg.health;
 }
 // SEE SETUP \/ \/ \/ \/
 
@@ -256,8 +256,6 @@ function DoFrame(tick: number) {
 
     // TODO: Get server time in client-server handshake and use that for time calculations
     DeltaTime = (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
-    // eslint-disable-next-line
-    console.log('Applied world state update with DeltaTime', DeltaTime);
   }
 
   // Use inputs

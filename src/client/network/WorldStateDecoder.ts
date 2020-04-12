@@ -12,7 +12,12 @@ import { IWorldState, IEntityFighter, IEntityProjectile } from '../../common/eve
 function updateFighter(world: World, packet: IEntityFighter): Fighter {
   let newFighter: Fighter = null;
   for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
-    if (world.Fighters[i].getOwnerID() === packet.ownerId) newFighter = world.Fighters[i];
+    if (
+      world.Fighters[i].getOwnerID() === packet.ownerId // Ensure they're the right player
+      && world.Fighters[i].getCharacter() === packet.class // And the right character
+    ) {
+      newFighter = world.Fighters[i];
+    }
   }
 
   const pos = new Vector(packet.position.x, packet.position.y, packet.position.z);
