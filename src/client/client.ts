@@ -1,8 +1,8 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
-import { IEvent, TypeEnum, IPlayerDied } from '../common/events/index';
-import { IWorldState } from '../common/events/events';
+import { IEvent, TypeEnum } from '../common/events/index';
+import { IWorldState, IPlayerState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -76,10 +76,6 @@ function OnDeath(died: number, killer: number) {
     uiHealthbar.collapse();
   }
 }
-MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IPlayerDied) => {
-  if (msg.type !== TypeEnum.PlayerDied) return;
-  OnDeath(msg.characterId, msg.killerId);
-});
 
 
 // User Input //
@@ -217,6 +213,21 @@ MessageBus.subscribe('PickCharacter', (type: FighterType) => {
 let stateUpdatePending = false;
 let stateUpdateLastPacketTime = 0;
 let stateUpdate: IWorldState = null;
+function UpdatePlayerState(msg: IPlayerState) {
+  const mismatch = msg.characterID !== player.getCharacterID();
+  if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
+    character.HP = 0;
+    character.LastHitBy = null;
+  }
+
+  player.assignCharacterID(msg.characterID);
+
+  if (mismatch && character) { // If there was a mismatch and old character was killed, generate a new one
+    MessageBus.publish('PickCharacter', luchador);
+  }
+
+  character.HP = msg.health;
+}
 // SEE SETUP \/ \/ \/ \/
 
 let LastFrame = 0;
@@ -229,7 +240,19 @@ function DoFrame(tick: number) {
 
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
+
+    for (let i = 0; i < world.Fighters.length; i++) { // Keeps track of how many WorldState updates each fighters missed
+      world.Fighters[i].UpdatesMissed++;
+    }
+
     decodeWorldState(stateUpdate, world);
+
+    for (let i = 0; i < world.Fighters.length; i++) { // Prune fighters who have not been included in the world state 5 consecutive times
+      if (world.Fighters[i].UpdatesMissed > 5) {
+        OnDeath(world.Fighters[i].getOwnerID(), -1);
+      }
+    }
+
     // TODO: Get server time in client-server handshake and use that for time calculations
     DeltaTime = (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
     // eslint-disable-next-line
@@ -350,24 +373,19 @@ function DoFrame(tick: number) {
       console.log('Connected OK!', connected);
 
       MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IEvent) => {
-        if (msg.type === TypeEnum.WorldState) {
-          stateUpdatePending = true;
-          stateUpdate = msg;
-          stateUpdateLastPacketTime = msg.timestamp as number;
-        } else if (msg.type === TypeEnum.PlayerState) {
-          const mismatch = msg.characterID !== player.getCharacterID();
-          if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
-            character.HP = 0;
-            character.LastHitBy = null;
-          }
-
-          player.assignCharacterID(msg.characterID);
-
-          if (mismatch && character) { // If there was a mismatch and old character was killed, generate a new one
-            MessageBus.publish('PickCharacter', luchador);
-          }
-
-          character.HP = msg.health;
+        switch (msg.type) {
+          case TypeEnum.WorldState:
+            stateUpdatePending = true;
+            stateUpdate = msg;
+            stateUpdateLastPacketTime = msg.timestamp as number;
+            break;
+          case TypeEnum.PlayerState:
+            UpdatePlayerState(msg);
+            break;
+          case TypeEnum.PlayerDied:
+            OnDeath(msg.characterId, msg.killerId);
+            break;
+          default: // None
         }
       });
     })

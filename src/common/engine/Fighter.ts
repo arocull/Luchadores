@@ -27,6 +27,7 @@ class Fighter extends Entity {
 
   public Flipped: boolean;
   public Animator: any;
+  public UpdatesMissed: number;
 
   public JustHitPosition: Vector;
   public JustHitMomentum: number;
@@ -59,6 +60,7 @@ class Fighter extends Entity {
 
     this.Flipped = false; // Do we draw them facing leftward or rightward?
     this.Animator = null; // Animation object
+    this.UpdatesMissed = 0;
 
     this.JustHitPosition = new Vector(0, 0, 0);
     this.JustHitMomentum = 0;
