@@ -148,7 +148,7 @@ class SocketClient {
     // Only publish a disconnect event if this client managed to identify itself
     if (this.id != null) {
       this.unsubscribe();
-      MessageBus.publish(this.topicServerFromClient, <events.IClientDisconnected>{
+      MessageBus.publish(Topics.Connections, <events.IClientDisconnected>{
         type: events.TypeEnum.ClientDisconnected,
         id: this.id,
         topicInbound: this.topicServerFromClient,
