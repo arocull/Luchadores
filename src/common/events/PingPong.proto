@@ -1,0 +1,4 @@
+message PingPong {
+  required int32 type = 1;
+  required int64 timestamp = 2;
+}
