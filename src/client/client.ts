@@ -111,7 +111,7 @@ function UpdateInput() { // Attempts to send updated user input to server
   });
 }
 document.addEventListener('keydown', (event) => {
-  const old = Vector.Clone(Input.MouseDirection);
+  const old = Vector.Clone(Input.MoveDirection);
   const oldJ = Input.Jump;
 
   if (Input.UsernameSelectOpen) { // Type into username textbox
@@ -130,10 +130,10 @@ document.addEventListener('keydown', (event) => {
   else if (event.key === ' ') Input.Jump = true;
   else if (event.key === 'y') Input.PlayerListOpen = true;
 
-  if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
+  if (!Input.MoveDirection.equals(old) || oldJ !== Input.Jump) UpdateInput();
 });
 document.addEventListener('keyup', (event) => {
-  const old = Vector.Clone(Input.MouseDirection);
+  const old = Vector.Clone(Input.MoveDirection);
   const oldJ = Input.Jump;
 
   if (event.shiftKey) {
@@ -145,7 +145,7 @@ document.addEventListener('keyup', (event) => {
   else if (event.key === ' ') Input.Jump = false;
   else if (event.key === 'y') Input.PlayerListOpen = false;
 
-  if (!old.equals(Input.MouseDirection) || oldJ !== Input.Jump) UpdateInput();
+  if (!Input.MoveDirection.equals(old) || oldJ !== Input.Jump) UpdateInput();
 });
 document.addEventListener('mousedown', () => {
   Input.MouseDown = true;
@@ -295,7 +295,7 @@ function DoFrame(tick: number) {
           particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000));
         }
 
-        if (Vector.Distance(a.Position, character.Position) <= 2) {
+        if (character && Vector.Distance(a.Position, character.Position) <= 2) {
           cam.Shake += a.JustHitMomentum / 1500;
         }
 

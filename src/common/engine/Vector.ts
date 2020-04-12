@@ -30,7 +30,7 @@ class Vector { // A structure that holds position data or direction and magnitud
       const unit = Vector.UnitVector(this);
       this.x = unit.x * lenF;
       this.y = unit.y * lenF;
-      this.z = unit.y * lenF;
+      this.z = unit.z * lenF;
     }
 
     return this;
