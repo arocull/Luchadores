@@ -234,6 +234,7 @@ let LastFrame = 0;
 function DoFrame(tick: number) {
   // Convert milliseconds to seconds
   let DeltaTime = (tick / 1000) - LastFrame;
+  const trueDeltaTime = DeltaTime;
   LastFrame = tick / 1000;
 
   Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen);
@@ -322,7 +323,7 @@ function DoFrame(tick: number) {
     Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
   } else if ((character && character.HP > 0) || uiHealthbar.collapsing) {
     if (character) uiHealthbar.healthPercentage = character.HP / character.MaxHP;
-    uiHealthbar.tick(DeltaTime);
+    uiHealthbar.tick(trueDeltaTime);
 
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.base);
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.bar);
@@ -337,14 +338,20 @@ function DoFrame(tick: number) {
     doUIFrameInteraction(uiBackdrop); // Enable clicking on backdrop to disable clicking
     for (let i = 0; i < uiUsernameSelect.frames.length; i++) {
       doUIFrameInteraction(uiUsernameSelect.frames[i]);
+    }
+
+    uiUsernameSelect.setCursorPosition(Renderer.GetTextWidth(canvas, cam, uiUsernameSelect.getTextBox()));
+    uiUsernameSelect.tick(trueDeltaTime);
+
+    for (let i = 0; i < uiUsernameSelect.frames.length; i++) {
       Renderer.DrawUIFrame(canvas, cam, uiUsernameSelect.frames[i]);
     }
   }
-  if (Input.PlayerListOpen) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
+  if (Input.PlayerListOpen && !Input.GUIMode) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
 
   if (renderSettings.FPScounter) {
     if (fpsCount.length >= 30) fpsCount.shift();
-    fpsCount.push(DeltaTime);
+    fpsCount.push(trueDeltaTime);
 
     let avgDT = 0;
     for (let i = 0; i < fpsCount.length; i++) {

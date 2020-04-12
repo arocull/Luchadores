@@ -60,6 +60,11 @@ function DepthSort(a: Entity, b: Entity): number {
 }
 
 
+function MeasureString(canvas: CanvasRenderingContext2D, str: string): number {
+  return canvas.measureText(str).width;
+}
+
+
 class Renderer {
   /* eslint-disable no-param-reassign */
   public static DrawScreen(
@@ -246,16 +251,75 @@ class Renderer {
       let fontSize = 48;
       if (text.textFontSize > 0) fontSize = text.textFontSize;
       canvas.font = `${fontSize}px ${text.textFont}`;
-      canvas.textBaseline = 'middle';
+      canvas.textBaseline = text.textBase;
       canvas.textAlign = text.textAlignment;
 
-      let offset = 0;
-      if (text.textAlignment === 'center') offset = width / 2;
+      const indent = width * (1 - text.textInnerWidth);
+      startX += (width * (1 - text.textInnerWidth)) / 2;
+      width -= indent;
+
+      let offsetX = 0;
+      let offsetY = 0;
+      if (text.textAlignment === 'center') offsetX = width / 2;
+      if (text.textBase === 'middle') offsetY = height / 2;
 
       canvas.globalAlpha = text.textAlpha;
       canvas.fillStyle = text.textStyle;
-      canvas.fillText(text.text, startX + offset, startY + height / 2, width);
+      if (text.textWrapping) {
+        const full = text.text;
+
+        let index = 0;
+        while (index < full.length) {
+          let str = '';
+          let len = 0;
+          let lastSpace = -1;
+          let surpassed = false;
+
+          // Estimate how large this text line is and check for word cut-offs
+          for (let i = index; i < full.length && len < width; i++) {
+            str += full.substr(i, 1);
+            len = MeasureString(canvas, str);
+            if (full.substr(i, 1) === ' ') lastSpace = i;
+            if (len > width) surpassed = true;
+          }
+          if (lastSpace === -1 || !surpassed) lastSpace = full.length;
+
+          str = '';
+          for (let i = index; i < lastSpace; i++) {
+            str += full.substr(i, 1);
+            index++;
+          }
+          if (index === lastSpace) index++; // Don't write space character if it ended on one
+
+          canvas.fillText(str, startX + offsetX, startY + offsetY, width);
+          startY += height;
+        }
+      } else {
+        canvas.fillText(text.text, startX + offsetX, startY + offsetY, width);
+      }
+
+      if (text.drawCursor) {
+        canvas.globalAlpha = text.cursorAlpha;
+        canvas.strokeStyle = text.cursorStyle;
+        canvas.lineWidth = text.cursorThickness;
+
+        canvas.beginPath();
+        canvas.moveTo(startX + offsetX + text.cursorPosition * cam.Width, startY + height * 0.15);
+        canvas.lineTo(startX + offsetX + text.cursorPosition * cam.Width, startY + height * 0.85);
+        canvas.stroke();
+      }
     }
+  }
+
+  public static GetTextWidth(canvas: CanvasRenderingContext2D, cam: Camera, text: UITextBox, fillSpaces: boolean = true): number {
+    let fontSize = 48;
+    if (text.textFontSize > 0) fontSize = text.textFontSize;
+    canvas.font = `${fontSize}px ${text.textFont}`;
+    canvas.textBaseline = 'middle';
+    canvas.textAlign = text.textAlignment;
+
+    if (fillSpaces) return canvas.measureText(text.text.replace(/ /g, '-')).actualBoundingBoxRight / cam.Width;
+    return canvas.measureText(text.text).actualBoundingBoxRight / cam.Width;
   }
 
   public static DrawFPS(canvas: CanvasRenderingContext2D, cam: Camera, DeltaTime: number) {
