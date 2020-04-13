@@ -4,8 +4,6 @@ import * as WebSocket from 'ws';
 
 import logger from './Logger';
 import SocketClient from './SocketClient';
-// import { MessageBus, Topics } from '../common/messaging/bus';
-// import { decoder } from '../common/messaging/serde';
 
 class SocketHost {
   private ws: WebSocket.Server;

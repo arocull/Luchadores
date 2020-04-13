@@ -5,6 +5,7 @@ import * as events from '../common/events';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import { SubscriberContainer } from '../common/messaging/container';
 import { decoder, encoder } from '../common/messaging/serde';
+import { PingPongHandler } from '../common/network/pingpong';
 
 interface AddressInfo {
   remoteFamily?: string;
@@ -16,12 +17,14 @@ class SocketClient {
   private _id: string;
   private _topicServerToClient: string;
   private _topicServerFromClient: string;
+  private pingPongHandler: PingPongHandler;
   private subscribers: SubscriberContainer;
 
   constructor(
     private socket: WebSocket,
     private addressInfo: AddressInfo,
   ) {
+    this.pingPongHandler = new PingPongHandler();
     this.subscribers = new SubscriberContainer();
     this.initialize();
   }
@@ -90,6 +93,7 @@ class SocketClient {
       throw new Error('Cannot subscribe - no client id was negotiated yet');
     }
     this.subscribers.attach(this.topicServerToClient, (msg) => this.send(msg));
+    this.pingPongHandler.subscribe(this.topicServerToClient, this.topicServerFromClient);
   }
 
   private unsubscribe() {
@@ -97,6 +101,7 @@ class SocketClient {
       throw new Error('Cannot unsubscribe - no client id was negotiated yet');
     }
     this.subscribers.detachAll();
+    this.pingPongHandler.unsubscribe();
   }
 
   connect(): Promise<void> {

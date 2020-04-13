@@ -4,6 +4,7 @@ import * as events from '../../common/events';
 import { SubscriberContainer } from '../../common/messaging/container';
 import { MessageBus, Topics } from '../../common/messaging/bus';
 import { decoder, encoder } from '../../common/messaging/serde';
+import { PingPongHandler, Topics as PingPongTopics, PingInfo } from '../../common/network/pingpong';
 
 const UNOPENED = -1;
 
@@ -12,10 +13,12 @@ class NetworkClient {
   private _id: string;
   private _topicClientToServer: string;
   private _topicClientFromServer: string;
+  private pingPongHandler: PingPongHandler;
   private subscribers: SubscriberContainer;
 
   constructor(private url: string) {
     this.id = uuid();
+    this.pingPongHandler = new PingPongHandler();
     this.subscribers = new SubscriberContainer();
   }
 
@@ -124,6 +127,9 @@ class NetworkClient {
 
           // Subscribe us to receive any events targeting outbound network
           this.subscribers.attach(this.topicClientToServer, (msg) => this.send(msg));
+          this.subscribers.attach(PingPongTopics.PingInfo, (msg: PingInfo) => console.log('New ping info', msg)); // TODO: Experimental, remove later
+          this.pingPongHandler.subscribe(this.topicClientToServer, this.topicClientFromServer);
+          this.pingPongHandler.start(1000);
 
           // Publish the new connection event to complete the connection after ack
           MessageBus.publish(Topics.Connections, <events.IClientConnected>{
@@ -172,6 +178,8 @@ class NetworkClient {
 
     // Unsubscribe event handlers
     this.subscribers.detachAll();
+    this.pingPongHandler.unsubscribe();
+    this.pingPongHandler.stop();
 
     // Publish an event to the inbound listeners that we have disconnected
     MessageBus.publish(Topics.Connections, <events.IClientDisconnected>{
