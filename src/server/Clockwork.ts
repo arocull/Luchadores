@@ -15,6 +15,7 @@ import {
   IPlayerSpawned,
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
+import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
 
 interface Action {
   player: Player;
@@ -42,14 +43,15 @@ class Clockwork {
     this.loop = null;
 
     if (this.running) {
-      // const pings: number[] = [];
-      // _.each(this.connections, (conn) => {
-      //   pings.push(conn.getPing());
-      // });
+      // Could just be a reduce function for worst ping in the future
+      const pings: number[] = _.map(this.connections, (conn) => conn.getPing());
 
       // Worst of *average* pings! This way we even the playing field so the
       // player with fiber doesn't whoop on the guy with dialup.
-      const worstPing = 100; // _.max(pings);
+      // Math.max prevents ping rounding error from ever being negative.
+      // Defaults using || 20.
+      const worstPing = Math.max(0, _.max(pings)) || 20;
+      Logger.silly('Worst ping: %j, %o', pings, worstPing);
 
       if (delta > 0) {
         const actionArray = this.actions.toArray();
@@ -230,6 +232,7 @@ class Clockwork {
     if (!this.running) {
       this.running = true;
 
+      // Listen for client connection events
       this.subscribers.attach(Topics.Connections, ((message: IEvent) => {
         switch (message.type) {
           case TypeEnum.ClientConnected:
@@ -241,6 +244,13 @@ class Clockwork {
           default: // Nothing
         }
       }));
+
+      // Listen for pings and update player pings when they come in
+      this.subscribers.attach(PingPongTopics.PingInfo, (pingInfo: PingInfo) => {
+        this.connections
+          .filter((c) => c.getId() === pingInfo.id)
+          .forEach((c) => c.updatePing(pingInfo.roundTripTimeMilliseconds));
+      });
 
       this.tick(0);
     }

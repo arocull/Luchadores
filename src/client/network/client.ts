@@ -4,7 +4,7 @@ import * as events from '../../common/events';
 import { SubscriberContainer } from '../../common/messaging/container';
 import { MessageBus, Topics } from '../../common/messaging/bus';
 import { decoder, encoder } from '../../common/messaging/serde';
-import { PingPongHandler, Topics as PingPongTopics } from '../../common/network/pingpong';
+import { PingPongHandler } from '../../common/network/pingpong';
 
 const UNOPENED = -1;
 
@@ -146,7 +146,7 @@ class NetworkClient {
       })
       .then((pingInfo) => {
         console.log('Got initial ping for handshake - ready to go!', pingInfo);
-        MessageBus.publish(PingPongTopics.PingInfo, pingInfo);
+        this.pingPongHandler.publish(pingInfo);
 
         // Start polling for pings at a regular interval.
         this.pingPongHandler.start(1000);

@@ -3,6 +3,7 @@ import {
 } from '../events';
 import { MessageBus } from '../messaging/bus';
 import { SubscriberContainer } from '../messaging/container';
+import { decodeInt64 } from '../messaging/serde';
 
 export const Topics = {
   PingInfo: 'ping-info',
@@ -66,7 +67,7 @@ export class PingPongHandler {
     }
     this.intervalHandle = setInterval(() => {
       this.ping()
-        .then((pingInfo) => MessageBus.publish(Topics.PingInfo, pingInfo));
+        .then((pingInfo) => this.publish(pingInfo));
     }, intervalMs);
   }
 
@@ -101,7 +102,7 @@ export class PingPongHandler {
         const receiveMs = Date.now();
         const roundTripTimeMilliseconds = receiveMs - sendMs;
         const roundTripOffsetMs = Math.round(roundTripTimeMilliseconds / 2);
-        const serverTimestampCorrected = (pong.timestamp as number) + roundTripOffsetMs;
+        const serverTimestampCorrected = decodeInt64(pong.timestamp) + roundTripOffsetMs;
         const clockDriftMs = receiveMs - serverTimestampCorrected;
         const pingInfo: PingInfo = {
           id: this.pingProvider.id,
@@ -119,5 +120,9 @@ export class PingPongHandler {
       type: TypeEnum.Pong,
       timestamp: Date.now(),
     });
+  }
+
+  publish(pingInfo: PingInfo) {
+    MessageBus.publish(Topics.PingInfo, pingInfo);
   }
 }
