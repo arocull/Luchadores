@@ -251,22 +251,10 @@ function DoFrame(tick: number) {
     decodeWorldState(stateUpdate, world);
 
     for (let i = 0; i < world.Fighters.length; i++) {
-      // Apply any fighter names who do not have names yet
-      // TODO: HAX: This could all be a lot better :(
-      const fighter = world.Fighters[i];
-      if (fighter.DisplayName == null) {
-        const connect = playerConnects.filter((x) => x.ownerId === fighter.getOwnerID())[0];
-        if (connect) {
-          console.log('Updated fighter', fighter.getOwnerID(), 'with connect', connect);
-          fighter.DisplayName = connect.username;
-        } else {
-          console.error('No player connect found for', fighter.getOwnerID());
-        }
-      }
-
       // Prune fighters who have not been included in the world state 5 consecutive times
-      if (fighter.UpdatesMissed > 5) {
-        OnDeath(fighter.getOwnerID(), -1);
+      if (world.Fighters[i].UpdatesMissed > 5) {
+        OnDeath(world.Fighters[i].getOwnerID(), -1);
+        i--;
       }
     }
 
@@ -302,6 +290,16 @@ function DoFrame(tick: number) {
         a.Animator.Tick(DeltaTime);
         if (a.Animator.killEffectCountdown === 0) {
           PRosePetal.Burst(particles, a.Position, 0.2, 5, 20 * renderSettings.ParticleAmount);
+        }
+      }
+
+      // Apply any fighter names who do not have names yet
+      if (!a.DisplayName) {
+        for (let j = 0; j < playerConnects.length; j++) {
+          if (playerConnects[i] && playerConnects[i].ownerId === a.getOwnerID()) {
+            a.DisplayName = playerConnects[i].username;
+            break;
+          }
         }
       }
 

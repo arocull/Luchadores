@@ -165,10 +165,6 @@ class Clockwork {
 
   // Player Setup
   busPlayerConnect(message: IClientConnected) {
-    if (message.type !== TypeEnum.ClientConnected) {
-      return;
-    }
-
     for (let i = 0; i < this.connections.length; i++) { // Make sure player doesn't already exist
       if (this.connections[i].getId() === message.id) {
         return; // Player was already present, ignore this request
@@ -213,14 +209,13 @@ class Clockwork {
       ownerId: c.getCharacterID(),
       username: c.getUsername(),
     });
-    this.broadcastList(playerConnects);
+    // this.broadcastList broadcasts a list of players to ALL clients, not just one, so let's just update this player
+    for (let i = 0; i < playerConnects.length; i++) {
+      MessageBus.publish(player.getTopicSend(), playerConnects[i]);
+    }
   }
 
   busPlayerDisconnect(message: IClientDisconnected) {
-    if (message.type !== TypeEnum.ClientDisconnected) {
-      return;
-    }
-
     // Unsubscribe from all event hook-ups associated with this player's id
     this.subscribers.detachAllSpecific(message.id);
 

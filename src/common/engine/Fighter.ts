@@ -28,6 +28,7 @@ class Fighter extends Entity {
   public Flipped: boolean;
   public Animator: any;
   public UpdatesMissed: number;
+  public DisplayName: string;
 
   public JustHitPosition: Vector;
   public JustHitMomentum: number;
@@ -38,8 +39,6 @@ class Fighter extends Entity {
   public Firing: boolean;
   protected BulletCooldown: number;
   public BulletShock: number;
-
-  public DisplayName: string;
 
   constructor(
     public HP: number,
@@ -63,6 +62,7 @@ class Fighter extends Entity {
     this.Flipped = false; // Do we draw them facing leftward or rightward?
     this.Animator = null; // Animation object
     this.UpdatesMissed = 0;
+    this.DisplayName = null;
 
     this.JustHitPosition = new Vector(0, 0, 0);
     this.JustHitMomentum = 0;
