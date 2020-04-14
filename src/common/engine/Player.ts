@@ -9,6 +9,9 @@ class Player {
   private pingHistory: Denque<number>;
   private pingHistoryCapacity: number = 30; // 30 is the rule of thumb for samples (Law of Large Numbers).
 
+  private topicSend: string;
+  private topicReceive: string;
+
   constructor(private id: string) {
     this.username = 'Player';
 
@@ -23,6 +26,9 @@ class Player {
   }
   setUsername(newUsername: string) {
     this.username = newUsername;
+    if (this.character != null) {
+      this.character.DisplayName = newUsername;
+    }
   }
 
   getId() {
@@ -55,6 +61,7 @@ class Player {
   }
   assignCharacter(newCharacter: Fighter) {
     this.character = newCharacter;
+    this.character.DisplayName = this.username;
   }
 
   getCharacterID() {
@@ -62,6 +69,19 @@ class Player {
   }
   assignCharacterID(newCharacterID: number) {
     this.characterID = newCharacterID;
+  }
+
+  setTopics(send: string, receive: string) {
+    this.topicSend = send;
+    this.topicReceive = receive;
+  }
+
+  getTopicSend() {
+    return this.topicSend;
+  }
+
+  getTopicReceive() {
+    return this.topicReceive;
   }
 }
 

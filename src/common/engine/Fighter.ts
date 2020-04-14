@@ -39,6 +39,8 @@ class Fighter extends Entity {
   protected BulletCooldown: number;
   public BulletShock: number;
 
+  public DisplayName: string;
+
   constructor(
     public HP: number,
     public Mass: number, // How much mass this fighter has, used in momentum calculations
@@ -70,6 +72,8 @@ class Fighter extends Entity {
     this.Firing = false;
     this.BulletCooldown = 0;
     this.BulletShock = 0;
+
+    this.DisplayName = `Unknown-${this.ID}`;
   }
 
 

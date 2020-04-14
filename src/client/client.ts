@@ -390,6 +390,10 @@ function DoFrame(tick: number) {
           case TypeEnum.PlayerDied:
             OnDeath(msg.characterId, msg.killerId);
             break;
+          case TypeEnum.PlayerConnect:
+            // TODO: Attach this event to players in our local world
+            console.log('Player connected', msg);
+            break;
           default: // None
         }
       });
