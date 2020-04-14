@@ -21,6 +21,7 @@ import { FighterType } from '../common/engine/Enums';
 
 // Set up base client things
 const player = new Player('');
+// eslint-disable-next-line
 let luchador: FighterType = FighterType.Sheep;
 let character: Fighter = null;
 
@@ -206,7 +207,7 @@ MessageBus.subscribe('PickCharacter', (type: FighterType) => {
     fighterClass: type,
   });
 
-  character = world.spawnFighter(player, luchador);
+  // character = world.spawnFighter(player, luchador);
 });
 
 
@@ -216,15 +217,14 @@ let stateUpdateLastPacketTime = 0;
 let stateUpdate: IWorldState = null;
 function UpdatePlayerState(msg: IPlayerState) {
   const mismatch = msg.characterID !== player.getCharacterID();
-  if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
-    character.HP = 0;
-    character.LastHitBy = null;
-  }
 
   player.assignCharacterID(msg.characterID);
 
-  if (mismatch && character) { // If there was a mismatch and old character was killed, generate a new one
-    MessageBus.publish('PickCharacter', luchador);
+  if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
+    character.HP = 0;
+    character.LastHitBy = null;
+
+    // character = world.spawnFighter(player, luchador);
   }
 
   if (character) character.HP = msg.health;
@@ -281,6 +281,8 @@ function DoFrame(tick: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
     const a = world.Fighters[i];
     if (a) {
+      if (a.getOwnerID() === player.getCharacterID()) character = a;
+
       // Tick animators, prune and generate new ones based off of need
       if (!a.Animator) a.Animator = new Animator(a, renderSettings);
       else if (a.Animator) {
