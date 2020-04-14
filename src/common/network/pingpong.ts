@@ -8,7 +8,17 @@ export const Topics = {
   PingInfo: 'ping-info',
 };
 
+export interface PingProvider {
+  id: string;
+  topicSend: string;
+  topicReceive: string;
+}
+
 export interface PingInfo {
+  /**
+   * The client ID that this ping belongs to.
+   */
+  id: string;
   /**
    * The best estimation of the timestamp on the other end of the connection.
    */
@@ -23,17 +33,15 @@ export interface PingInfo {
 export class PingPongHandler {
   private intervalHandle?: NodeJS.Timeout;
   private subscribers: SubscriberContainer;
-  private topicSend?: string;
-  private topicReceive?: string;
+  private pingProvider?: PingProvider;
 
   constructor() {
     this.subscribers = new SubscriberContainer();
   }
 
-  subscribe(topicSend: string, topicReceive: string) {
-    this.topicSend = topicSend;
-    this.topicReceive = topicReceive;
-    this.subscribers.attach(topicReceive, (message: IEvent) => {
+  subscribe(pingProvider: PingProvider) {
+    this.pingProvider = pingProvider;
+    this.subscribers.attach(this.pingProvider.topicReceive, (message: IEvent) => {
       if (message.type === TypeEnum.Ping) {
         this.pong();
       }
@@ -41,16 +49,21 @@ export class PingPongHandler {
   }
 
   unsubscribe() {
-    this.topicSend = null;
-    this.topicReceive = null;
+    this.pingProvider = null;
     this.subscribers.detachAll();
   }
 
+  /**
+   * Start an interval timer to poll pings and broadcast out to ping-info topic.
+   */
   start(intervalMs: number) {
     if (this.intervalHandle != null) {
       this.stop();
     }
-    this.intervalHandle = setInterval(() => this.ping(), intervalMs);
+    this.intervalHandle = setInterval(() => {
+      this.ping()
+        .then((pingInfo) => MessageBus.publish(Topics.PingInfo, pingInfo));
+    }, intervalMs);
   }
 
   stop() {
@@ -63,17 +76,17 @@ export class PingPongHandler {
    * Resolved pings will also be announced on the ping-info topic.
    */
   ping(): Promise<PingInfo> {
-    if (this.topicSend == null) {
+    if (this.pingProvider == null) {
       return Promise.reject(new Error('No sending topic connected - cannot ping'));
     }
 
     const sendMs = Date.now();
-    MessageBus.publish(this.topicSend, <IPing>{
+    MessageBus.publish(this.pingProvider.topicSend, <IPing>{
       type: TypeEnum.Ping,
       timestamp: Date.now(),
     });
 
-    return MessageBus.await(this.topicReceive, 2000,
+    return MessageBus.await(this.pingProvider.topicReceive, 2000,
       (message: IEvent) => {
         if (message.type === TypeEnum.Pong) {
           return message;
@@ -86,17 +99,17 @@ export class PingPongHandler {
         const serverTimestampCorrected = (pong.timestamp as number) + roundTripOffsetMs;
         const clockDriftMs = receiveMs - serverTimestampCorrected;
         const pingInfo: PingInfo = {
+          id: this.pingProvider.id,
           remoteTimestamp: serverTimestampCorrected,
           clockDriftMilliseconds: clockDriftMs,
         };
-        MessageBus.publish(Topics.PingInfo, pingInfo);
         return pingInfo;
       });
   }
 
   /** Replies with a pong */
   pong() {
-    MessageBus.publish(this.topicSend, <IPong>{
+    MessageBus.publish(this.pingProvider.topicSend, <IPong>{
       type: TypeEnum.Pong,
       timestamp: Date.now(),
     });

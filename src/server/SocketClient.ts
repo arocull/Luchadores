@@ -93,7 +93,11 @@ class SocketClient {
       throw new Error('Cannot subscribe - no client id was negotiated yet');
     }
     this.subscribers.attach(this.topicServerToClient, (msg) => this.send(msg));
-    this.pingPongHandler.subscribe(this.topicServerToClient, this.topicServerFromClient);
+    this.pingPongHandler.subscribe({
+      id: this.id,
+      topicSend: this.topicServerToClient,
+      topicReceive: this.topicServerFromClient,
+    });
   }
 
   private unsubscribe() {
