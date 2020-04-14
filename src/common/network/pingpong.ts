@@ -20,6 +20,10 @@ export interface PingInfo {
    */
   id: string;
   /**
+   * The number of milliseconds between the ping sent and the pong received.
+   */
+  roundTripTimeMilliseconds: number;
+  /**
    * The best estimation of the timestamp on the other end of the connection.
    */
   remoteTimestamp: number;
@@ -95,11 +99,13 @@ export class PingPongHandler {
       })
       .then((pong) => {
         const receiveMs = Date.now();
-        const roundTripOffsetMs = Math.round((receiveMs - sendMs) / 2);
+        const roundTripTimeMilliseconds = receiveMs - sendMs;
+        const roundTripOffsetMs = Math.round(roundTripTimeMilliseconds / 2);
         const serverTimestampCorrected = (pong.timestamp as number) + roundTripOffsetMs;
         const clockDriftMs = receiveMs - serverTimestampCorrected;
         const pingInfo: PingInfo = {
           id: this.pingProvider.id,
+          roundTripTimeMilliseconds,
           remoteTimestamp: serverTimestampCorrected,
           clockDriftMilliseconds: clockDriftMs,
         };
