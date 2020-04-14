@@ -22,6 +22,14 @@ export interface IClientDisconnected extends events.IClientDisconnected {
   type: TypeEnum.ClientDisconnected;
 }
 
+export interface IPing extends events.IPingPong {
+  type: TypeEnum.Ping,
+}
+
+export interface IPong extends events.IPingPong {
+  type: TypeEnum.Pong,
+}
+
 export interface ILobbyRequest extends events.ILobbyRequest {
   type: TypeEnum.LobbyRequest;
 }
@@ -66,5 +74,7 @@ export type IEvent =
   | IPlayerInputState
   | IPlayerDied
   | IPlayerState
+  | IPing
+  | IPong
   | IWorldState
   ;

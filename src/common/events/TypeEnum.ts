@@ -1,6 +1,9 @@
 enum TypeEnum {
-  LobbyRequest = 100,
-  LobbyResponse = 101,
+  Ping = 100,
+  Pong = 101,
+
+  LobbyRequest = 150,
+  LobbyResponse = 151,
 
   ClientConnecting = 200,
   ClientAcknowledged = 201,

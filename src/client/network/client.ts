@@ -4,6 +4,7 @@ import * as events from '../../common/events';
 import { SubscriberContainer } from '../../common/messaging/container';
 import { MessageBus, Topics } from '../../common/messaging/bus';
 import { decoder, encoder } from '../../common/messaging/serde';
+import { PingPongHandler } from '../../common/network/pingpong';
 
 const UNOPENED = -1;
 
@@ -12,10 +13,12 @@ class NetworkClient {
   private _id: string;
   private _topicClientToServer: string;
   private _topicClientFromServer: string;
+  private pingPongHandler: PingPongHandler;
   private subscribers: SubscriberContainer;
 
   constructor(private url: string) {
     this.id = uuid();
+    this.pingPongHandler = new PingPongHandler();
     this.subscribers = new SubscriberContainer();
   }
 
@@ -116,33 +119,50 @@ class NetworkClient {
       id: this.id,
     });
 
-    // Add a timeout for if this event doesn't get ack'd
-    MessageBus.await(this.topicClientFromServer, 2000, (message: events.IEvent) => {
-      if (message.type === events.TypeEnum.ClientAcknowledged) {
-        if (message.id === this.id) {
-          console.log('ClientAck and ID match - away we go!');
-
-          // Subscribe us to receive any events targeting outbound network
-          this.subscribers.attach(this.topicClientToServer, (msg) => this.send(msg));
-
-          // Publish the new connection event to complete the connection after ack
-          MessageBus.publish(Topics.Connections, <events.IClientConnected>{
-            type: events.TypeEnum.ClientConnected,
-            id: this.id,
-            topicInbound: this.topicClientFromServer,
-            topicOutbound: this.topicClientToServer,
-          });
-          return message;
+    MessageBus.await(this.topicClientFromServer, 2000,
+      (message: events.IEvent) => {
+        if (message.type === events.TypeEnum.ClientAcknowledged) {
+          if (message.id === this.id) {
+            return message;
+          }
+          this.close();
+          throw new Error('Client ID mismatch! Disconnecting.');
         }
-        console.error('Client ID mismatch! Disconnecting.');
+        return null;
+      })
+      .then(() => {
+        console.log('ClientAck and ID match - away we go! Waiting to sync clocks with first ping.');
+
+        // Subscribe us to receive any events targeting outbound network.
+        // Needed for ping handler to work.
+        this.subscribers.attach(this.topicClientToServer, (msg) => this.send(msg));
+
+        this.pingPongHandler.subscribe({
+          id: this.id,
+          topicSend: this.topicClientToServer,
+          topicReceive: this.topicClientFromServer,
+        });
+        return this.pingPongHandler.ping();
+      })
+      .then((pingInfo) => {
+        console.log('Got initial ping for handshake - ready to go!', pingInfo);
+        this.pingPongHandler.publish(pingInfo);
+
+        // Start polling for pings at a regular interval.
+        this.pingPongHandler.start(1000);
+
+        // Publish the new connection event to complete the connection after ack
+        MessageBus.publish(Topics.Connections, <events.IClientConnected>{
+          type: events.TypeEnum.ClientConnected,
+          id: this.id,
+          topicInbound: this.topicClientFromServer,
+          topicOutbound: this.topicClientToServer,
+        });
+      })
+      .catch((err) => {
+        console.error('Client handshake process failed. Disconnecting.', err);
         this.close();
-        return message;
-      }
-      return null;
-    }).catch((err) => {
-      console.error('Client never ACK\'d. Disconnecting.', err);
-      this.close();
-    });
+      });
   }
   /* eslint-enable no-console */
 
@@ -172,6 +192,8 @@ class NetworkClient {
 
     // Unsubscribe event handlers
     this.subscribers.detachAll();
+    this.pingPongHandler.unsubscribe();
+    this.pingPongHandler.stop();
 
     // Publish an event to the inbound listeners that we have disconnected
     MessageBus.publish(Topics.Connections, <events.IClientDisconnected>{

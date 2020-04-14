@@ -1,4 +1,5 @@
 // "serde" is shorthand for "serializer / deserializer"
+import * as Long from 'long';
 
 import { IEvent, TypeEnum } from '../events'; // The public interface types
 import * as events from '../events/events'; // The private Protobuf classes
@@ -32,6 +33,9 @@ function getProtobufType(object: IEvent): ProtobufTypeSerde {
       return events.PlayerDied;
     case TypeEnum.PlayerState:
       return events.PlayerState;
+    case TypeEnum.Ping:
+    case TypeEnum.Pong: // Falls thru - same struct
+      return events.PingPong;
     case TypeEnum.WorldState:
       return events.WorldState;
     default:
@@ -62,4 +66,14 @@ export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): IEvent {
   const kind = events.Kind.decode(data);
   const serde = getProtobufType(kind);
   return serde.decode(data);
+}
+
+export function decodeInt64(value: number | Long): number {
+  if (Long.isLong(value)) {
+    return (value as Long).toNumber();
+  }
+  if (typeof value === 'number') {
+    return value;
+  }
+  throw new Error(`Cannot decode value: ${typeof value}, ${value}`);
 }

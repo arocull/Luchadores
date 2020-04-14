@@ -1,6 +1,7 @@
 /* eslint-disable object-curly-newline */
 import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
+import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
 import { IWorldState, IPlayerState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
@@ -382,7 +383,7 @@ function DoFrame(tick: number) {
           case TypeEnum.WorldState:
             stateUpdatePending = true;
             stateUpdate = msg;
-            stateUpdateLastPacketTime = msg.timestamp as number;
+            stateUpdateLastPacketTime = decodeInt64(msg.timestamp);
             break;
           case TypeEnum.PlayerState:
             UpdatePlayerState(msg);
