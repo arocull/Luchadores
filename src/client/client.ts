@@ -2,7 +2,7 @@
 import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
 import { IEvent, TypeEnum } from '../common/events/index';
-import { IWorldState, IPlayerState } from '../common/events/events';
+import { IPlayerConnect, IPlayerState, IWorldState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -23,11 +23,12 @@ const player = new Player('');
 let luchador: FighterType = FighterType.Sheep;
 let character: Fighter = null;
 
-
 // Generate World
 const world = new World();
 world.Map.loadTexture();
 Random.randomSeed();
+
+let playerConnects: IPlayerConnect[] = [];
 
 // TODO: HAX - get topics to use from web socket
 const topics = {
@@ -188,8 +189,9 @@ function doUIFrameInteraction(frame: UIFrame) {
 MessageBus.subscribe('PickUsername', (name: string) => {
   player.setUsername(name);
 
-  MessageBus.publish(topics.ClientNetworkToServer, {
+  MessageBus.publish(topics.ClientNetworkToServer, <IPlayerConnect>{
     type: TypeEnum.PlayerConnect,
+    ownerId: -1, // We don't know this on this client yet - server will decide
     username: name,
   });
 
@@ -248,9 +250,23 @@ function DoFrame(tick: number) {
 
     decodeWorldState(stateUpdate, world);
 
-    for (let i = 0; i < world.Fighters.length; i++) { // Prune fighters who have not been included in the world state 5 consecutive times
-      if (world.Fighters[i].UpdatesMissed > 5) {
-        OnDeath(world.Fighters[i].getOwnerID(), -1);
+    for (let i = 0; i < world.Fighters.length; i++) {
+      // Apply any fighter names who do not have names yet
+      // TODO: HAX: This could all be a lot better :(
+      const fighter = world.Fighters[i];
+      if (fighter.DisplayName == null) {
+        const connect = playerConnects.filter((x) => x.ownerId === fighter.getOwnerID())[0];
+        if (connect) {
+          console.log('Updated fighter', fighter.getOwnerID(), 'with connect', connect);
+          fighter.DisplayName = connect.username;
+        } else {
+          console.error('No player connect found for', fighter.getOwnerID());
+        }
+      }
+
+      // Prune fighters who have not been included in the world state 5 consecutive times
+      if (fighter.UpdatesMissed > 5) {
+        OnDeath(fighter.getOwnerID(), -1);
       }
     }
 
@@ -391,8 +407,11 @@ function DoFrame(tick: number) {
             OnDeath(msg.characterId, msg.killerId);
             break;
           case TypeEnum.PlayerConnect:
-            // TODO: Attach this event to players in our local world
-            console.log('Player connected', msg);
+            // We have to save this in memory elsewhere for when fighters are selected
+            // and finally connect into the world state. Updates are applied later.
+            playerConnects = playerConnects.filter((x) => x.ownerId !== msg.ownerId); // Remove existing
+            playerConnects.push(msg); // Add new
+            console.log('Player connected', msg, 'Current players', playerConnects);
             break;
           default: // None
         }

@@ -139,7 +139,12 @@ class Clockwork {
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
     plr.setUsername(message.username);
 
-    this.broadcast(message); // Broadcast the username to all clients, they will all receive a message of "player joined the game"
+    // Broadcast the username to all clients, they will all receive a message of "player joined the game"
+    this.broadcast(<IPlayerConnect>{
+      type: TypeEnum.PlayerConnect,
+      ownerId: plr.getCharacterID(), // Sync ID down to client's world state
+      username: message.username,
+    });
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
     if (!plr.getCharacter()) {
@@ -198,9 +203,17 @@ class Clockwork {
 
     // TODO: Update player pings
 
+    // Finally, add player to the connections list because they are set up
     Logger.info(`Connected player ${message.id}`);
+    this.connections.push(player);
 
-    this.connections.push(player); // Finally, add player to the connections list because they are set up
+    // Broadcast an initial state of all player names on new connection
+    const playerConnects = this.connections.map((c) => <IPlayerConnect>{
+      type: TypeEnum.PlayerConnect,
+      ownerId: c.getCharacterID(),
+      username: c.getUsername(),
+    });
+    this.broadcastList(playerConnects);
   }
 
   busPlayerDisconnect(message: IClientDisconnected) {

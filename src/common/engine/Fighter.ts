@@ -72,8 +72,6 @@ class Fighter extends Entity {
     this.Firing = false;
     this.BulletCooldown = 0;
     this.BulletShock = 0;
-
-    this.DisplayName = `Unknown-${this.ID}`;
   }
 
 
