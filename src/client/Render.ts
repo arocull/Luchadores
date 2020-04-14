@@ -77,6 +77,11 @@ class Renderer {
   ) {
     canvas.resetTransform();
 
+    // Username font settings
+    canvas.font = '18px roboto';
+    canvas.textBaseline = 'middle';
+    canvas.textAlign = 'center';
+
     const offsetX = camera.Width / 2;
     const offsetY = camera.Height / 2;
     const zoom = camera.Zoom;
@@ -144,6 +149,17 @@ class Renderer {
             (pos.y + pos.z) * zoom + offsetY,
             2 * a.Radius * zoom,
             -a.Height * zoom,
+          );
+        }
+
+        if (a.DisplayName) {
+          canvas.globalAlpha = 1;
+          canvas.fillStyle = '#000000';
+
+          canvas.fillText(
+            a.DisplayName,
+            offsetX - pos.x * camera.Zoom,
+            (pos.y + pos.z - a.Height - 0.175) * camera.Zoom + offsetY,
           );
         }
       } else if (toDraw[i].type === EntityType.Projectile) {

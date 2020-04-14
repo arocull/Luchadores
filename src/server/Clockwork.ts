@@ -95,23 +95,22 @@ class Clockwork {
   }
 
   public broadcast(message: IEvent) {
-    for (let i = 0; i < this.connections.length; i++) {
-      MessageBus.publish(`server-to-client-${this.connections[i].getId()}`, message);
-    }
+    this.connections.forEach((conn) => MessageBus.publish(conn.getTopicSend(), message));
   }
+
   public broadcastList(messages: IEvent[]) {
-    for (let i = 0; i < messages.length; i++) {
-      this.broadcast(messages[i]);
-    }
+    messages.forEach((msg) => this.broadcast(msg));
   }
+
   public updatePlayerStates() { // Iterates through all players and informs them of their character ID and health
     for (let i = 0; i < this.connections.length; i++) {
       // Only sends message if their character exists though (they shouldn't need it if they don't have a character)
-      const char = this.connections[i].getCharacter();
+      const conn = this.connections[i];
+      const char = conn.getCharacter();
       if (char && char.HP > 0) {
-        MessageBus.publish(`server-to-client-${this.connections[i].getId()}`, {
+        MessageBus.publish(conn.getTopicSend(), {
           type: TypeEnum.PlayerState,
-          characterID: this.connections[i].getCharacterID(),
+          characterID: conn.getCharacterID(),
           health: char.HP,
         });
       }
@@ -142,7 +141,12 @@ class Clockwork {
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
     plr.setUsername(message.username);
 
-    this.broadcast(message); // Broadcast the username to all clients, they will all recieve a message of "player joined the game"
+    // Broadcast the username to all clients, they will all receive a message of "player joined the game"
+    this.broadcast(<IPlayerConnect>{
+      type: TypeEnum.PlayerConnect,
+      ownerId: plr.getCharacterID(), // Sync ID down to client's world state
+      username: message.username,
+    });
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
     if (!plr.getCharacter()) {
@@ -163,10 +167,6 @@ class Clockwork {
 
   // Player Setup
   busPlayerConnect(message: IClientConnected) {
-    if (message.type !== TypeEnum.ClientConnected) {
-      return;
-    }
-
     for (let i = 0; i < this.connections.length; i++) { // Make sure player doesn't already exist
       if (this.connections[i].getId() === message.id) {
         return; // Player was already present, ignore this request
@@ -175,9 +175,10 @@ class Clockwork {
 
     const player = new Player(message.id); // Create player objects
     player.assignCharacterID(this.getLowestUnusedCharacterID()); // Assign them a basic numeric ID for world-state synchronization
+    player.setTopics(message.topicOutbound, message.topicInbound);
 
     // TODO: Move message handling responsibility directly into `Player`?
-    this.subscribers.attachSpecific(message.id, message.topicInbound, (msg: IEvent) => { // Hook up event for when the player sets their username
+    this.subscribers.attachSpecific(message.id, player.getTopicReceive(), (msg: IEvent) => { // Hook up event for when the player sets their username
       switch (msg.type) {
         case TypeEnum.PlayerConnect:
           this.busPlayerConnectHook(player, msg);
@@ -192,7 +193,7 @@ class Clockwork {
       }
     });
 
-    MessageBus.publish(message.topicOutbound, { // Update client-side player ID
+    MessageBus.publish(player.getTopicSend(), { // Update client-side player ID
       type: TypeEnum.PlayerState,
       characterID: player.getCharacterID(),
       health: 0, // No character yet, just say they have 0 HP
@@ -200,16 +201,23 @@ class Clockwork {
 
     // TODO: Update player pings
 
+    // Finally, add player to the connections list because they are set up
     Logger.info(`Connected player ${message.id}`);
+    this.connections.push(player);
 
-    this.connections.push(player); // Finally, add player to the connections list because they are set up
+    // Broadcast an initial state of all player names on new connection
+    const playerConnects = this.connections.map((c) => <IPlayerConnect>{
+      type: TypeEnum.PlayerConnect,
+      ownerId: c.getCharacterID(),
+      username: c.getUsername(),
+    });
+    // this.broadcastList broadcasts a list of players to ALL clients, not just one, so let's just update this player
+    for (let i = 0; i < playerConnects.length; i++) {
+      MessageBus.publish(player.getTopicSend(), playerConnects[i]);
+    }
   }
 
   busPlayerDisconnect(message: IClientDisconnected) {
-    if (message.type !== TypeEnum.ClientDisconnected) {
-      return;
-    }
-
     // Unsubscribe from all event hook-ups associated with this player's id
     this.subscribers.detachAllSpecific(message.id);
 

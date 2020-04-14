@@ -3,7 +3,7 @@ import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
-import { IWorldState, IPlayerState } from '../common/events/events';
+import { IPlayerConnect, IPlayerState, IWorldState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -25,11 +25,12 @@ const player = new Player('');
 let luchador: FighterType = FighterType.Sheep;
 let character: Fighter = null;
 
-
 // Generate World
 const world = new World();
 world.Map.loadTexture();
 Random.randomSeed();
+
+let playerConnects: IPlayerConnect[] = [];
 
 // TODO: HAX - get topics to use from web socket
 const topics = {
@@ -190,8 +191,9 @@ function doUIFrameInteraction(frame: UIFrame) {
 MessageBus.subscribe('PickUsername', (name: string) => {
   player.setUsername(name);
 
-  MessageBus.publish(topics.ClientNetworkToServer, {
+  MessageBus.publish(topics.ClientNetworkToServer, <IPlayerConnect>{
     type: TypeEnum.PlayerConnect,
+    ownerId: -1, // We don't know this on this client yet - server will decide
     username: name,
   });
 
@@ -249,9 +251,11 @@ function DoFrame(tick: number) {
 
     decodeWorldState(stateUpdate, world);
 
-    for (let i = 0; i < world.Fighters.length; i++) { // Prune fighters who have not been included in the world state 5 consecutive times
+    for (let i = 0; i < world.Fighters.length; i++) {
+      // Prune fighters who have not been included in the world state 5 consecutive times
       if (world.Fighters[i].UpdatesMissed > 5) {
         OnDeath(world.Fighters[i].getOwnerID(), -1);
+        i--;
       }
     }
 
@@ -289,6 +293,16 @@ function DoFrame(tick: number) {
         a.Animator.Tick(DeltaTime);
         if (a.Animator.killEffectCountdown === 0) {
           PRosePetal.Burst(particles, a.Position, 0.2, 5, 20 * renderSettings.ParticleAmount);
+        }
+      }
+
+      // Apply any fighter names who do not have names yet
+      if (!a.DisplayName) {
+        for (let j = 0; j < playerConnects.length; j++) {
+          if (playerConnects[i] && playerConnects[i].ownerId === a.getOwnerID()) {
+            a.DisplayName = playerConnects[i].username;
+            break;
+          }
         }
       }
 
@@ -392,6 +406,13 @@ function DoFrame(tick: number) {
             break;
           case TypeEnum.PlayerDied:
             OnDeath(msg.characterId, msg.killerId);
+            break;
+          case TypeEnum.PlayerConnect:
+            // We have to save this in memory elsewhere for when fighters are selected
+            // and finally connect into the world state. Updates are applied later.
+            playerConnects = playerConnects.filter((x) => x.ownerId !== msg.ownerId); // Remove existing
+            playerConnects.push(msg); // Add new
+            console.log('Player connected', msg, 'Current players', playerConnects);
             break;
           default: // None
         }
