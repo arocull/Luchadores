@@ -309,8 +309,8 @@ function DoFrame(tick: number) {
       // Apply any fighter names who do not have names yet
       if (!a.DisplayName) {
         for (let j = 0; j < playerConnects.length; j++) {
-          if (playerConnects[i] && playerConnects[i].ownerId === a.getOwnerID()) {
-            a.DisplayName = playerConnects[i].username;
+          if (playerConnects[j] && playerConnects[j].ownerId === a.getOwnerID()) {
+            a.DisplayName = playerConnects[j].username;
             break;
           }
         }
