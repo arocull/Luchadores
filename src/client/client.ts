@@ -15,7 +15,7 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 /* eslint-enable object-curly-newline */
@@ -25,6 +25,7 @@ const player = new Player('');
 // eslint-disable-next-line
 let luchador: FighterType = FighterType.Sheep;
 let character: Fighter = null;
+let respawnTimer = 3;
 
 // Generate World
 const world = new World();
@@ -54,6 +55,7 @@ const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
 const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
 const uiHealthbar = new UIHealthbar();
+const uiKillCam = new UITextBox(0, 0.9, 1, 0.1, false, '');
 
 
 // Particles
@@ -65,6 +67,8 @@ MessageBus.subscribe('Effect_NewParticle', (msg) => {
 
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
+  let killFighter: Fighter = null;
+
   for (let i = 0; i < world.Fighters.length; i++) {
     if (world.Fighters[i].getOwnerID() === died) {
       PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
@@ -72,12 +76,16 @@ function OnDeath(died: number, killer: number) {
       i--;
     } else if (world.Fighters[i].getOwnerID() === killer) {
       world.Fighters[i].EarnKill();
+      killFighter = world.Fighters[i];
       if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 3;
     }
   }
 
-  if (died === player.getCharacterID()) {
+  if (died === player.getCharacterID()) { // Set camera focus to your killer as a killcam until you respawn
+    character = null;
     uiHealthbar.collapse();
+    cam.SetFocus(killFighter);
+    uiKillCam.text = `Killed by ${killFighter.DisplayName}`;
   }
 }
 
@@ -191,6 +199,7 @@ uiBackdrop.renderStyle = '#000000';
 uiBackdrop.onClick = (() => {
   uiUsernameSelect.deselect();
 });
+uiKillCam.alpha = 0;
 function doUIFrameInteraction(frame: UIFrame) {
   const hovering = frame.checkMouse(Input.MouseX / viewport.width, Input.MouseY / viewport.height);
   frame.onHover(hovering);
@@ -210,6 +219,7 @@ MessageBus.subscribe('PickUsername', (name: string) => {
 });
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   luchador = type;
+  respawnTimer = 3;
   Input.ClassSelectOpen = false;
 
   MessageBus.publish(topics.ClientNetworkToServer, {
@@ -307,8 +317,8 @@ function DoFrame(tick: number) {
       // Apply any fighter names who do not have names yet
       if (!a.DisplayName) {
         for (let j = 0; j < playerConnects.length; j++) {
-          if (playerConnects[i] && playerConnects[i].ownerId === a.getOwnerID()) {
-            a.DisplayName = playerConnects[i].username;
+          if (playerConnects[j] && playerConnects[j].ownerId === a.getOwnerID()) {
+            a.DisplayName = playerConnects[j].username;
             break;
           }
         }
@@ -328,11 +338,20 @@ function DoFrame(tick: number) {
       }
     }
   }
-  if (character) cam.Shake += character.BulletShock;
+  if (character) {
+    cam.Shake += character.BulletShock;
+    respawnTimer = 3;
+  } else if (!Input.GUIMode) {
+    respawnTimer -= trueDeltaTime;
+
+    if (respawnTimer <= 0) { // If their respawn timer reached 0, pull up class elect again
+      Input.ClassSelectOpen = true;
+    }
+  }
 
   // Tick and prune particles
   for (let i = 0; i < particles.length; i++) {
-    particles[i].Tick(DeltaTime);
+    particles[i].Tick(trueDeltaTime);
 
     if (particles[i].Finished === true) {
       particles.splice(i, 1);
@@ -371,6 +390,7 @@ function DoFrame(tick: number) {
     }
   }
   if (Input.PlayerListOpen && !Input.GUIMode) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
+  if (respawnTimer > 0 && respawnTimer < 3) Renderer.DrawUIFrame(canvas, cam, uiKillCam);
 
   if (renderSettings.FPScounter) {
     if (fpsCount.length >= 30) fpsCount.shift();
