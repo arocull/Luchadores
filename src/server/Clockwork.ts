@@ -149,7 +149,7 @@ class Clockwork {
     });
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
-    if (!plr.getCharacter()) {
+    if (!plr.getCharacter() || plr.getCharacter().HP <= 0) {
       plr.assignCharacter(this.world.spawnFighter(plr, message.fighterClass)); // Spawn them a fighter
     }
   }
