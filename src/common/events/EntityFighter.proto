@@ -6,9 +6,9 @@ message EntityFighter {
     required Vector acceleration = 3;
     required int32 ownerId = 4;
     required int32 class = 5;
-    optional bool firing = 6;
-    optional Vector aim = 7;
-    optional float cooldown = 8;
-    optional float specialNumber = 9;
-    optional bool specialBoolean = 10;
+    required bool firing = 6;
+    required Vector aim = 7;
+    required float cooldown = 8;
+    required float specialNumber = 9;
+    required bool specialBoolean = 10;
 }

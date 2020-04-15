@@ -259,8 +259,8 @@ MessageBus.subscribe('ping-info', (pingInfo: PingInfo) => {
 let LastFrame = 0;
 function DoFrame(tick: number) {
   // Convert milliseconds to seconds
-  let DeltaTime = (tick / 1000) - LastFrame;
-  const trueDeltaTime = DeltaTime;
+  const DeltaTime = (tick / 1000) - LastFrame;
+  let worldDeltaTime = DeltaTime;
   LastFrame = tick / 1000;
 
   Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen);
@@ -283,7 +283,7 @@ function DoFrame(tick: number) {
     }
 
     // TODO: Get server time in client-server handshake and use that for time calculations
-    DeltaTime = ((Date.now() - networkTimeOffset) - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
+    worldDeltaTime = ((Date.now() - networkTimeOffset) - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
   }
 
   // Use inputs
@@ -296,7 +296,7 @@ function DoFrame(tick: number) {
     cam.SetFocus(character);
   }
 
-  world.tick(DeltaTime);
+  world.tick(worldDeltaTime);
 
   // Update Camera
   viewport.width = window.innerWidth;
@@ -347,7 +347,7 @@ function DoFrame(tick: number) {
     cam.Shake += character.BulletShock;
     respawnTimer = 3;
   } else if (!Input.GUIMode) {
-    respawnTimer -= trueDeltaTime;
+    respawnTimer -= DeltaTime;
 
     if (respawnTimer <= 0) { // If their respawn timer reached 0, pull up class elect again
       Input.ClassSelectOpen = true;
@@ -356,7 +356,7 @@ function DoFrame(tick: number) {
 
   // Tick and prune particles
   for (let i = 0; i < particles.length; i++) {
-    particles[i].Tick(trueDeltaTime);
+    particles[i].Tick(DeltaTime);
 
     if (particles[i].Finished === true) {
       particles.splice(i, 1);
@@ -370,7 +370,7 @@ function DoFrame(tick: number) {
     Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
   } else if ((character && character.HP > 0) || uiHealthbar.collapsing) {
     if (character) uiHealthbar.healthPercentage = character.HP / character.MaxHP;
-    uiHealthbar.tick(trueDeltaTime);
+    uiHealthbar.tick(DeltaTime);
 
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.base);
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.bar);
@@ -388,7 +388,7 @@ function DoFrame(tick: number) {
     }
 
     uiUsernameSelect.setCursorPosition(Renderer.GetTextWidth(canvas, cam, uiUsernameSelect.getTextBox()));
-    uiUsernameSelect.tick(trueDeltaTime);
+    uiUsernameSelect.tick(DeltaTime);
 
     for (let i = 0; i < uiUsernameSelect.frames.length; i++) {
       Renderer.DrawUIFrame(canvas, cam, uiUsernameSelect.frames[i]);
@@ -399,7 +399,7 @@ function DoFrame(tick: number) {
 
   if (renderSettings.FPScounter) {
     if (fpsCount.length >= 30) fpsCount.shift();
-    fpsCount.push(trueDeltaTime);
+    fpsCount.push(DeltaTime);
 
     let avgDT = 0;
     for (let i = 0; i < fpsCount.length; i++) {

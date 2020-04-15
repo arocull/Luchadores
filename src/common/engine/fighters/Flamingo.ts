@@ -30,6 +30,7 @@ class Flamingo extends Fighter {
     // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;
     this.breath = 50;
+    this.breathing = false;
   }
 
   public canFirebullet() {

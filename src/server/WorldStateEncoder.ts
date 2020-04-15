@@ -28,7 +28,7 @@ function encodeEntity(obj: Entity): any {
     if (fight.getCharacter() === FighterType.Flamingo) {
       const flam = <Flamingo>fight;
       result.specialNumber = flam.getBreath();
-      result.specialBool = flam.isBreathing();
+      result.specialBoolean = flam.isBreathing();
     }
   } else if (obj.type === EntityType.Projectile) {
     const proj = <Projectile>obj;
