@@ -24,12 +24,15 @@ class Host extends EventEmitter {
 
     const connectionCountChange = () => {
       if (this.instance && this.socketHost.getClients().length === 0) {
+        // Wait a moment to receive any residual packets, or maybe a player will
+        // refill the spot.
         setTimeout(() => {
-          // Wait a moment to receive any residual packets, or maybe a player will
-          // fill the spot.
-          logger.info('Shutting down game instance ...');
-          this.instance.stop();
-          this.instance = null;
+          // Make sure our conditions still hold.
+          if (this.instance && this.socketHost.getClients().length === 0) {
+            logger.info('Shutting down game instance ...');
+            this.instance.stop();
+            this.instance = null;
+          }
         }, 5 * 1000);
       } else if (!this.instance && this.socketHost.getClients().length > 0) {
         logger.info('Spinning up game instance ...');
