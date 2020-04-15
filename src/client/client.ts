@@ -18,6 +18,7 @@ import Camera from './Camera';
 import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
+import { PingInfo } from '../common/network/pingpong';
 /* eslint-enable object-curly-newline */
 
 // Set up base client things
@@ -169,7 +170,6 @@ document.addEventListener('mouseup', () => {
 });
 
 const throttledMouseUpdate = _.throttle((event) => {
-  console.log('mouse update');
   const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(character.Position), new Vector(event.clientX, event.clientY, 0)));
   dir.x *= -1;
 
@@ -251,6 +251,11 @@ function UpdatePlayerState(msg: IPlayerState) {
 }
 // SEE SETUP \/ \/ \/ \/
 
+let networkTimeOffset = 0;
+MessageBus.subscribe('ping-info', (pingInfo: PingInfo) => {
+  networkTimeOffset = Date.now() - pingInfo.remoteTimestamp;
+});
+
 let LastFrame = 0;
 function DoFrame(tick: number) {
   // Convert milliseconds to seconds
@@ -278,7 +283,7 @@ function DoFrame(tick: number) {
     }
 
     // TODO: Get server time in client-server handshake and use that for time calculations
-    DeltaTime = (Date.now() - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
+    DeltaTime = ((Date.now() - networkTimeOffset) - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
   }
 
   // Use inputs
