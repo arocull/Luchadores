@@ -1,4 +1,5 @@
 /* eslint-disable object-curly-newline */
+import _ from 'lodash';
 import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
 import { decodeInt64 } from '../common/messaging/serde';
@@ -158,19 +159,26 @@ document.addEventListener('mouseup', () => {
   Input.MouseDown = false;
   UpdateInput();
 });
+
+const throttledMouseUpdate = _.throttle((event) => {
+  console.log('mouse update');
+  const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(character.Position), new Vector(event.clientX, event.clientY, 0)));
+  dir.x *= -1;
+
+  Input.MouseDirection = dir;
+  UpdateInput(); // We only care to send aim updates if this is a ranged fighter
+}, 100);
+
 document.addEventListener('mousemove', (event) => {
   if (Input.GUIMode) {
     Input.MouseX = event.clientX;
     Input.MouseY = event.clientY;
 
     // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
-  } else if (character && character.isRanged()) {
-    const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(character.Position), new Vector(event.clientX, event.clientY, 0)));
-    dir.x *= -1;
-
-    Input.MouseDirection = dir;
-    UpdateInput(); // We only care to send aim updates if this is a ranged fighter
-    // should we only send aim inputs if their mouse is down to help reduce traffic?
+  } else if (character && character.isRanged() && Input.MouseDown) {
+    // Throttled the update so we don't strain the server.
+    // This is matched locally so there won't be conflicts with the server's physics.
+    throttledMouseUpdate(event);
   } else {
     Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (viewport.width / 2), (viewport.height / 2) - event.clientY, 0);
   }
