@@ -43,7 +43,7 @@ class Clockwork {
     this.loop = null;
 
     if (this.running) {
-      // Could just be a reduce function for worst ping in the future
+      // TODO: Could just be a reduce function for worst ping in the future
       const pings: number[] = _.map(this.connections, (conn) => conn.getPing());
 
       // Worst of *average* pings! This way we even the playing field so the
