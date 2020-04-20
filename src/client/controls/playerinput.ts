@@ -8,13 +8,13 @@ export interface PlayerInput {
   /** Which mouse buttons are down? */
   MouseButtons: Record<number, boolean>;
   /** Where is the mouse pointing? */
-  MouseDirection: Vector;
+  MouseCoordinates: Vector;
 }
 
 const Input: PlayerInput = {
   Keys: {},
   MouseButtons: {},
-  MouseDirection: new Vector(0, 0, 0),
+  MouseCoordinates: new Vector(0, 0, 0),
 };
 
 document.addEventListener('keydown', (event) => {
@@ -30,14 +30,14 @@ document.addEventListener('mouseup', (event) => {
   Input.MouseButtons[event.button] = false;
 });
 document.addEventListener('mousemove', (event) => {
-  Input.MouseDirection.x = event.clientX;
-  Input.MouseDirection.y = event.clientY;
+  Input.MouseCoordinates.x = event.clientX;
+  Input.MouseCoordinates.y = event.clientY;
 });
 
-export function sample(): PlayerInput {
+export function sampleInputs(): PlayerInput {
   return {
     Keys: _.clone(Input.Keys),
     MouseButtons: _.clone(Input.MouseButtons),
-    MouseDirection: Vector.Clone(Input.MouseDirection),
+    MouseCoordinates: Vector.Clone(Input.MouseCoordinates),
   };
 }
