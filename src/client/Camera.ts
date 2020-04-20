@@ -9,6 +9,7 @@ class Camera {
   private OffsetX: number;
   private OffsetY: number;
 
+  private baseZoom: number;
   public Zoom: number;
   public Shake: number;
 
@@ -41,9 +42,12 @@ class Camera {
     if (newFocus) this.Focus = newFocus;
   }
   public UpdateFocus(DeltaTime: number) { // Internal, snaps camera to focus
+    let focusSpeed: number = 0;
     if (this.Focus) {
       // Focus camera on center of character
       this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0);
+
+      focusSpeed = Math.max(Math.min(this.Focus.Velocity.lengthXY(), 50), 0) / 100;
 
       // If camera shake is enabled, do it
       if (this.Shake > 0 && this.Settings.EnableCameraShake) {
@@ -56,7 +60,9 @@ class Camera {
     }
 
     // Use constant aspect ratio
-    this.Zoom = Math.min(this.Width / this.MaxDrawWidth, this.Height / this.MaxDrawHeight);
+    this.baseZoom = Math.min(this.Width / this.MaxDrawWidth, this.Height / this.MaxDrawHeight);
+    // Smoothly lerp visual zoom to reduce motion
+    this.Zoom = Math.min(this.baseZoom, (this.Zoom * (1 - DeltaTime) + (this.baseZoom - focusSpeed * this.baseZoom) * DeltaTime));
   }
 
 
