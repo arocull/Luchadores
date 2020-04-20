@@ -14,7 +14,7 @@ class Random {
 
   // Creates a random seed based off of current time (randomized as well by previous use if there was any)
   static randomSeed() {
-    this.setSeed(Date.now() + index * seed);
+    this.setSeed(Date.now() + index * seed); // This use of `Date.now()` is fine
   }
 
   // Returns a random float between 0 and 1

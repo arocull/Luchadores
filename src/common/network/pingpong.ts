@@ -1,3 +1,4 @@
+import { now } from '../engine/Time';
 import {
   TypeEnum, IEvent, IPing, IPong,
 } from '../events';
@@ -85,10 +86,10 @@ export class PingPongHandler {
       return Promise.reject(new Error('No sending topic connected - cannot ping'));
     }
 
-    const sendMs = Date.now();
+    const sendMs = now();
     MessageBus.publish(this.pingProvider.topicSend, <IPing>{
       type: TypeEnum.Ping,
-      timestamp: Date.now(),
+      timestamp: now(),
     });
 
     return MessageBus.await(this.pingProvider.topicReceive, 2000,
@@ -99,7 +100,7 @@ export class PingPongHandler {
         return null;
       })
       .then((pong) => {
-        const receiveMs = Date.now();
+        const receiveMs = now();
         const roundTripTimeMilliseconds = receiveMs - sendMs;
         const roundTripOffsetMs = Math.round(roundTripTimeMilliseconds / 2);
         const serverTimestampCorrected = decodeInt64(pong.timestamp) + roundTripOffsetMs;
@@ -118,7 +119,7 @@ export class PingPongHandler {
   pong() {
     MessageBus.publish(this.pingProvider.topicSend, <IPong>{
       type: TypeEnum.Pong,
-      timestamp: Date.now(),
+      timestamp: now(),
     });
   }
 
