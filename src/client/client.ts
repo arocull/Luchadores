@@ -1,8 +1,11 @@
 /* eslint-disable object-curly-newline */
 import _ from 'lodash';
-import { sampleInputs, PlayerInput } from './controls/playerinput';
+import {
+  sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput,
+} from './controls/playerinput';
 import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
+import { SubscriberContainer } from '../common/messaging/container';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
 import { IPlayerConnect, IPlayerState, IWorldState } from '../common/events/events';
@@ -110,40 +113,25 @@ const Input = {
   MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
 };
 
-let keyDown: boolean = false;
+let guiInputSubscribers: SubscriberContainer = null;
 function parseKeys(input: PlayerInput) {
-  if (input.Keys.Shift) {
-    uiUsernameSelect.shift(true);
-  } else {
-    uiUsernameSelect.shift(false);
-  }
-
-  // TODO: Everything in the GUI section is kinda terrible now.
-  //       It works a lot better when it's event driven.
-  if (Input.UsernameSelectOpen) { // Type into username textbox
-    if (input.Keys.Enter) {
-      uiUsernameSelect.enter();
-      return;
-    }
-    if (input.Keys.Backspace) {
-      if (!keyDown) {
+  // Type into username textbox
+  if (Input.UsernameSelectOpen && guiInputSubscribers == null) {
+    // When we enter GUI mode, bind the events
+    guiInputSubscribers = new SubscriberContainer();
+    guiInputSubscribers.attach(InputTopics.keydown, (k: KeyboardButtonInput) => {
+      if (k.key === 'Enter') {
+        uiUsernameSelect.enter();
+      } else if (k.key === 'Backspace') {
         uiUsernameSelect.backspace();
-        keyDown = true;
+      } else if (k.key.length === 1) {
+        uiUsernameSelect.shift(k.shiftKey);
+        uiUsernameSelect.typeCharacter(k.key);
       }
-      return;
-    }
-    // The first active key?
-    const key = _.findKey(input.Keys, (v, k) => v === true && k.length === 1);
-    if (key != null) {
-      if (!keyDown) {
-        uiUsernameSelect.typeCharacter(key);
-        keyDown = true;
-        return;
-      }
-    } else {
-      keyDown = false; // No keys down
-    }
-    return;
+    });
+  } else if (!Input.UsernameSelectOpen && guiInputSubscribers != null) {
+    // When we leave GUI mode, unbind the events
+    guiInputSubscribers.detachAll();
   }
 
   if (input.Keys.a === true) Input.MoveDirection.x = -1;
