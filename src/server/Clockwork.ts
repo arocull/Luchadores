@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import Denque from 'denque';
 import Player from '../common/engine/Player';
+import { now } from '../common/engine/Time';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
 import World from '../common/engine/World';
@@ -167,7 +168,7 @@ class Clockwork {
 
     const action: Action = {
       player: plr,
-      timestamp: Date.now(),
+      timestamp: now(),
       input: message,
     };
 

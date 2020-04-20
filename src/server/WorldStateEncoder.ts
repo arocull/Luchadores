@@ -4,6 +4,7 @@ import World from '../common/engine/World';
 import { Fighter, Flamingo } from '../common/engine/fighters/index';
 import { Projectile } from '../common/engine/projectiles/index';
 import { EntityType, FighterType } from '../common/engine/Enums';
+import { now } from '../common/engine/Time';
 import { TypeEnum } from '../common/events/index';
 import { IWorldState } from '../common/events/events';
 
@@ -52,7 +53,7 @@ function encodeWorldState(world: World): IWorldState {
     mapFriction: world.Map.Friction,
     mapId: 0,
     mapWallStrength: world.Map.wallStrength,
-    timestamp: Date.now(),
+    timestamp: now(),
     fighters: [],
     projectiles: [],
   };
