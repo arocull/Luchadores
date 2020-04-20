@@ -150,19 +150,25 @@ function parseMouse(input: PlayerInput) {
   // Button 0 is left click
   Input.MouseDown = (input.MouseButtons[0] === true);
 
-  const { x } = input.MouseCoordinates;
-  const { y } = input.MouseCoordinates;
   if (Input.GUIMode) {
-    Input.MouseX = x;
-    Input.MouseY = y;
-
-    // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
+    Input.MouseX = input.MouseCoordinates.x;
+    Input.MouseY = input.MouseCoordinates.y;
   } else if (character && character.isRanged() && Input.MouseDown) {
-    const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(character.Position), new Vector(x, y, 0)));
+    // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
+    const dir = Vector.UnitVectorXY(
+      Vector.Subtract(
+        cam.PositionOffset(character.Position),
+        input.MouseCoordinates,
+      ),
+    );
     dir.x *= -1;
     Input.MouseDirection = dir;
   } else {
-    Input.MouseDirection = Vector.UnitVectorFromXYZ(x - (viewport.width / 2), (viewport.height / 2) - y, 0);
+    Input.MouseDirection = Vector.UnitVectorFromXYZ(
+      input.MouseCoordinates.x - (viewport.width / 2),
+      (viewport.height / 2) - input.MouseCoordinates.y,
+      0,
+    );
   }
 }
 
