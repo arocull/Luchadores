@@ -182,7 +182,7 @@ const inputThrottled = _.throttle(() => {
     mouseDirection: Input.MouseDirection,
     moveDirection: Input.MoveDirection,
   });
-}, 100);
+}, 50);
 
 // Hacks to poll and update sampling from player input module.
 // Should be refactored into something better.
