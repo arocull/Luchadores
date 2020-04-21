@@ -4,7 +4,6 @@ import {
 } from '../events';
 import { MessageBus } from '../messaging/bus';
 import { SubscriberContainer } from '../messaging/container';
-import { decodeInt64 } from '../messaging/serde';
 
 export const Topics = {
   PingInfo: 'ping-info',
@@ -25,15 +24,6 @@ export interface PingInfo {
    * The number of milliseconds between the ping sent and the pong received.
    */
   roundTripTimeMilliseconds: number;
-  /**
-   * The best estimation of the timestamp on the other end of the connection.
-   */
-  remoteTimestamp: number;
-  /**
-   * The number of milliseconds to add to the local clock to correct time.
-   * May be a negative number.
-  */
-  clockDriftMilliseconds: number;
 }
 
 export class PingPongHandler {
@@ -49,7 +39,7 @@ export class PingPongHandler {
     this.pingProvider = pingProvider;
     this.subscribers.attach(this.pingProvider.topicReceive, (message: IEvent) => {
       if (message.type === TypeEnum.Ping) {
-        this.pong();
+        this.pong(message.packetId);
       }
     });
   }
@@ -67,8 +57,10 @@ export class PingPongHandler {
       this.stop();
     }
     this.intervalHandle = setInterval(() => {
+      // TODO: Where to send ping rejections?
       this.ping()
-        .then((pingInfo) => this.publish(pingInfo));
+        .then((pingInfo) => this.publish(pingInfo))
+        .catch((err) => console.error('Ping rejection!', err));
     }, intervalMs);
   }
 
@@ -87,39 +79,35 @@ export class PingPongHandler {
     }
 
     const sendMs = now();
-    MessageBus.publish(this.pingProvider.topicSend, <IPing>{
+    const thisPing: IPing = {
       type: TypeEnum.Ping,
-      timestamp: now(),
-    });
+      packetId: Math.floor(Math.random() * 1000000),
+    };
+    MessageBus.publish(this.pingProvider.topicSend, thisPing);
 
     return MessageBus.await(this.pingProvider.topicReceive, 2000,
       (message: IEvent) => {
-        if (message.type === TypeEnum.Pong) {
+        if (message.type === TypeEnum.Pong && message.packetId === thisPing.packetId) {
           return message;
         }
         return null;
       })
-      .then((pong) => {
+      .then(() => {
         const receiveMs = now();
         const roundTripTimeMilliseconds = receiveMs - sendMs;
-        const roundTripOffsetMs = Math.round(roundTripTimeMilliseconds / 2);
-        const serverTimestampCorrected = decodeInt64(pong.timestamp) + roundTripOffsetMs;
-        const clockDriftMs = receiveMs - serverTimestampCorrected;
         const pingInfo: PingInfo = {
           id: this.pingProvider.id,
           roundTripTimeMilliseconds,
-          remoteTimestamp: serverTimestampCorrected,
-          clockDriftMilliseconds: clockDriftMs,
         };
         return pingInfo;
       });
   }
 
   /** Replies with a pong */
-  pong() {
+  pong(packetId: number) {
     MessageBus.publish(this.pingProvider.topicSend, <IPong>{
       type: TypeEnum.Pong,
-      timestamp: now(),
+      packetId,
     });
   }
 

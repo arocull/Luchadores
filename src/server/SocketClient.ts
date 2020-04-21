@@ -93,7 +93,10 @@ class SocketClient {
     if (this.id == null) {
       throw new Error('Cannot subscribe - no client id was negotiated yet');
     }
-    this.subscribers.attach(this.topicServerToClient, (msg) => this.send(msg));
+    this.subscribers.attach(this.topicServerToClient, (msg) => {
+      logger.silly('Socket message sent %j', msg);
+      this.send(msg);
+    });
 
     this.pingPongHandler.subscribe({
       id: this.id,
@@ -101,9 +104,7 @@ class SocketClient {
       topicReceive: this.topicServerFromClient,
     });
 
-    // Ping now and begin pinging the client at regular intervals
-    this.pingPongHandler.ping()
-      .then((pingInfo) => this.pingPongHandler.publish(pingInfo));
+    // Begin pinging the client at regular intervals
     this.pingPongHandler.start(1000);
   }
 
@@ -146,13 +147,10 @@ class SocketClient {
   }
 
   onMessage(data: Buffer) {
-    logger.silly('Socket receiving data %j', data);
-
     const decoded = decoder(data);
     logger.silly('Socket message decoded %j', decoded);
 
     MessageBus.publish(this.topicServerFromClient, decoded);
-    logger.silly('Socket message sent to topic %j', this.topicServerToClient);
   }
 
   close() {

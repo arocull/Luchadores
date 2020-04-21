@@ -119,6 +119,14 @@ class NetworkClient {
       id: this.id,
     });
 
+    // It's OK to start listening for and responding to pings right away.
+    // This will depend on the topics being wired up to the socket.
+    this.pingPongHandler.subscribe({
+      id: this.id,
+      topicSend: this.topicClientToServer,
+      topicReceive: this.topicClientFromServer,
+    });
+
     MessageBus.await(this.topicClientFromServer, 2000,
       (message: events.IEvent) => {
         if (message.type === events.TypeEnum.ClientAcknowledged) {
@@ -131,22 +139,11 @@ class NetworkClient {
         return null;
       })
       .then(() => {
-        console.log('ClientAck and ID match - away we go! Waiting to sync clocks with first ping.');
+        console.log('ClientAck and ID match - away we go!');
 
         // Subscribe us to receive any events targeting outbound network.
-        // Needed for ping handler to work.
+        // Needed for outbound ping handler to work.
         this.subscribers.attach(this.topicClientToServer, (msg) => this.send(msg));
-
-        this.pingPongHandler.subscribe({
-          id: this.id,
-          topicSend: this.topicClientToServer,
-          topicReceive: this.topicClientFromServer,
-        });
-        return this.pingPongHandler.ping();
-      })
-      .then((pingInfo) => {
-        console.log('Got initial ping for handshake - ready to go!', pingInfo);
-        this.pingPongHandler.publish(pingInfo);
 
         // Start polling for pings at a regular interval.
         this.pingPongHandler.start(1000);

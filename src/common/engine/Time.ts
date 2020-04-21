@@ -9,14 +9,14 @@ export const performance: Performance = (function getPerformance() {
 /** Gets a sample of elapsed milliseconds since origin time */
 export function sample(): number {
   // Floors the output to a whole millisecond number
-  return ~~performance.now(); // eslint-disable-line no-bitwise
+  return Math.floor(performance.now());
 }
 
 /** Gets a UTC timestamp for when you really need one. */
 export function now(): number {
-  // Floors the output to a whole millisecond number
   // WARNING: `performance.timeOrigin` is a non-standard API
-  return ~~(performance.timeOrigin + performance.now()); // eslint-disable-line no-bitwise
+  // return Math.floor(performance.timeOrigin + performance.now());
+  return Date.now();
 }
 
 export class Timer {
