@@ -101,9 +101,11 @@ class MessageBusImpl extends EventEmitter implements IMessageBus {
       }
     });
 
+    // Allocate error early to capture the stack trace of where we came from
+    const rejection = new Error(`Expected message did not arrive in ${timeoutMs}ms on topic ${topic}`);
     timeout = setTimeout(() => {
       this.removeSubscriber(subscriber);
-      future.reject(new Error(`Expected message did not arrive in ${timeoutMs}ms on topic ${topic}`));
+      future.reject(rejection);
     }, timeoutMs);
 
     return future.promise;
