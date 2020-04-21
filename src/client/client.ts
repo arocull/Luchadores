@@ -8,7 +8,7 @@ import { MessageBus } from '../common/messaging/bus';
 import { SubscriberContainer } from '../common/messaging/container';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
-import { IPlayerConnect, IPlayerState, IWorldState } from '../common/events/events';
+import { IPlayerConnect, IPlayerInputState, IPlayerState, IWorldState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -22,7 +22,7 @@ import Camera from './Camera';
 import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
-import { now } from '../common/engine/Time';
+import { now, Timer } from '../common/engine/Time';
 /* eslint-enable object-curly-newline */
 
 // Set up base client things
@@ -37,7 +37,11 @@ const world = new World();
 world.Map.loadTexture();
 Random.randomSeed();
 
+// Maintain stateful things
 let playerConnects: IPlayerConnect[] = [];
+let stateUpdateToApply: IWorldState = null;
+let stateUpdateMostRecent: IWorldState = null;
+const stateUpdateTimer = new Timer();
 
 // TODO: HAX - get topics to use from web socket
 const topics = {
@@ -175,8 +179,10 @@ function parseMouse(input: PlayerInput) {
 // TODO: TEMPORARY HACK WHILE FIGURING OUT INPUT LOAD ON SERVER
 const inputThrottled = _.throttle(() => {
   // Send input capture up to server
-  MessageBus.publish(topics.ClientNetworkToServer, {
+  MessageBus.publish(topics.ClientNetworkToServer, <IPlayerInputState>{
     type: TypeEnum.PlayerInputState,
+    sourceWorldTimestamp: stateUpdateMostRecent.timestamp,
+    frameTimeMs: stateUpdateTimer.duration(),
     jump: Input.Jump,
     mouseDown: Input.MouseDown,
     mouseDirection: Input.MouseDirection,
@@ -243,9 +249,6 @@ MessageBus.subscribe('PickCharacter', (type: FighterType) => {
 
 
 // State Updates
-let stateUpdatePending = false;
-let stateUpdateLastPacketTime = 0;
-let stateUpdate: IWorldState = null;
 function UpdatePlayerState(msg: IPlayerState) {
   const mismatch = msg.characterID !== player.getCharacterID();
 
@@ -260,7 +263,6 @@ function UpdatePlayerState(msg: IPlayerState) {
 
   if (character) character.HP = msg.health;
 }
-// SEE SETUP \/ \/ \/ \/
 let LastFrame = 0;
 function DoFrame(tick: number) {
   // Convert milliseconds to seconds
@@ -273,14 +275,12 @@ function DoFrame(tick: number) {
 
   Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen);
 
-  if (stateUpdatePending && stateUpdate) {
-    stateUpdatePending = false;
-
+  if (stateUpdateToApply) {
     for (let i = 0; i < world.Fighters.length; i++) { // Keeps track of how many WorldState updates each fighters missed
       world.Fighters[i].UpdatesMissed++;
     }
 
-    decodeWorldState(stateUpdate, world);
+    decodeWorldState(stateUpdateToApply, world);
 
     for (let i = 0; i < world.Fighters.length; i++) {
       // Prune fighters who have not been included in the world state 5 consecutive times
@@ -290,12 +290,12 @@ function DoFrame(tick: number) {
       }
     }
 
-    // TODO: Get server time in client-server handshake and use that for time calculations
+    // TODO: Correct this to work off of time relative from last server update time only
     // EXAMPLE:
     //  world @ server = 1000ms
     //  world @ client = 900ms, so behind by 100ms
     //  then tick by 100ms, so move all entities as predicted
-    worldDeltaTime = (now() - stateUpdateLastPacketTime) / 1000;
+    worldDeltaTime = (now() - decodeInt64(stateUpdateToApply.timestamp)) / 1000;
   }
 
   // Use inputs
@@ -442,9 +442,9 @@ function DoFrame(tick: number) {
       MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IEvent) => {
         switch (msg.type) {
           case TypeEnum.WorldState:
-            stateUpdatePending = true;
-            stateUpdate = msg;
-            stateUpdateLastPacketTime = decodeInt64(msg.timestamp);
+            stateUpdateToApply = msg;
+            stateUpdateMostRecent = msg;
+            stateUpdateTimer.restart();
             break;
           case TypeEnum.PlayerState:
             UpdatePlayerState(msg);

@@ -2,8 +2,10 @@ import "Vector.proto";
 
 message PlayerInputState {
     required int32 type = 1;
-    required bool jump = 2;
-    required bool mouseDown = 3;
-    required Vector mouseDirection = 4;
-    required Vector moveDirection = 5;
+    required int64 sourceWorldTimestamp = 2;
+    required int32 frameTimeMs = 3;
+    required bool jump = 4;
+    required bool mouseDown = 5;
+    required Vector mouseDirection = 6;
+    required Vector moveDirection = 7;
 }

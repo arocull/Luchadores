@@ -24,8 +24,19 @@ export class Timer {
   private endTime: number;
 
   constructor() {
-    this.startTime = 0;
-    this.endTime = 0;
+    this.reset();
+  }
+
+  reset(): Timer {
+    this.startTime = -1;
+    this.endTime = -1;
+    return this;
+  }
+
+  restart(): Timer {
+    this.startTime = sample();
+    this.endTime = -1;
+    return this;
   }
 
   startValue(): number {
@@ -38,6 +49,7 @@ export class Timer {
 
   start(): number {
     this.startTime = sample();
+    this.endTime = -1;
     return this.startTime;
   }
 
@@ -47,6 +59,13 @@ export class Timer {
   }
 
   duration(): number {
-    return this.endTime - this.startTime;
+    if (this.startTime < 0) {
+      throw new Error('Timer not started! Cannot get duration.');
+    }
+    if (this.endTime >= 0) {
+      return this.endTime - this.startTime;
+    }
+    // Rolling duration
+    return sample() - this.startTime;
   }
 }
