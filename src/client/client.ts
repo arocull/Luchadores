@@ -291,6 +291,10 @@ function DoFrame(tick: number) {
     }
 
     // TODO: Get server time in client-server handshake and use that for time calculations
+    // EXAMPLE:
+    //  world @ server = 1000ms
+    //  world @ client = 900ms, so behind by 100ms
+    //  then tick by 100ms, so move all entities as predicted
     worldDeltaTime = (now() - stateUpdateLastPacketTime) / 1000;
   }
 
