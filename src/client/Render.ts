@@ -1,13 +1,13 @@
 // Client only -- Renders stuff to the screen
 /* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
-import { EntityType, ParticleType, ProjectileType, UIFrameType } from '../common/engine/Enums';
+import { EntityType, ParticleType, ProjectileType, UIFrameType, FighterType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters/index';
 import Animator from './animation/Animator';
 import { Projectile } from '../common/engine/projectiles/index';
 import { Particle, PLightning } from './particles/index';
-import { UIFrame, UITextBox } from './ui/index';
+import { UIFrame, UITextBox, UIDeathNotification } from './ui/index';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
 /* eslint-enable object-curly-newline */
@@ -336,6 +336,42 @@ class Renderer {
         canvas.moveTo(startX + offsetX + text.cursorPosition * cam.Width, startY + height * 0.15);
         canvas.lineTo(startX + offsetX + text.cursorPosition * cam.Width, startY + height * 0.85);
         canvas.stroke();
+      }
+    } else if (frame.type === UIFrameType.DeathNotification) {
+      const notif = <UIDeathNotification>(frame);
+
+      canvas.font = '16px roboto';
+      canvas.textBaseline = 'hanging';
+      canvas.textAlign = 'right';
+
+      if (notif.killer) {
+        if (notif.wasDeath) canvas.fillStyle = '#03ae0b';
+        else canvas.fillStyle = '#ae0b03';
+        canvas.fillText(notif.death, startX + width, startY, width);
+        width -= MeasureString(canvas, notif.death);
+      }
+
+      let msg: string;
+      switch (notif.method) {
+        case FighterType.Sheep: msg = ' bulldozed '; break;
+        case FighterType.Deer: msg = ' gunned down '; break;
+        case FighterType.Flamingo: msg = ' incinerated '; break;
+        case FighterType.Toad: msg = ' electrocuted '; break;
+        default: msg = ' died';
+      }
+      canvas.fillStyle = '#ffffff';
+      canvas.fillText(msg, startX + width, startY, width);
+      width -= MeasureString(canvas, msg);// + 64; // with two spaces added
+
+      if (notif.wasKiller) canvas.fillStyle = '#03ae0b';
+      else canvas.fillStyle = '#ae0b03';
+      if (notif.killer) {
+        canvas.fillText(notif.killer, startX + width, startY, width);
+        width -= MeasureString(canvas, notif.killer);
+      } else {
+        if (notif.wasDeath) canvas.fillStyle = '#03ae0b';
+        else canvas.fillStyle = '#ae0b03';
+        canvas.fillText(notif.death, startX + width, startY, width);
       }
     }
   }

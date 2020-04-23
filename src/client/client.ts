@@ -19,7 +19,7 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 import { PingInfo } from '../common/network/pingpong';
@@ -61,6 +61,7 @@ const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
 const uiHealthbar = new UIHealthbar();
 const uiKillCam = new UITextBox(0, 0.9, 1, 0.1, false, '');
+const uiDeathNotifs: UIDeathNotification[] = [];
 
 
 // Particles
@@ -72,11 +73,13 @@ MessageBus.subscribe('Effect_NewParticle', (msg) => {
 
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
+  let diedName: string = '';
   let killFighter: Fighter = null;
 
   for (let i = 0; i < world.Fighters.length; i++) {
     if (world.Fighters[i].getOwnerID() === died) {
       PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
+      diedName = world.Fighters[i].DisplayName;
       world.Fighters.splice(i, 1);
       i--;
     } else if (world.Fighters[i].getOwnerID() === killer) {
@@ -91,6 +94,24 @@ function OnDeath(died: number, killer: number) {
     uiHealthbar.collapse();
     cam.SetFocus(killFighter);
     uiKillCam.text = `Killed by ${killFighter.DisplayName}`;
+  }
+
+  if (killFighter) {
+    uiDeathNotifs.push(new UIDeathNotification(
+      diedName,
+      killFighter.DisplayName,
+      killFighter.getCharacter(),
+      died === player.getCharacterID(),
+      killer === player.getCharacterID(),
+    ));
+  } else {
+    uiDeathNotifs.push(new UIDeathNotification(
+      diedName,
+      null,
+      FighterType.None,
+      died === player.getCharacterID(),
+      false,
+    ));
   }
 }
 
@@ -410,6 +431,17 @@ function DoFrame(tick: number) {
   }
   if (Input.PlayerListOpen && !Input.GUIMode) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
   if (respawnTimer > 0 && respawnTimer < 3) Renderer.DrawUIFrame(canvas, cam, uiKillCam);
+
+  for (let i = 0; i < uiDeathNotifs.length; i++) {
+    uiDeathNotifs[i].timeLeft -= DeltaTime;
+    if (uiDeathNotifs[i].timeLeft <= 0) {
+      uiDeathNotifs.splice(i, 1);
+      i--;
+    } else {
+      uiDeathNotifs[i].cornerY = i * UIDeathNotification.HEIGHT;
+      Renderer.DrawUIFrame(canvas, cam, uiDeathNotifs[i]);
+    }
+  }
 
   if (renderSettings.FPScounter) {
     if (fpsCount.length >= 30) fpsCount.shift();
