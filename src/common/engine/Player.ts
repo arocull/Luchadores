@@ -3,6 +3,7 @@ import Fighter from './Fighter';
 
 class Player {
   private username: string;
+  private kills: number;
 
   private character: Fighter;
   private characterID: number; // Used for keeping track between server and clients on who is who
@@ -14,6 +15,7 @@ class Player {
 
   constructor(private id: string) {
     this.username = 'Player';
+    this.kills = 0;
 
     this.character = null;
     this.characterID = -1;
@@ -69,6 +71,13 @@ class Player {
   }
   assignCharacterID(newCharacterID: number) {
     this.characterID = newCharacterID;
+  }
+
+  earnKill() {
+    this.kills++;
+  }
+  getKills(): number {
+    return this.kills;
   }
 
   setTopics(send: string, receive: string) {

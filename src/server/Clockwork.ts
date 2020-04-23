@@ -13,6 +13,7 @@ import {
   IPlayerConnect,
   IPlayerInputState,
   IPlayerSpawned,
+  IPlayerDisconnect,
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
@@ -84,7 +85,20 @@ class Clockwork {
 
         // Finally, update world state for all clients
         this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
-        this.broadcastList(this.world.reapKills()); // Tells players what fighters died and who to award kills to
+
+        const kills = this.world.reapKills();
+        this.broadcastList(kills); // Tells players what fighters died and who to award kills to
+        for (let i = 0; i < kills.length; i++) { // Count each kill toward respective kill counts
+          if (kills[i].killerId > 0) {
+            for (let j = 0; j < this.connections.length; j++) {
+              if (this.connections[i].getCharacterID() === kills[i].killerId) {
+                Logger.debug('Character IDs %j was killed by %j', kills[i].characterId, kills[i].killerId);
+                this.connections[i].earnKill();
+              }
+            }
+          }
+        }
+
         this.updatePlayerStates(); // Update player states (tell players how much HP they have)
       }
 
@@ -141,6 +155,13 @@ class Clockwork {
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
     plr.setUsername(message.username);
 
+    // Must be sent here--any publishes before full ACK are ignored
+    MessageBus.publish(plr.getTopicSend(), { // Update client-side player ID
+      type: TypeEnum.PlayerState,
+      characterID: plr.getCharacterID(),
+      health: 0, // No character yet, just say they have 0 HP
+    });
+
     // Broadcast the username to all clients, they will all receive a message of "player joined the game"
     this.broadcast(<IPlayerConnect>{
       type: TypeEnum.PlayerConnect,
@@ -150,11 +171,13 @@ class Clockwork {
 
     // Broadcast an initial state of all player names on new connection
     for (let i = 0; i < this.connections.length; i++) {
-      MessageBus.publish(plr.getTopicSend(), <IPlayerConnect>{
-        type: TypeEnum.PlayerConnect,
-        ownerId: this.connections[i].getCharacterID(),
-        username: this.connections[i].getUsername(),
-      });
+      if (this.connections[i] !== plr) {
+        MessageBus.publish(plr.getTopicSend(), <IPlayerConnect>{
+          type: TypeEnum.PlayerConnect,
+          ownerId: this.connections[i].getCharacterID(),
+          username: this.connections[i].getUsername(),
+        });
+      }
     }
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
@@ -202,16 +225,10 @@ class Clockwork {
       }
     });
 
-    MessageBus.publish(player.getTopicSend(), { // Update client-side player ID
-      type: TypeEnum.PlayerState,
-      characterID: player.getCharacterID(),
-      health: 0, // No character yet, just say they have 0 HP
-    });
-
     // TODO: Update player pings
 
     // Finally, add player to the connections list because they are set up
-    Logger.info(`Connected player ${message.id}`);
+    Logger.info(`Connected player ${message.id} and assigned character ID ${player.getCharacterID()}`);
     this.connections.push(player);
   }
 
@@ -232,6 +249,12 @@ class Clockwork {
     if (player && player.getCharacter()) { // If they exist and still have a character, kill the character
       player.getCharacter().HP = -100; // Character will automatically be cleaned up by world in the next update
     }
+
+    // Notify all other players of the disconnect so they can remove the player from their player lists
+    this.broadcast(<IPlayerDisconnect>{
+      type: TypeEnum.PlayerDisconnect,
+      ownerId: player.getCharacterID(),
+    });
   }
 
   start() {
