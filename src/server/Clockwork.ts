@@ -88,13 +88,13 @@ class Clockwork {
 
         const kills = this.world.reapKills();
         this.broadcastList(kills); // Tells players what fighters died and who to award kills to
-        for (let i = 0; i < kills.length; i++) { // Count each kill toward respective kill counts
-          if (kills[i].killerId > 0) {
-            for (let j = 0; j < this.connections.length; j++) {
-              if (this.connections[i].getCharacterID() === kills[i].killerId) {
-                Logger.debug('Character IDs %j was killed by %j', kills[i].characterId, kills[i].killerId);
-                this.connections[i].earnKill();
-              }
+        for (let i = 0; i < kills.length; i++) { // Count each kill and death toward respective counts
+          Logger.debug('Character IDs %j was killed by %j', kills[i].characterId, kills[i].killerId);
+          for (let j = 0; j < this.connections.length; j++) {
+            if (this.connections[i].getCharacterID() === kills[i].killerId) { // Earn kill
+              this.connections[i].earnKill();
+            } else if (this.connections[i].getCharacterID() === kills[i].characterId) { // Earn death
+              this.connections[i].earnDeath();
             }
           }
         }

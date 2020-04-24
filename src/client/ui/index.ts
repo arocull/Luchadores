@@ -4,6 +4,7 @@ import UIUsernameSelect from './UsernameSelect';
 import UIClassSelect from './ClassSelect';
 import UILuchadorPortrait from './LuchadorPortrait';
 import UIHealthbar from './Healthbar';
+import UIPlayerInfo from './PlayerInfo';
 
 export {
   UIFrame,
@@ -12,4 +13,5 @@ export {
   UIClassSelect,
   UILuchadorPortrait,
   UIHealthbar,
+  UIPlayerInfo,
 };

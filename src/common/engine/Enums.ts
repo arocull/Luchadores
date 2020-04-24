@@ -28,6 +28,7 @@ enum ParticleType {
 enum UIFrameType {
   Basic = 0,
   Text = 1,
+  PlayerInfo = 3,
 }
 
 const FighterTypeStrings = [
