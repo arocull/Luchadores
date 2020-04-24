@@ -7,7 +7,7 @@ import { Fighter } from '../common/engine/fighters/index';
 import Animator from './animation/Animator';
 import { Projectile } from '../common/engine/projectiles/index';
 import { Particle, PLightning } from './particles/index';
-import { UIFrame, UITextBox, UIDeathNotification } from './ui/index';
+import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
 /* eslint-enable object-curly-newline */
@@ -233,22 +233,41 @@ class Renderer {
 
   public static DrawPlayerList(canvas: CanvasRenderingContext2D, cam: Camera, data: string) {
     canvas.resetTransform();
-    const cornerX = cam.Width / 6;
-    const cornerY = cam.Height / 6;
-    const sizeX = cam.Width * (2 / 3);
-    const sizeY = cam.Height * (2 / 3);
-
-    const fontSize = 48; // sizeX / 100;
+    const startX = cam.Width * UIPlayerInfo.CORNERX_OFFSET;
+    let startY = cam.Height * UIPlayerInfo.CORNERY_OFFSET;
+    const width = cam.Width * UIPlayerInfo.LIST_WIDTH;
+    const height = cam.Height * UIPlayerInfo.LIST_HEIGHT;
 
     canvas.fillStyle = '#ffffff';
     canvas.globalAlpha = 0.9;
-    canvas.fillRect(cornerX, cornerY, sizeX, sizeY);
+    canvas.fillRect(startX, startY, width, height);
 
     canvas.fillStyle = '#000000';
-    canvas.font = `${fontSize}px roboto`;
-    canvas.textBaseline = 'hanging';
+    canvas.font = '48px roboto';
+    canvas.textBaseline = 'bottom';
+    canvas.textAlign = 'center';
+    canvas.fillText(data, startX + width / 2, startY, width);
+
+    // Template organizer
+    canvas.font = '18px roboto';
+    canvas.textBaseline = 'middle';
+    canvas.textAlign = 'right';
+
+    startY += (cam.Height * UIPlayerInfo.HEIGHT) / 2;
+
+    canvas.fillText('Kills', startX + width * 0.1, startY, width * 0.1);
     canvas.textAlign = 'left';
-    canvas.fillText(data, cornerX, cornerY, sizeX);
+    canvas.fillText('Luchador', startX + width * 0.8, startY, width * 0.2);
+    canvas.fillText('Player', startX + width * 0.15, startY, width * 0.6);
+
+    canvas.lineWidth = 4;
+    canvas.lineCap = 'butt';
+    canvas.strokeStyle = '#000000';
+    startY += (cam.Height * UIPlayerInfo.HEIGHT) / 2;
+    canvas.beginPath();
+    canvas.moveTo(startX, startY);
+    canvas.lineTo(startX + width, startY);
+    canvas.stroke();
   }
 
   public static DrawUIFrame(canvas: CanvasRenderingContext2D, cam: Camera, frame: UIFrame) {
@@ -377,6 +396,25 @@ class Renderer {
         else canvas.fillStyle = '#ae0b03';
         canvas.fillText(notif.death, startX + width, startY, width);
       }
+    } else if (frame.type === UIFrameType.PlayerInfo) {
+      const card = <UIPlayerInfo>(frame);
+
+      canvas.font = '18px roboto';
+      canvas.textBaseline = 'middle';
+      canvas.textAlign = 'right';
+      canvas.fillStyle = '#000000';
+
+      startY += height / 2;
+
+      // Draw kills
+      canvas.fillText(card.getOwner().getKills().toString(), startX + width * 0.1, startY, width * 0.1);
+
+      canvas.textAlign = 'left';
+      canvas.fillText(card.fighter, startX + width * 0.8, startY, width * 0.2);
+
+      // Draw username
+      if (card.isClient) canvas.fillStyle = '#008a4a';
+      canvas.fillText(card.getOwner().getUsername(), startX + width * 0.15, startY, width * 0.6);
     }
   }
 

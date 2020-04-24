@@ -19,9 +19,9 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
 import Renderer from './Render';
-import { FighterType, fighterTypeToString } from '../common/engine/Enums';
+import { FighterType } from '../common/engine/Enums';
 import { PingInfo } from '../common/network/pingpong';
 /* eslint-enable object-curly-newline */
 
@@ -62,7 +62,7 @@ const uiUsernameSelect = new UIUsernameSelect();
 const uiHealthbar = new UIHealthbar();
 const uiKillCam = new UITextBox(0, 0.9, 1, 0.1, false, '');
 const uiDeathNotifs: UIDeathNotification[] = [];
-
+const uiPlayerList: UIPlayerInfo[] = [];
 
 // Particles
 const particles: Particle[] = [];
@@ -72,8 +72,10 @@ MessageBus.subscribe('Effect_NewParticle', (msg) => {
 
 
 // Call when a PlayerConnect request is heard
-function OnPlayerconnect(charID: number, username: string) {
+function OnPlayerConnect(charID: number, username: string) {
   if (charID === player.getCharacterID()) return;
+  // Remove the player from the list if they already exist
+  // - could be new player taking up character ID of old player that left
   for (let i = 0; i < playerConnects.length; i++) {
     if (playerConnects[i].getCharacterID() === charID) {
       playerConnects.splice(i, 1);
@@ -86,6 +88,26 @@ function OnPlayerconnect(charID: number, username: string) {
   newPlayer.assignCharacterID(charID);
 
   playerConnects.push(newPlayer);
+
+  uiPlayerList.push(new UIPlayerInfo(newPlayer));
+}
+// Call when a PlayerDisconnect request is heard
+function OnPlayerDisconnect(charID: number) {
+  let discPlayer = null;
+  for (let i = 0; i < playerConnects.length; i++) {
+    if (playerConnects[i].getCharacterID() === charID) {
+      discPlayer = playerConnects[i];
+      playerConnects.splice(i, 1);
+      break;
+    }
+  }
+
+  for (let i = 0; i < uiPlayerList.length; i++) {
+    if (uiPlayerList[i].getOwner() === discPlayer) {
+      uiPlayerList.splice(i, 1);
+      return;
+    }
+  }
 }
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
@@ -104,8 +126,8 @@ function OnDeath(died: number, killer: number) {
       if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 1;
 
       for (let j = 0; j < playerConnects.length; j++) {
-        if (playerConnects[i].getCharacterID() === world.Fighters[i].getOwnerID()) {
-          playerConnects[i].earnKill();
+        if (playerConnects[j].getCharacterID() === world.Fighters[i].getOwnerID()) {
+          playerConnects[j].earnKill();
           break;
         }
       }
@@ -138,6 +160,9 @@ function OnDeath(died: number, killer: number) {
       false,
     ));
   }
+
+  // Rank player list by kills
+  uiPlayerList.sort(UIPlayerInfo.SORT);
 }
 
 
@@ -273,6 +298,8 @@ MessageBus.subscribe('PickUsername', (name: string) => {
 
   Input.UsernameSelectOpen = false;
   Input.ClassSelectOpen = true;
+
+  uiPlayerList.push(new UIPlayerInfo(player, true)); // Add self to the player list now that they are connected
 });
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   luchador = type;
@@ -455,13 +482,12 @@ function DoFrame(tick: number) {
     }
   }
   if (Input.PlayerListOpen && !Input.GUIMode) {
-    let str = 'Player List\n';
-    for (let i = 0; i < playerConnects.length; i++) {
-      let fighterName = 'Selecting';
-      if (playerConnects[i].getCharacter()) fighterName = fighterTypeToString(playerConnects[i].getCharacter().getCharacter());
-      str += `${playerConnects[i].getCharacterID()}: ${playerConnects[i].getUsername()} - ${fighterName} - ${playerConnects[i].getKills()}\n`;
+    Renderer.DrawPlayerList(canvas, cam, 'Player List');
+    for (let i = 0; i < uiPlayerList.length; i++) {
+      uiPlayerList[i].update();
+      uiPlayerList[i].cornerY = UIPlayerInfo.CORNERY_OFFSET + (i + 1) * UIPlayerInfo.HEIGHT;
+      Renderer.DrawUIFrame(canvas, cam, uiPlayerList[i]);
     }
-    Renderer.DrawPlayerList(canvas, cam, str);
   }
   if (respawnTimer > 0 && respawnTimer < 3) Renderer.DrawUIFrame(canvas, cam, uiKillCam);
 
@@ -520,17 +546,10 @@ function DoFrame(tick: number) {
             OnDeath(msg.characterId, msg.killerId);
             break;
           case TypeEnum.PlayerConnect:
-            // We have to save this in memory elsewhere for when fighters are selected
-            // and finally connect into the world state. Updates are applied later.
-            OnPlayerconnect(msg.ownerId, msg.username);
+            OnPlayerConnect(msg.ownerId, msg.username);
             break;
           case TypeEnum.PlayerDisconnect:
-            for (let i = 0; i < playerConnects.length; i++) {
-              if (playerConnects[i].getCharacterID() === msg.ownerId) {
-                playerConnects.splice(i, 1);
-                break;
-              }
-            }
+            OnPlayerDisconnect(msg.ownerId);
             break;
           default: // None
         }

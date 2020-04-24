@@ -120,14 +120,11 @@ class Clockwork {
     for (let i = 0; i < this.connections.length; i++) {
       // Only sends message if their character exists though (they shouldn't need it if they don't have a character)
       const conn = this.connections[i];
-      const char = conn.getCharacter();
-      if (char && char.HP > 0) {
-        MessageBus.publish(conn.getTopicSend(), {
-          type: TypeEnum.PlayerState,
-          characterID: conn.getCharacterID(),
-          health: char.HP,
-        });
-      }
+      MessageBus.publish(conn.getTopicSend(), {
+        type: TypeEnum.PlayerState,
+        characterID: conn.getCharacterID(),
+        health: conn.getCharacter() ? conn.getCharacter().HP : 0,
+      });
     }
   }
 
@@ -161,6 +158,8 @@ class Clockwork {
       characterID: plr.getCharacterID(),
       health: 0, // No character yet, just say they have 0 HP
     });
+    // Might not be recieved before broadcast is sent out, potentially causing a dual-entry on a client's player list
+    // Can we fire this sooner while still allowing it to be catched by the client?
 
     // Broadcast the username to all clients, they will all receive a message of "player joined the game"
     this.broadcast(<IPlayerConnect>{
