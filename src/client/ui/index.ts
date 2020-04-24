@@ -5,6 +5,7 @@ import UIClassSelect from './ClassSelect';
 import UILuchadorPortrait from './LuchadorPortrait';
 import UIHealthbar from './Healthbar';
 import UIPlayerInfo from './PlayerInfo';
+import UIDeathNotification from './DeathNotification';
 
 export {
   UIFrame,
@@ -14,4 +15,5 @@ export {
   UILuchadorPortrait,
   UIHealthbar,
   UIPlayerInfo,
+  UIDeathNotification,
 };
