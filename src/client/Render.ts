@@ -65,6 +65,17 @@ function MeasureString(canvas: CanvasRenderingContext2D, str: string): number {
 }
 
 
+function GetKillMethod(fighter: FighterType): string {
+  switch (fighter) {
+    case FighterType.Sheep: return ' bulldozed ';
+    case FighterType.Deer: return ' gunned down ';
+    case FighterType.Flamingo: return ' incinerated ';
+    case FighterType.Toad: return ' electrocuted ';
+    default: return ' died';
+  }
+}
+
+
 class Renderer {
   /* eslint-disable no-param-reassign */
   public static DrawScreen(
@@ -351,15 +362,8 @@ class Renderer {
         width -= MeasureString(canvas, notif.death);
       }
 
-      let msg: string;
-      switch (notif.method) {
-        case FighterType.Sheep: msg = ' bulldozed '; break;
-        case FighterType.Deer: msg = ' gunned down '; break;
-        case FighterType.Flamingo: msg = ' incinerated '; break;
-        case FighterType.Toad: msg = ' electrocuted '; break;
-        default: msg = ' died';
-      }
       canvas.fillStyle = '#ffffff';
+      const msg = GetKillMethod(notif.method);
       canvas.fillText(msg, startX + width, startY, width);
       width -= MeasureString(canvas, msg);// + 64; // with two spaces added
 
