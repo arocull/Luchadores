@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import Denque from 'denque';
 import Player from '../common/engine/Player';
-import { Timer } from '../common/engine/time/Time';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
 import World from '../common/engine/World';
@@ -17,6 +16,7 @@ import {
   IPlayerDisconnect,
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
+import { decodeInt64 } from '../common/messaging/serde';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
 
 interface Action {
@@ -183,7 +183,7 @@ class Clockwork {
 
     const action: Action = {
       player: plr,
-      timestamp: Timer.now(),
+      timestamp: decodeInt64(message.timestamp),
       input: message,
     };
 
