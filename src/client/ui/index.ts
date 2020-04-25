@@ -6,6 +6,7 @@ import UILuchadorPortrait from './LuchadorPortrait';
 import UIHealthbar from './Healthbar';
 import UIPlayerInfo from './PlayerInfo';
 import UIDeathNotification from './DeathNotification';
+import UILoadScreen from './LoadScreen';
 
 export {
   UIFrame,
@@ -16,4 +17,5 @@ export {
   UIHealthbar,
   UIPlayerInfo,
   UIDeathNotification,
+  UILoadScreen,
 };

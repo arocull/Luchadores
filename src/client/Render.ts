@@ -321,6 +321,7 @@ class Renderer {
       let offsetX = 0;
       let offsetY = 0;
       if (text.textAlignment === 'center') offsetX = width / 2;
+      else if (text.textAlignment === 'right') offsetX = width;
       if (text.textBase === 'middle') offsetY = height / 2;
 
       canvas.globalAlpha = text.textAlpha;
@@ -436,8 +437,8 @@ class Renderer {
 
   public static DrawFPS(canvas: CanvasRenderingContext2D, cam: Camera, DeltaTime: number) {
     canvas.globalAlpha = 1;
-    canvas.fillStyle = '#000000';
-    canvas.font = '48px roboto';
+    canvas.fillStyle = '#00ffff';
+    canvas.font = '16px roboto';
     canvas.textBaseline = 'top';
     canvas.textAlign = 'left';
 
@@ -445,7 +446,7 @@ class Renderer {
     let str = fps.toString();
     if (str.length === 2) str += '.0';
 
-    canvas.fillText(`${str} FPS`, 0, 0, cam.Width * 0.1);
+    canvas.fillText(`${str} FPS`, 5, 5, cam.Width);
   }
   /* eslint-enable no-param-reassign */
 }
