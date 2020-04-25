@@ -15,7 +15,7 @@ class UILuchadorPortrait extends UIFrame {
     this.renderStyle = this.color;
     this.borderColor = this.color;
 
-    this.restrainAspect = true;
+    this.constrainAspect = true;
 
     this.image = new Image();
     this.image.src = `Portraits/${fighterTypeToString(luchador)}.png`;

@@ -16,7 +16,9 @@ class UIFrame {
   public image: HTMLImageElement = null;
   public imageAlpha: number = 1;
 
-  public restrainAspect: boolean = false; // If true, draws image as a square
+  public constrainAspect: boolean = false; // If true, draws image as a square
+  public constrainAspectCenterX: boolean = true; // If true, will automatically center X position when constrained
+  public constrainAspectCenterY: boolean = true; // If true, will automatically center Y position when constrained
 
   constructor(
     public cornerX: number,

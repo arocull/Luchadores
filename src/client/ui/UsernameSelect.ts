@@ -18,12 +18,12 @@ class UIUsernameSelect {
   constructor() {
     this.frames = [];
 
-    const title = new UITextBox(0, 0, 1, 0.2, false, 'LUCHADORES');
+    const title = new UITextBox(0, 0.01, 1, 0.2, false, 'LUCHADORES');
     title.alpha = 0;
     title.textAlpha = 1;
     title.textFontSize = 128;
-    title.textFont = 'roboto';
-    title.textBase = 'hanging';
+    title.textFont = 'flamenco';
+    title.textBase = 'top';
     this.frames.push(title);
 
     this.name = '';
