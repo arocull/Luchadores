@@ -53,7 +53,7 @@ function encodeWorldState(world: World): IWorldState {
     mapFriction: world.Map.Friction,
     mapId: 0,
     mapWallStrength: world.Map.wallStrength,
-    timestamp: Timer.now(), // TODO: Replace `now`
+    timestamp: Timer.now(),
     fighters: [],
     projectiles: [],
   };

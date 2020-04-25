@@ -168,7 +168,7 @@ class Clockwork {
 
     const action: Action = {
       player: plr,
-      timestamp: Timer.now(), // TODO: Replace `now`
+      timestamp: Timer.now(),
       input: message,
     };
 

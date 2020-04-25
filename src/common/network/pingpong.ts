@@ -104,7 +104,7 @@ export class PingPongHandler {
         const roundTripTimeMilliseconds = receiveMs - sendMs;
         const roundTripOffsetMs = Math.round(roundTripTimeMilliseconds / 2);
         const serverTimestampCorrected = decodeInt64(pong.timestamp) + roundTripOffsetMs;
-        const clockDriftMs = receiveMs - serverTimestampCorrected;
+        const clockDriftMs = serverTimestampCorrected - receiveMs;
         const pingInfo: PingInfo = {
           id: this.pingProvider.id,
           roundTripTimeMilliseconds,

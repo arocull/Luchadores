@@ -22,8 +22,7 @@ import Camera from './Camera';
 import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
-import { Timer } from '../common/engine/time/Time';
-import { PingInfo } from '../common/network/pingpong';
+import Wristwatch from '../common/engine/time/Wristwatch';
 /* eslint-enable object-curly-newline */
 
 // Set up base client things
@@ -261,12 +260,6 @@ function UpdatePlayerState(msg: IPlayerState) {
 
   if (character) character.HP = msg.health;
 }
-// SEE SETUP \/ \/ \/ \/
-
-let networkTimeOffset = 0;
-MessageBus.subscribe('ping-info', (pingInfo: PingInfo) => {
-  networkTimeOffset = Timer.now() - pingInfo.remoteTimestamp;
-});
 
 let LastFrame = 0;
 function DoFrame(tick: number) {
@@ -298,7 +291,7 @@ function DoFrame(tick: number) {
     }
 
     // TODO: Get server time in client-server handshake and use that for time calculations
-    worldDeltaTime = ((Timer.now() - networkTimeOffset) - stateUpdateLastPacketTime) / 1000;
+    worldDeltaTime = (Wristwatch.getSyncedNow() - stateUpdateLastPacketTime) / 1000;
   }
 
   // Use inputs
@@ -433,14 +426,25 @@ function DoFrame(tick: number) {
 
 /* eslint-disable no-console */
 (function setup() {
-  window.requestAnimationFrame(DoFrame);
-
-  new NetworkClient(`ws://${window.location.host}/socket`)
-    .connect()
+  const ws = new NetworkClient(`ws://${window.location.host}/socket`);
+  ws.connect()
     .then((connected) => {
       topics.ClientNetworkFromServer = connected.topicInbound;
       topics.ClientNetworkToServer = connected.topicOutbound;
       console.log('Connected OK!', connected);
+
+      console.log('Synchronizing wristwatches...');
+      return Wristwatch.syncWith(ws.getPingHandler(), 5000);
+    })
+    .then(() => {
+      console.log(
+        'Synchronized! Calculated drift:', Wristwatch.getClockDriftToRemote(),
+        'Synced time:', Wristwatch.getSyncedNow(),
+      );
+      return Promise.resolve();
+    })
+    .then(() => {
+      window.requestAnimationFrame(DoFrame);
 
       MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IEvent) => {
         switch (msg.type) {
