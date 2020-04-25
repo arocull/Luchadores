@@ -19,7 +19,7 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo, UILoadScreen } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 import Wristwatch from '../common/engine/time/Wristwatch';
@@ -32,6 +32,7 @@ const player = new Player('');
 let luchador: FighterType = FighterType.Sheep;
 let character: Fighter = null;
 let respawnTimer = 3;
+let clientConnected: boolean = false;
 
 // Generate World
 const world = new World();
@@ -57,6 +58,8 @@ const fpsCount: number[] = [];
 const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
 cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 
+const uiLoadScreen = new UILoadScreen();
+const connectingText = new UITextBox(0.01, 0.925, 1, 0.05, false, 'Stabilizing connection...');
 const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
 const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
@@ -284,6 +287,9 @@ uiBackdrop.renderStyle = '#000000';
 uiBackdrop.onClick = (() => {
   uiUsernameSelect.deselect();
 });
+connectingText.alpha = 0;
+connectingText.textStyle = '#ffffff';
+connectingText.textAlignment = 'left';
 uiKillCam.alpha = 0;
 uiKillCam.textFont = 'flamenco';
 uiKillCam.textFontSize = 60;
@@ -456,6 +462,7 @@ function DoFrame(tick: number) {
 
   if (Input.GUIMode) {
     Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
+    if (!clientConnected) Renderer.DrawUIFrame(canvas, cam, connectingText);
   } else if ((character && character.HP > 0) || uiHealthbar.collapsing) {
     if (character) uiHealthbar.healthPercentage = character.HP / character.MaxHP;
     uiHealthbar.tick(DeltaTime);
@@ -484,6 +491,7 @@ function DoFrame(tick: number) {
     }
   }
   if (Input.ClassSelectOpen) {
+    if (clientConnected) uiClassSelect.addConfirmButton();
     for (let i = 0; i < uiClassSelect.frames.length; i++) {
       doUIFrameInteraction(uiClassSelect.frames[i]);
       Renderer.DrawUIFrame(canvas, cam, uiClassSelect.frames[i]);
@@ -554,14 +562,28 @@ const preloader = new AssetPreloader([
 /* eslint-disable no-console */
 (function setup() {
   console.log('Preloading assets ...');
-  // TODO: Open loading screen.
+  viewport.width = window.innerWidth;
+  viewport.height = window.innerHeight;
+  cam.Scale(viewport.width, viewport.height);
+  for (let i = 0; i < uiLoadScreen.frames.length; i++) {
+    Renderer.DrawUIFrame(canvas, cam, uiLoadScreen.frames[i]);
+  }
+
   preloader.preload().then(() => {
-    // TODO: Close loading screen.
     console.log('Asset preloading complete.');
+    window.requestAnimationFrame(DoFrame);
   });
   preloader.on('progress', (status) => {
-    // TODO: Tick loading bar.
     console.log(`Preload progress: ${_.round(status.progress * 100, 1)}% ... (${status.file})`);
+
+    viewport.width = window.innerWidth;
+    viewport.height = window.innerHeight;
+    cam.Scale(viewport.width, viewport.height);
+
+    uiLoadScreen.update(status.progress);
+    for (let i = 0; i < uiLoadScreen.frames.length; i++) {
+      Renderer.DrawUIFrame(canvas, cam, uiLoadScreen.frames[i]);
+    }
   });
 
   const ws = new NetworkClient(`ws://${window.location.host}/socket`);
@@ -582,8 +604,7 @@ const preloader = new AssetPreloader([
       return Promise.resolve();
     })
     .then(() => {
-      window.requestAnimationFrame(DoFrame);
-
+      clientConnected = true;
       MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IEvent) => {
         switch (msg.type) {
           case TypeEnum.WorldState:

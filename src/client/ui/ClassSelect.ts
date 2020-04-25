@@ -11,6 +11,9 @@ class UIClassSelect {
   public frames: UIFrame[];
   private selected: FighterType;
 
+  private confirmButton: UITextBox;
+  private confirmButtonInList: boolean = false;
+
   constructor(rows: number, columns: number, displayedLuchadors: number) {
     this.frames = [];
     this.selected = FighterType.Sheep;
@@ -86,21 +89,19 @@ class UIClassSelect {
 
     // Select button
     const button = new UITextBox(
-      UIClassSelect.INNER_WIDTH + UIClassSelect.SIDEBAR_WIDTH * 0.1,
+      UIClassSelect.INNER_WIDTH + UIClassSelect.SIDEBAR_WIDTH * 0.15,
       0.9,
-      UIClassSelect.SIDEBAR_WIDTH * 0.8,
-      0.05,
+      UIClassSelect.SIDEBAR_WIDTH * 0.7,
+      0.075,
       true,
-      'Select',
+      'Please wait...',
     );
-    button.color = '#11dd33';
-    button.colorHover = '#22ee44';
-    button.borderColor = '#22ee44';
-    button.borderColorHover = '#33ff55';
-    button.borderThickness = 0.05;
-    button.onClick = (() => {
-      MessageBus.publish('PickCharacter', this.selected);
-    });
+    button.borderThickness = 0.01;
+    button.color = '#444444';
+    button.colorHover = '#444444';
+    button.borderColor = '#333333';
+    button.borderColorHover = '#333333';
+    this.confirmButton = button;
     this.frames.push(button);
 
     MessageBus.subscribe('UI_ClickLuchador', (clickedLuchador: FighterType) => {
@@ -133,6 +134,21 @@ class UIClassSelect {
     });
 
     MessageBus.publish('UI_ClickLuchador', FighterType.Sheep); // Use sheep defaults
+  }
+
+  public addConfirmButton() {
+    if (!this.confirmButtonInList) {
+      this.confirmButtonInList = true;
+
+      this.confirmButton.color = '#11dd33';
+      this.confirmButton.colorHover = '#22ee44';
+      this.confirmButton.borderColor = '#22ee44';
+      this.confirmButton.borderColorHover = '#33ff55';
+      this.confirmButton.text = 'Select';
+      this.confirmButton.onClick = (() => {
+        MessageBus.publish('PickCharacter', this.selected);
+      });
+    }
   }
 }
 

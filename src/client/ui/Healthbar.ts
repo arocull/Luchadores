@@ -37,15 +37,14 @@ class UIHealthbar {
   private autoscale() {
     this.barBack.width = 0.975 * this.base.width;
     this.barBack.height = 0.9 * this.base.height;
-    this.bar.width = this.barBack.width;
     this.bar.height = this.barBack.height;
 
-    this.barBack.cornerX = this.base.cornerX + (this.base.width - this.bar.width) / 2;
-    this.barBack.cornerY = this.base.cornerY + (this.base.height - this.bar.height) / 2;
+    this.barBack.cornerX = this.base.cornerX + (this.base.width - this.barBack.width) / 2;
+    this.barBack.cornerY = this.base.cornerY + (this.base.height - this.barBack.height) / 2;
     this.bar.cornerX = this.barBack.cornerX;
     this.bar.cornerY = this.barBack.cornerY;
 
-    this.bar.width *= this.displayPerc;
+    this.bar.width = this.barBack.width * this.displayPerc;
   }
   public reset() { // Resets position and scale of healthbar
     this.base.cornerX = UIHealthbar.POSX;
