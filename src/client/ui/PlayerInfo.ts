@@ -10,6 +10,7 @@ class UIPlayerInfo extends UIFrame {
   public static CORNERY_OFFSET = (1 - UIPlayerInfo.LIST_HEIGHT) / 2;
 
   public fighter: string = 'Selecting';
+  public ping: number = 0;
 
   constructor(private owner: Player, public isClient = false) {
     super(UIPlayerInfo.CORNERX_OFFSET, 0, UIPlayerInfo.LIST_WIDTH, UIPlayerInfo.HEIGHT, false);

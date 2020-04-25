@@ -282,6 +282,8 @@ uiBackdrop.onClick = (() => {
   uiUsernameSelect.deselect();
 });
 uiKillCam.alpha = 0;
+uiKillCam.textFont = 'flamenco';
+uiKillCam.textFontSize = 60;
 function doUIFrameInteraction(frame: UIFrame) {
   const hovering = frame.checkMouse(Input.MouseX / viewport.width, Input.MouseY / viewport.height);
   frame.onHover(hovering);
@@ -497,7 +499,7 @@ function DoFrame(tick: number) {
       uiDeathNotifs.splice(i, 1);
       i--;
     } else {
-      uiDeathNotifs[i].cornerY = i * UIDeathNotification.HEIGHT;
+      uiDeathNotifs[i].cornerY = i * UIDeathNotification.HEIGHT + UIDeathNotification.OFFSET;
       Renderer.DrawUIFrame(canvas, cam, uiDeathNotifs[i]);
     }
   }

@@ -64,12 +64,14 @@ class UIClassSelect {
     fighterName.textFontSize = 56;
     fighterName.alpha = 0;
     fighterName.textStyle = '#ffffff';
+    fighterName.textFont = 'flamenco';
     this.frames.push(fighterName);
 
     const flavorText = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.125, UIClassSelect.SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
     flavorText.textFontSize = 16;
     flavorText.alpha = 0;
     flavorText.textStyle = '#dddddd';
+    flavorText.textFont = 'flamenco';
     this.frames.push(flavorText);
 
     const descript = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.16, UIClassSelect.SIDEBAR_WIDTH, 0.045, false, 'Description');
