@@ -35,6 +35,7 @@ const clientConfig = _.defaultsDeep(_.cloneDeep(commonConfig), {
     filename: '[name].js',
     path: path.resolve(__dirname, '../dist/public'),
   },
+  externals: ['perf_hooks'],
   plugins: [
     new webpack.DefinePlugin({
       CANVAS_RENDERER: JSON.stringify(true),

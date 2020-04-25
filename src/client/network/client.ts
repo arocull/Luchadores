@@ -107,6 +107,10 @@ class NetworkClient {
       || this.state === WebSocket.CLOSED;
   }
 
+  getPingHandler() {
+    return this.pingPongHandler;
+  }
+
   /* eslint-disable no-console */
   private onOpen(openEvent: Event) {
     console.log('Opened web socket', openEvent);

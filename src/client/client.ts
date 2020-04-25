@@ -22,7 +22,7 @@ import Camera from './Camera';
 import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
-import { PingInfo } from '../common/network/pingpong';
+import Wristwatch from '../common/engine/time/Wristwatch';
 import AssetPreloader from './AssetPreloader';
 /* eslint-enable object-curly-newline */
 
@@ -334,12 +334,6 @@ function UpdatePlayerState(msg: IPlayerState) {
 
   if (character) character.HP = msg.health;
 }
-// SEE SETUP \/ \/ \/ \/
-
-let networkTimeOffset = 0;
-MessageBus.subscribe('ping-info', (pingInfo: PingInfo) => {
-  networkTimeOffset = Date.now() - pingInfo.remoteTimestamp;
-});
 
 let LastFrame = 0;
 function DoFrame(tick: number) {
@@ -371,7 +365,7 @@ function DoFrame(tick: number) {
     }
 
     // TODO: Get server time in client-server handshake and use that for time calculations
-    worldDeltaTime = ((Date.now() - networkTimeOffset) - stateUpdateLastPacketTime) / 1000; // Do we want to use a more accurate time than this?
+    worldDeltaTime = (Wristwatch.getSyncedNow() - stateUpdateLastPacketTime) / 1000;
   }
 
   // Use inputs
@@ -533,8 +527,6 @@ const preloader = new AssetPreloader([
 
 /* eslint-disable no-console */
 (function setup() {
-  window.requestAnimationFrame(DoFrame);
-
   console.log('Preloading assets ...');
   // TODO: Open loading screen.
   preloader.preload().then(() => {
@@ -546,12 +538,25 @@ const preloader = new AssetPreloader([
     console.log(`Preload progress: ${_.round(status.progress * 100, 1)}% ... (${status.file})`);
   });
 
-  new NetworkClient(`ws://${window.location.host}/socket`)
-    .connect()
+  const ws = new NetworkClient(`ws://${window.location.host}/socket`);
+  ws.connect()
     .then((connected) => {
       topics.ClientNetworkFromServer = connected.topicInbound;
       topics.ClientNetworkToServer = connected.topicOutbound;
       console.log('Connected OK!', connected);
+
+      console.log('Synchronizing wristwatches...');
+      return Wristwatch.syncWith(ws.getPingHandler(), 5000);
+    })
+    .then(() => {
+      console.log(
+        'Synchronized! Calculated drift:', Wristwatch.getClockDriftToRemote(),
+        'Synced time:', Wristwatch.getSyncedNow(),
+      );
+      return Promise.resolve();
+    })
+    .then(() => {
+      window.requestAnimationFrame(DoFrame);
 
       MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IEvent) => {
         switch (msg.type) {
