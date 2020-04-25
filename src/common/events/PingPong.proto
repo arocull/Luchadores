@@ -1,4 +1,5 @@
 message PingPong {
   required int32 type = 1;
   required int64 timestamp = 2;
+  required int32 packetId = 3;
 }

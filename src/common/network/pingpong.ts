@@ -35,6 +35,10 @@ export interface PingInfo {
   clockDriftMilliseconds: number;
 }
 
+function makePacketId() {
+  return Math.floor(Math.random() * 10000000);
+}
+
 export class PingPongHandler {
   private intervalHandle?: NodeJS.Timeout;
   private subscribers: SubscriberContainer;
@@ -48,7 +52,7 @@ export class PingPongHandler {
     this.pingProvider = pingProvider;
     this.subscribers.attach(this.pingProvider.topicReceive, (message: IEvent) => {
       if (message.type === TypeEnum.Ping) {
-        this.pong();
+        this.pong(message);
       }
     });
   }
@@ -86,14 +90,16 @@ export class PingPongHandler {
     }
 
     const sendMs = Date.now();
-    MessageBus.publish(this.pingProvider.topicSend, <IPing>{
+    const ping: IPing = {
       type: TypeEnum.Ping,
       timestamp: Date.now(),
-    });
+      packetId: makePacketId(),
+    };
+    MessageBus.publish(this.pingProvider.topicSend, ping);
 
     return MessageBus.await(this.pingProvider.topicReceive, 2000,
       (message: IEvent) => {
-        if (message.type === TypeEnum.Pong) {
+        if (message.type === TypeEnum.Pong && message.packetId === ping.packetId) {
           return message;
         }
         return null;
@@ -115,11 +121,13 @@ export class PingPongHandler {
   }
 
   /** Replies with a pong */
-  pong() {
-    MessageBus.publish(this.pingProvider.topicSend, <IPong>{
+  pong(ping: IPing) {
+    const pong: IPong = {
       type: TypeEnum.Pong,
       timestamp: Date.now(),
-    });
+      packetId: ping.packetId,
+    };
+    MessageBus.publish(this.pingProvider.topicSend, pong);
   }
 
   publish(pingInfo: PingInfo) {
