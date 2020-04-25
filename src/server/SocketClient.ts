@@ -101,9 +101,7 @@ class SocketClient {
       topicReceive: this.topicServerFromClient,
     });
 
-    // Ping now and begin pinging the client at regular intervals
-    this.pingPongHandler.ping()
-      .then((pingInfo) => this.pingPongHandler.publish(pingInfo));
+    // Begin pinging the client at regular intervals
     this.pingPongHandler.start(1000);
   }
 
