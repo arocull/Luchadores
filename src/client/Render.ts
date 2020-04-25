@@ -243,7 +243,7 @@ class Renderer {
     canvas.fillRect(startX, startY, width, height);
 
     canvas.fillStyle = '#000000';
-    canvas.font = '48px roboto';
+    canvas.font = '48px flamenco';
     canvas.textBaseline = 'bottom';
     canvas.textAlign = 'center';
     canvas.fillText(data, startX + width / 2, startY, width);
@@ -257,8 +257,9 @@ class Renderer {
 
     canvas.fillText('Kills', startX + width * 0.1, startY, width * 0.1);
     canvas.textAlign = 'left';
-    canvas.fillText('Luchador', startX + width * 0.8, startY, width * 0.2);
-    canvas.fillText('Player', startX + width * 0.15, startY, width * 0.6);
+    canvas.fillText('Luchador', startX + width * 0.5, startY, width * 0.2);
+    canvas.fillText('Player', startX + width * 0.15, startY, width * 0.3);
+    canvas.fillText('Ping', startX + width * 0.9, startY, width * 0.1);
 
     canvas.lineWidth = 4;
     canvas.lineCap = 'butt';
@@ -278,12 +279,12 @@ class Renderer {
     let width = frame.width * cam.Width;
     let height = frame.height * cam.Height;
 
-    if (frame.restrainAspect) {
-      const scale = Math.min(frame.width * cam.Width, frame.height * cam.Height);
-      startX += (width - scale) / 2;
-      startY -= (height - scale) / 2;
-      width = scale;
-      height = scale;
+    if (frame.constrainAspect) {
+      const scale = Math.min(cam.Width, cam.Height);
+      if (frame.constrainAspectCenterX) startX += (width - scale * frame.width) / 2;
+      if (frame.constrainAspectCenterY) startY -= (height - scale * frame.height) / 2;
+      width = scale * frame.width;
+      height = scale * frame.height;
     }
 
     if (frame.alpha > 0) {
@@ -370,8 +371,8 @@ class Renderer {
     } else if (frame.type === UIFrameType.DeathNotification) {
       const notif = <UIDeathNotification>(frame);
 
-      canvas.font = '16px roboto';
-      canvas.textBaseline = 'hanging';
+      canvas.font = '18px roboto';
+      canvas.textBaseline = 'top';
       canvas.textAlign = 'right';
 
       if (notif.killer) {
@@ -409,12 +410,16 @@ class Renderer {
       // Draw kills
       canvas.fillText(card.getOwner().getKills().toString(), startX + width * 0.1, startY, width * 0.1);
 
+      // Selected character
       canvas.textAlign = 'left';
-      canvas.fillText(card.fighter, startX + width * 0.8, startY, width * 0.2);
+      canvas.fillText(card.fighter, startX + width * 0.5, startY, width * 0.2);
 
       // Draw username
       if (card.isClient) canvas.fillStyle = '#008a4a';
-      canvas.fillText(card.getOwner().getUsername(), startX + width * 0.15, startY, width * 0.6);
+      canvas.fillText(card.getOwner().getUsername(), startX + width * 0.15, startY, width * 0.3);
+
+      // Ping
+      canvas.fillText(card.ping.toString(), startX + width * 0.9, startY, width * 0.1);
     }
   }
 
@@ -433,7 +438,7 @@ class Renderer {
     canvas.globalAlpha = 1;
     canvas.fillStyle = '#000000';
     canvas.font = '48px roboto';
-    canvas.textBaseline = 'hanging';
+    canvas.textBaseline = 'top';
     canvas.textAlign = 'left';
 
     const fps = Math.floor(10 / DeltaTime) / 10;

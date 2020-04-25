@@ -23,7 +23,7 @@ class UIClassSelect {
 
     const scaleX = UIClassSelect.INNER_WIDTH / (columns + 1);
     const scaleY = 1 / (rows + 1);
-    const scale = scaleY;
+    const scale = Math.max(scaleX, scaleY);
 
     const gapX = (UIClassSelect.INNER_WIDTH - scale * columns) / columns;
     const gapY = (1 - scale * rows) / rows;
@@ -47,32 +47,35 @@ class UIClassSelect {
     }
 
     // Displayed class portrait
+    const portraitScale = scaleY * 1.3;
     const portrait = new UIFrame(
-      UIClassSelect.INNER_WIDTH + (UIClassSelect.SIDEBAR_WIDTH - scaleX) / 2,
+      UIClassSelect.INNER_WIDTH + (UIClassSelect.SIDEBAR_WIDTH - portraitScale) / 2,
       0.05,
-      scaleX,
-      scaleY,
+      portraitScale,
+      portraitScale,
       false,
     );
     portrait.image = new Image();
     portrait.image.src = `Portraits/${fighterTypeToString(this.selected)}.png`;
-    portrait.restrainAspect = true;
+    portrait.constrainAspect = true;
     portrait.borderThickness = 0.1;
     this.frames.push(portrait);
 
-    const fighterName = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.075, UIClassSelect.SIDEBAR_WIDTH, 0.05, false, 'Name');
+    const fighterName = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.075, UIClassSelect.SIDEBAR_WIDTH, 0.05, false, 'Name');
     fighterName.textFontSize = 56;
     fighterName.alpha = 0;
     fighterName.textStyle = '#ffffff';
+    fighterName.textFont = 'flamenco';
     this.frames.push(fighterName);
 
-    const flavorText = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.125, UIClassSelect.SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
+    const flavorText = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.125, UIClassSelect.SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
     flavorText.textFontSize = 16;
     flavorText.alpha = 0;
     flavorText.textStyle = '#dddddd';
+    flavorText.textFont = 'flamenco';
     this.frames.push(flavorText);
 
-    const descript = new UITextBox(UIClassSelect.INNER_WIDTH, scaleY + 0.16, UIClassSelect.SIDEBAR_WIDTH, 0.045, false, 'Description');
+    const descript = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.16, UIClassSelect.SIDEBAR_WIDTH, 0.045, false, 'Description');
     descript.textFontSize = 24;
     descript.alpha = 0;
     descript.textStyle = '#eeeeee';
