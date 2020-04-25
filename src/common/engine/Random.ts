@@ -1,3 +1,5 @@
+import { Timer } from './time/Time';
+
 let seed = 1; // Seed used by random number generator
 let index = 0; // Number of times a random number has been generated on this seed
 
@@ -14,7 +16,7 @@ class Random {
 
   // Creates a random seed based off of current time (randomized as well by previous use if there was any)
   static randomSeed() {
-    this.setSeed(Date.now() + index * seed); // This use of `Date.now()` is fine
+    this.setSeed(Timer.now() + index * seed);
   }
 
   // Returns a random float between 0 and 1
