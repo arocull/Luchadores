@@ -51,13 +51,31 @@ class Clockwork {
         const actionArray = this.actions.toArray();
         this.actions.clear(); // Reset the list of actions for next tick
 
-        // TODO: Do we still care about the ordering of these?
-        // TODO: Should we drop all but the last incoming input per connection?
         const sortedActions = _.sortBy(actionArray, (act) => act.timestamp);
-        sortedActions.forEach((act) => this.world.applyAction(act.player, act.input));
+        const span = sortedActions.length > 0
+          ? _.last(sortedActions).timestamp - _.first(sortedActions).timestamp
+          : 0;
 
-        this.world.tick(this.tickRate / 1000); // In seconds
-        // Logger.debug('Ticked %o actions at %o', actionArray.length, Date.now());
+        // We're going to line the actions in the order they fired, apply each
+        // to the world state, and tick the physics by the amount of time
+        // between each action.
+        let lastTime = 0;
+        _.each(sortedActions, (act) => {
+          // Apply the action onto the world state.
+          this.world.applyAction(act.player, act.input);
+
+          if (lastTime) {
+            // Tick the world by the difference in time between the actions.
+            this.world.tick((lastTime - act.timestamp) / 1000);
+          }
+
+          lastTime = act.timestamp;
+        });
+
+        // Get remainder time
+        const remainder = this.tickRate - span;
+        this.world.tick(remainder / 1000); // Decimal seconds
+        // Logger.debug('Ticked %o actions at %o with remainder %o', actionArray.length, Date.now(), remainder);
 
         // Finally, update world state for all clients
         this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
