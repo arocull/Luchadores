@@ -22,7 +22,7 @@ import Camera from './Camera';
 import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
-import { Timer } from '../common/engine/Time';
+import { Timer } from '../common/engine/time/Time';
 import { PingInfo } from '../common/network/pingpong';
 /* eslint-enable object-curly-newline */
 

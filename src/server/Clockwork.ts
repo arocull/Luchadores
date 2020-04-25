@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import Denque from 'denque';
 import Player from '../common/engine/Player';
-import { Timer } from '../common/engine/Time';
+import { Timer } from '../common/engine/time/Time';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
 import World from '../common/engine/World';

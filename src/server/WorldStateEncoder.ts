@@ -4,7 +4,7 @@ import World from '../common/engine/World';
 import { Fighter, Flamingo } from '../common/engine/fighters/index';
 import { Projectile } from '../common/engine/projectiles/index';
 import { EntityType, FighterType } from '../common/engine/Enums';
-import { Timer } from '../common/engine/Time';
+import { Timer } from '../common/engine/time/Time';
 import { TypeEnum } from '../common/events/index';
 import { IWorldState } from '../common/events/events';
 

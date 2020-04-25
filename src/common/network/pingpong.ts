@@ -1,4 +1,4 @@
-import { Timer } from '../engine/Time';
+import { Timer } from '../engine/time/Time';
 import {
   TypeEnum, IEvent, IPing, IPong,
 } from '../events';
