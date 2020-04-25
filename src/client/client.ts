@@ -13,7 +13,7 @@ import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
-import { Fighter } from '../common/engine/fighters/index';
+import { Fighter, Flamingo } from '../common/engine/fighters/index';
 import Animator from './animation/Animator';
 import Player from '../common/engine/Player';
 import World from '../common/engine/World';
@@ -60,6 +60,7 @@ const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
 const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
 const uiHealthbar = new UIHealthbar();
+const uiSpecialBar = new UIHealthbar();
 const uiKillCam = new UITextBox(0, 0.9, 1, 0.1, false, '');
 const uiDeathNotifs: UIDeathNotification[] = [];
 const uiPlayerList: UIPlayerInfo[] = [];
@@ -136,6 +137,7 @@ function OnDeath(died: number, killer: number) {
 
   if (died === player.getCharacterID()) { // Set camera focus to your killer as a killcam until you respawn
     character = null;
+    uiHealthbar.healthPercentage = 0;
     uiHealthbar.collapse();
     if (killFighter) {
       cam.SetFocus(killFighter);
@@ -284,6 +286,8 @@ uiBackdrop.onClick = (() => {
 uiKillCam.alpha = 0;
 uiKillCam.textFont = 'flamenco';
 uiKillCam.textFontSize = 60;
+uiSpecialBar.POSY -= UIHealthbar.HEIGHT * 1.25;
+uiSpecialBar.reset();
 function doUIFrameInteraction(frame: UIFrame) {
   const hovering = frame.checkMouse(Input.MouseX / viewport.width, Input.MouseY / viewport.height);
   frame.onHover(hovering);
@@ -463,6 +467,23 @@ function DoFrame(tick: number) {
 
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.base);
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.bar);
+    uiHealthbar.checkReset();
+
+    let useSpecialBar = false;
+    if (character && character.getCharacter() === FighterType.Flamingo) {
+      useSpecialBar = true;
+
+      const flam = <Flamingo>(character);
+      uiSpecialBar.healthPercentage = flam.getBreath() / 50;
+      if (flam.isBreathing()) uiSpecialBar.bar.renderStyle = '#929190';
+      else uiSpecialBar.bar.renderStyle = '#e0a524';
+    }
+    if (useSpecialBar) {
+      uiSpecialBar.tick(DeltaTime);
+      Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.base);
+      Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.bar);
+      uiSpecialBar.checkReset();
+    }
   }
   if (Input.ClassSelectOpen) {
     for (let i = 0; i < uiClassSelect.frames.length; i++) {

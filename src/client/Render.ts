@@ -279,12 +279,12 @@ class Renderer {
     let width = frame.width * cam.Width;
     let height = frame.height * cam.Height;
 
-    if (frame.restrainAspect) {
-      const scale = Math.min(frame.width * cam.Width, frame.height * cam.Height);
-      startX += (width - scale) / 2;
-      startY -= (height - scale) / 2;
-      width = scale;
-      height = scale;
+    if (frame.constrainAspect) {
+      const scale = Math.min(cam.Width, cam.Height);
+      if (frame.constrainAspectCenterX) startX += (width - scale * frame.width) / 2;
+      if (frame.constrainAspectCenterY) startY -= (height - scale * frame.height) / 2;
+      width = scale * frame.width;
+      height = scale * frame.height;
     }
 
     if (frame.alpha > 0) {
