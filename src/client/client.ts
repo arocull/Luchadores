@@ -22,7 +22,7 @@ import Camera from './Camera';
 import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
-import { now } from '../common/engine/Time';
+import { Timer } from '../common/engine/Time';
 import { PingInfo } from '../common/network/pingpong';
 /* eslint-enable object-curly-newline */
 
@@ -265,7 +265,7 @@ function UpdatePlayerState(msg: IPlayerState) {
 
 let networkTimeOffset = 0;
 MessageBus.subscribe('ping-info', (pingInfo: PingInfo) => {
-  networkTimeOffset = now() - pingInfo.remoteTimestamp;
+  networkTimeOffset = Timer.now() - pingInfo.remoteTimestamp;
 });
 
 let LastFrame = 0;
@@ -298,7 +298,7 @@ function DoFrame(tick: number) {
     }
 
     // TODO: Get server time in client-server handshake and use that for time calculations
-    worldDeltaTime = ((now() - networkTimeOffset) - stateUpdateLastPacketTime) / 1000;
+    worldDeltaTime = ((Timer.now() - networkTimeOffset) - stateUpdateLastPacketTime) / 1000;
   }
 
   // Use inputs
