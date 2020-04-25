@@ -6,5 +6,4 @@ message PlayerInputState {
     required bool mouseDown = 3;
     required Vector mouseDirection = 4;
     required Vector moveDirection = 5;
-    required int64 timestamp = 6;
 }

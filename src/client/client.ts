@@ -8,7 +8,7 @@ import { MessageBus } from '../common/messaging/bus';
 import { SubscriberContainer } from '../common/messaging/container';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
-import { IPlayerConnect, IPlayerState, IWorldState, IPlayerInputState } from '../common/events/events';
+import { IPlayerConnect, IPlayerState, IWorldState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -249,15 +249,13 @@ function parseMouse(input: PlayerInput) {
 // TODO: TEMPORARY HACK WHILE FIGURING OUT INPUT LOAD ON SERVER
 const inputThrottled = _.throttle(() => {
   // Send input capture up to server
-  const playerInput: IPlayerInputState = {
+  MessageBus.publish(topics.ClientNetworkToServer, {
     type: TypeEnum.PlayerInputState,
     jump: Input.Jump,
     mouseDown: Input.MouseDown,
     mouseDirection: Input.MouseDirection,
     moveDirection: Input.MoveDirection,
-    timestamp: Wristwatch.getSyncedNow(),
-  };
-  MessageBus.publish(topics.ClientNetworkToServer, playerInput);
+  });
 }, 100);
 
 // Hacks to poll and update sampling from player input module.
