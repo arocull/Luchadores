@@ -8,6 +8,7 @@ class UIHealthbar {
   private static MAX_COLLAPSE_TIME: number = 2;
 
   public base: UIFrame;
+  public barBack: UIFrame;
   public bar: UIFrame;
 
   public healthPercentage: number = 1;
@@ -23,6 +24,9 @@ class UIHealthbar {
     this.base = new UIFrame(0, 0, 0, 0, false);
     this.base.renderStyle = '#876b48'; // Should this be an image texture?
 
+    this.barBack = new UIFrame(0, 0, 0, 0, false);
+    this.barBack.renderStyle = '#691209';
+
     this.bar = new UIFrame(0, 0, 0, 0, false);
     this.bar.renderStyle = '#c9241e';
 
@@ -31,11 +35,15 @@ class UIHealthbar {
   }
 
   private autoscale() {
-    this.bar.width = 0.975 * this.base.width;
-    this.bar.height = 0.9 * this.base.height;
+    this.barBack.width = 0.975 * this.base.width;
+    this.barBack.height = 0.9 * this.base.height;
+    this.bar.width = this.barBack.width;
+    this.bar.height = this.barBack.height;
 
-    this.bar.cornerX = this.base.cornerX + (this.base.width - this.bar.width) / 2;
-    this.bar.cornerY = this.base.cornerY + (this.base.height - this.bar.height) / 2;
+    this.barBack.cornerX = this.base.cornerX + (this.base.width - this.bar.width) / 2;
+    this.barBack.cornerY = this.base.cornerY + (this.base.height - this.bar.height) / 2;
+    this.bar.cornerX = this.barBack.cornerX;
+    this.bar.cornerY = this.barBack.cornerY;
 
     this.bar.width *= this.displayPerc;
   }

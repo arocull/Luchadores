@@ -466,6 +466,7 @@ function DoFrame(tick: number) {
     uiHealthbar.tick(DeltaTime);
 
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.base);
+    Renderer.DrawUIFrame(canvas, cam, uiHealthbar.barBack);
     Renderer.DrawUIFrame(canvas, cam, uiHealthbar.bar);
     uiHealthbar.checkReset();
 
@@ -475,12 +476,14 @@ function DoFrame(tick: number) {
 
       const flam = <Flamingo>(character);
       uiSpecialBar.healthPercentage = flam.getBreath() / 50;
+      uiSpecialBar.barBack.renderStyle = '#732303';
       if (flam.isBreathing()) uiSpecialBar.bar.renderStyle = '#929190';
       else uiSpecialBar.bar.renderStyle = '#e0a524';
     }
     if (useSpecialBar) {
       uiSpecialBar.tick(DeltaTime);
       Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.base);
+      Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.barBack);
       Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.bar);
       uiSpecialBar.checkReset();
     }
