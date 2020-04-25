@@ -19,10 +19,11 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 import Wristwatch from '../common/engine/time/Wristwatch';
+import AssetPreloader from './AssetPreloader';
 /* eslint-enable object-curly-newline */
 
 // Set up base client things
@@ -37,7 +38,7 @@ const world = new World();
 world.Map.loadTexture();
 Random.randomSeed();
 
-let playerConnects: IPlayerConnect[] = [];
+const playerConnects: Player[] = [player];
 
 // TODO: HAX - get topics to use from web socket
 const topics = {
@@ -61,7 +62,8 @@ const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
 const uiHealthbar = new UIHealthbar();
 const uiKillCam = new UITextBox(0, 0.9, 1, 0.1, false, '');
-
+const uiDeathNotifs: UIDeathNotification[] = [];
+const uiPlayerList: UIPlayerInfo[] = [];
 
 // Particles
 const particles: Particle[] = [];
@@ -70,28 +72,98 @@ MessageBus.subscribe('Effect_NewParticle', (msg) => {
 });
 
 
+// Call when a PlayerConnect request is heard
+function OnPlayerConnect(charID: number, username: string) {
+  if (charID === player.getCharacterID()) return;
+  // Remove the player from the list if they already exist
+  // - could be new player taking up character ID of old player that left
+  for (let i = 0; i < playerConnects.length; i++) {
+    if (playerConnects[i].getCharacterID() === charID) {
+      playerConnects.splice(i, 1);
+      break;
+    }
+  }
+
+  const newPlayer = new Player(`Player${charID}`); // Just fill string with something interesting so we can easier differentiate
+  newPlayer.setUsername(username);
+  newPlayer.assignCharacterID(charID);
+
+  playerConnects.push(newPlayer);
+
+  uiPlayerList.push(new UIPlayerInfo(newPlayer));
+}
+// Call when a PlayerDisconnect request is heard
+function OnPlayerDisconnect(charID: number) {
+  let discPlayer = null;
+  for (let i = 0; i < playerConnects.length; i++) {
+    if (playerConnects[i].getCharacterID() === charID) {
+      discPlayer = playerConnects[i];
+      playerConnects.splice(i, 1);
+      break;
+    }
+  }
+
+  for (let i = 0; i < uiPlayerList.length; i++) {
+    if (uiPlayerList[i].getOwner() === discPlayer) {
+      uiPlayerList.splice(i, 1);
+      return;
+    }
+  }
+}
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
+  let diedName: string = '';
   let killFighter: Fighter = null;
 
   for (let i = 0; i < world.Fighters.length; i++) {
     if (world.Fighters[i].getOwnerID() === died) {
       PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
+      diedName = world.Fighters[i].DisplayName;
       world.Fighters.splice(i, 1);
       i--;
     } else if (world.Fighters[i].getOwnerID() === killer) {
       world.Fighters[i].EarnKill();
       killFighter = world.Fighters[i];
-      if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 3;
+      if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 1;
+
+      for (let j = 0; j < playerConnects.length; j++) {
+        if (playerConnects[j].getCharacterID() === world.Fighters[i].getOwnerID()) {
+          playerConnects[j].earnKill();
+          break;
+        }
+      }
     }
   }
 
   if (died === player.getCharacterID()) { // Set camera focus to your killer as a killcam until you respawn
     character = null;
     uiHealthbar.collapse();
-    cam.SetFocus(killFighter);
-    uiKillCam.text = `Killed by ${killFighter.DisplayName}`;
+    if (killFighter) {
+      cam.SetFocus(killFighter);
+      uiKillCam.text = `Killed by ${killFighter.DisplayName}`;
+    }
   }
+
+  if (killFighter) {
+    uiDeathNotifs.push(new UIDeathNotification(
+      diedName,
+      killFighter.DisplayName,
+      killFighter.getCharacter(),
+      died === player.getCharacterID(),
+      killer === player.getCharacterID(),
+    ));
+  } else {
+    uiDeathNotifs.push(new UIDeathNotification(
+      diedName,
+      null,
+      FighterType.None,
+      died === player.getCharacterID(),
+      false,
+    ));
+  }
+
+  // Rank player list by kills
+  uiPlayerList.sort(UIPlayerInfo.SORT);
 }
 
 
@@ -227,6 +299,8 @@ MessageBus.subscribe('PickUsername', (name: string) => {
 
   Input.UsernameSelectOpen = false;
   Input.ClassSelectOpen = true;
+
+  uiPlayerList.push(new UIPlayerInfo(player, true)); // Add self to the player list now that they are connected
 });
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   luchador = type;
@@ -330,8 +404,8 @@ function DoFrame(tick: number) {
       // Apply any fighter names who do not have names yet
       if (!a.DisplayName) {
         for (let j = 0; j < playerConnects.length; j++) {
-          if (playerConnects[j] && playerConnects[j].ownerId === a.getOwnerID()) {
-            a.DisplayName = playerConnects[j].username;
+          if (playerConnects[j] && playerConnects[j].getCharacterID() === a.getOwnerID()) {
+            playerConnects[j].assignCharacter(a);
             break;
           }
         }
@@ -402,8 +476,26 @@ function DoFrame(tick: number) {
       Renderer.DrawUIFrame(canvas, cam, uiUsernameSelect.frames[i]);
     }
   }
-  if (Input.PlayerListOpen && !Input.GUIMode) Renderer.DrawPlayerList(canvas, cam, 'PING IS LIKE 60');
+  if (Input.PlayerListOpen && !Input.GUIMode) {
+    Renderer.DrawPlayerList(canvas, cam, 'Player List');
+    for (let i = 0; i < uiPlayerList.length; i++) {
+      uiPlayerList[i].update();
+      uiPlayerList[i].cornerY = UIPlayerInfo.CORNERY_OFFSET + (i + 1) * UIPlayerInfo.HEIGHT;
+      Renderer.DrawUIFrame(canvas, cam, uiPlayerList[i]);
+    }
+  }
   if (respawnTimer > 0 && respawnTimer < 3) Renderer.DrawUIFrame(canvas, cam, uiKillCam);
+
+  for (let i = 0; i < uiDeathNotifs.length; i++) {
+    uiDeathNotifs[i].timeLeft -= DeltaTime;
+    if (uiDeathNotifs[i].timeLeft <= 0) {
+      uiDeathNotifs.splice(i, 1);
+      i--;
+    } else {
+      uiDeathNotifs[i].cornerY = i * UIDeathNotification.HEIGHT;
+      Renderer.DrawUIFrame(canvas, cam, uiDeathNotifs[i]);
+    }
+  }
 
   if (renderSettings.FPScounter) {
     if (fpsCount.length >= 30) fpsCount.shift();
@@ -423,9 +515,29 @@ function DoFrame(tick: number) {
   return window.requestAnimationFrame(DoFrame);
 }
 
+const preloader = new AssetPreloader([
+  'Maps/Arena.jpg',
+  'Maps/Grass.jpg',
+  'Portraits/Deer.png',
+  'Portraits/Flamingo.png',
+  'Portraits/Sheep.png',
+  'Sprites/Flamingo.png',
+  'Sprites/Sheep.png',
+]);
 
 /* eslint-disable no-console */
 (function setup() {
+  console.log('Preloading assets ...');
+  // TODO: Open loading screen.
+  preloader.preload().then(() => {
+    // TODO: Close loading screen.
+    console.log('Asset preloading complete.');
+  });
+  preloader.on('progress', (status) => {
+    // TODO: Tick loading bar.
+    console.log(`Preload progress: ${_.round(status.progress * 100, 1)}% ... (${status.file})`);
+  });
+
   const ws = new NetworkClient(`ws://${window.location.host}/socket`);
   ws.connect()
     .then((connected) => {
@@ -460,11 +572,10 @@ function DoFrame(tick: number) {
             OnDeath(msg.characterId, msg.killerId);
             break;
           case TypeEnum.PlayerConnect:
-            // We have to save this in memory elsewhere for when fighters are selected
-            // and finally connect into the world state. Updates are applied later.
-            playerConnects = playerConnects.filter((x) => x.ownerId !== msg.ownerId); // Remove existing
-            playerConnects.push(msg); // Add new
-            console.log('Player connected', msg, 'Current players', playerConnects);
+            OnPlayerConnect(msg.ownerId, msg.username);
+            break;
+          case TypeEnum.PlayerDisconnect:
+            OnPlayerDisconnect(msg.ownerId);
             break;
           default: // None
         }

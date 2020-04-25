@@ -1,0 +1,4 @@
+message PlayerDisconnect {
+    required int32 type = 1;
+    required int32 ownerId = 2;
+}

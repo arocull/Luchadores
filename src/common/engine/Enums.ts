@@ -9,6 +9,8 @@ enum FighterType {
   Deer = 1,
   Flamingo = 2,
   Toad = 3,
+
+  None = -1,
 }
 
 enum ProjectileType {
@@ -28,6 +30,8 @@ enum ParticleType {
 enum UIFrameType {
   Basic = 0,
   Text = 1,
+  DeathNotification = 2,
+  PlayerInfo = 3,
 }
 
 const FighterTypeStrings = [
