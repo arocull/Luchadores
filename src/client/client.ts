@@ -23,6 +23,7 @@ import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDea
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 import { PingInfo } from '../common/network/pingpong';
+import AssetPreloader from './AssetPreloader';
 /* eslint-enable object-curly-newline */
 
 // Set up base client things
@@ -520,10 +521,30 @@ function DoFrame(tick: number) {
   return window.requestAnimationFrame(DoFrame);
 }
 
+const preloader = new AssetPreloader([
+  'Maps/Arena.jpg',
+  'Maps/Grass.jpg',
+  'Portraits/Deer.png',
+  'Portraits/Flamingo.png',
+  'Portraits/Sheep.png',
+  'Sprites/Flamingo.png',
+  'Sprites/Sheep.png',
+]);
 
 /* eslint-disable no-console */
 (function setup() {
   window.requestAnimationFrame(DoFrame);
+
+  console.log('Preloading assets ...');
+  // TODO: Open loading screen.
+  preloader.preload().then(() => {
+    // TODO: Close loading screen.
+    console.log('Asset preloading complete.');
+  });
+  preloader.on('progress', (status) => {
+    // TODO: Tick loading bar.
+    console.log(`Preload progress: ${_.round(status.progress * 100, 1)}% ... (${status.file})`);
+  });
 
   new NetworkClient(`ws://${window.location.host}/socket`)
     .connect()
