@@ -1,7 +1,11 @@
 /* eslint-disable object-curly-newline */
 import _ from 'lodash';
+import {
+  sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput,
+} from './controls/playerinput';
 import NetworkClient from './network/client';
 import { MessageBus } from '../common/messaging/bus';
+import { SubscriberContainer } from '../common/messaging/container';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
 import { IPlayerConnect, IPlayerState, IWorldState } from '../common/events/events';
@@ -109,13 +113,69 @@ const Input = {
   Jump: false, // Are they strying to jump?
   MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
 };
-// Called when the player's input state changes
-function UpdateInput() { // Attempts to send updated user input to server
-  if (Input.GUIMode || !character) return; // Do not send input updates if the player is fiddling with UI
 
-  Input.MoveDirection.z = 0; // The player should never have any move or aim input that points upward
-  Input.MouseDirection.z = 0;
+let guiInputSubscribers: SubscriberContainer = null;
+function parseKeys(input: PlayerInput) {
+  // Type into username textbox
+  if (Input.UsernameSelectOpen && guiInputSubscribers == null) {
+    // When we enter GUI mode, bind the events
+    guiInputSubscribers = new SubscriberContainer();
+    guiInputSubscribers.attach(InputTopics.keydown, (k: KeyboardButtonInput) => {
+      if (k.key === 'Enter') {
+        uiUsernameSelect.enter();
+      } else if (k.key === 'Backspace') {
+        uiUsernameSelect.backspace();
+      } else if (k.key.length === 1) {
+        uiUsernameSelect.shift(k.shiftKey);
+        uiUsernameSelect.typeCharacter(k.key);
+      }
+    });
+  } else if (!Input.UsernameSelectOpen && guiInputSubscribers != null) {
+    // When we leave GUI mode, unbind the events
+    guiInputSubscribers.detachAll();
+  }
 
+  if (input.Keys.a === true) Input.MoveDirection.x = -1;
+  else if (input.Keys.d === true) Input.MoveDirection.x = 1;
+  else Input.MoveDirection.x = 0;
+
+  if (input.Keys.w === true) Input.MoveDirection.y = 1;
+  else if (input.Keys.s === true) Input.MoveDirection.y = -1;
+  else Input.MoveDirection.y = 0;
+
+  Input.Jump = (input.Keys[' '] === true);
+  Input.PlayerListOpen = (input.Keys.y === true);
+}
+
+function parseMouse(input: PlayerInput) {
+  // Button 0 is left click
+  Input.MouseDown = (input.MouseButtons[0] === true);
+
+  if (Input.GUIMode) {
+    Input.MouseX = input.MouseCoordinates.x;
+    Input.MouseY = input.MouseCoordinates.y;
+  } else if (character && character.isRanged() && Input.MouseDown) {
+    // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
+    const dir = Vector.UnitVectorXY(
+      Vector.Subtract(
+        cam.PositionOffset(character.Position),
+        input.MouseCoordinates,
+      ),
+    );
+    dir.x *= -1;
+    Input.MouseDirection = dir;
+  } else {
+    Input.MouseDirection = Vector.UnitVectorFromXYZ(
+      input.MouseCoordinates.x - (viewport.width / 2),
+      (viewport.height / 2) - input.MouseCoordinates.y,
+      0,
+    );
+  }
+}
+
+// TODO: TEMPORARY HACK WHILE FIGURING OUT INPUT LOAD ON SERVER
+const inputThrottled = _.throttle(() => {
+  // Send input capture up to server
   MessageBus.publish(topics.ClientNetworkToServer, {
     type: TypeEnum.PlayerInputState,
     jump: Input.Jump,
@@ -123,76 +183,27 @@ function UpdateInput() { // Attempts to send updated user input to server
     mouseDirection: Input.MouseDirection,
     moveDirection: Input.MoveDirection,
   });
-}
-document.addEventListener('keydown', (event) => {
-  const old = Vector.Clone(Input.MoveDirection);
-  const oldJ = Input.Jump;
-
-  if (Input.UsernameSelectOpen) { // Type into username textbox
-    if (event.key.length === 1) uiUsernameSelect.typeCharacter(event.key);
-    else if (event.key === 'Backspace') uiUsernameSelect.backspace();
-    else if (event.key === 'Enter') uiUsernameSelect.enter();
-  }
-  if (event.shiftKey) {
-    uiUsernameSelect.shift(true);
-  }
-
-  if (event.key === 'a') Input.MoveDirection.x = -1;
-  else if (event.key === 'd') Input.MoveDirection.x = 1;
-  else if (event.key === 'w') Input.MoveDirection.y = 1;
-  else if (event.key === 's') Input.MoveDirection.y = -1;
-  else if (event.key === ' ') Input.Jump = true;
-  else if (event.key === 'y') Input.PlayerListOpen = true;
-
-  if (!Input.MoveDirection.equals(old) || oldJ !== Input.Jump) UpdateInput();
-});
-document.addEventListener('keyup', (event) => {
-  const old = Vector.Clone(Input.MoveDirection);
-  const oldJ = Input.Jump;
-
-  if (event.shiftKey) {
-    uiUsernameSelect.shift(false);
-  }
-
-  if (event.key === 'a' || event.key === 'd') Input.MoveDirection.x = 0;
-  else if (event.key === 'w' || event.key === 's') Input.MoveDirection.y = 0;
-  else if (event.key === ' ') Input.Jump = false;
-  else if (event.key === 'y') Input.PlayerListOpen = false;
-
-  if (!Input.MoveDirection.equals(old) || oldJ !== Input.Jump) UpdateInput();
-});
-document.addEventListener('mousedown', () => {
-  Input.MouseDown = true;
-  UpdateInput();
-});
-document.addEventListener('mouseup', () => {
-  Input.MouseDown = false;
-  UpdateInput();
-});
-
-const throttledMouseUpdate = _.throttle((event) => {
-  const dir = Vector.UnitVectorXY(Vector.Subtract(cam.PositionOffset(character.Position), new Vector(event.clientX, event.clientY, 0)));
-  dir.x *= -1;
-
-  Input.MouseDirection = dir;
-  UpdateInput(); // We only care to send aim updates if this is a ranged fighter
 }, 100);
 
-document.addEventListener('mousemove', (event) => {
-  if (Input.GUIMode) {
-    Input.MouseX = event.clientX;
-    Input.MouseY = event.clientY;
+// Hacks to poll and update sampling from player input module.
+// Should be refactored into something better.
+function ScrapeInput() {
+  const input = sampleInputs();
+  parseKeys(input);
+  parseMouse(input);
 
-    // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
-  } else if (character && character.isRanged() && Input.MouseDown) {
-    // Throttled the update so we don't strain the server.
-    // This is matched locally so there won't be conflicts with the server's physics.
-    throttledMouseUpdate(event);
-  } else {
-    Input.MouseDirection = Vector.UnitVectorFromXYZ(event.clientX - (viewport.width / 2), (viewport.height / 2) - event.clientY, 0);
+  if (Input.GUIMode || !character) {
+    return; // Do not send input updates if the player is fiddling with UI
   }
-});
 
+  // The player should never have any move or aim input that points upward
+  // TODO: Is this still needed?
+  Input.MoveDirection.z = 0;
+  Input.MouseDirection.z = 0;
+
+  // Send input capture up to server
+  inputThrottled();
+}
 
 // UI Management
 uiBackdrop.alpha = 0.25;
@@ -263,6 +274,9 @@ function DoFrame(tick: number) {
   const DeltaTime = (tick / 1000) - LastFrame;
   let worldDeltaTime = DeltaTime;
   LastFrame = tick / 1000;
+
+  // Capture inputs (updates `Input` global)
+  ScrapeInput();
 
   Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen);
 

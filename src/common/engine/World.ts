@@ -33,7 +33,7 @@ class World {
   private kills: IPlayerDied[];
 
   constructor() {
-    this.Map = new Map(50, 50, 10, 'Maps/Arena.png');
+    this.Map = new Map(40, 40, 10, 'Maps/Grass.png');
 
     this.Fighters = [];
     this.Bullets = [];

@@ -76,6 +76,8 @@ class Renderer {
     particles: Particle[],
   ) {
     canvas.resetTransform();
+    canvas.fillStyle = '#003001';
+    canvas.fillRect(0, 0, camera.Width, camera.Height);
 
     // Username font settings
     canvas.font = '18px roboto';
@@ -86,9 +88,20 @@ class Renderer {
     const offsetY = camera.Height / 2;
     const zoom = camera.Zoom;
 
+    const mapWidth = map.Width * zoom;
+    const mapHeight = map.Height * zoom;
+
     // Draw arena boundaries
     const corners = GetArenaBounds(camera, map, fighters);
-    canvas.drawImage(map.Texture, 0, 0, 2048, 2048, corners[0].x, corners[0].y - map.Height * zoom, map.Width * zoom, map.Height * zoom);
+    canvas.drawImage(
+      map.Texture,
+      0, 0,
+      3076, 3076,
+      corners[0].x - mapWidth / 4,
+      corners[0].y - mapHeight * (5 / 4),
+      mapWidth * 1.5,
+      mapHeight * 1.5,
+    );
     canvas.strokeStyle = '#ff0000';
     canvas.globalAlpha = 1;
     canvas.lineWidth = zoom * 0.1;
