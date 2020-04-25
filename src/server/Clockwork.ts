@@ -29,6 +29,7 @@ class Clockwork {
   private connections: Player[] = [];
   private world: World;
   private running: boolean = false;
+  private tickRate: number;
   private actions: Denque<Action>;
   private loop: NodeJS.Timeout;
   private subscribers: SubscriberContainer;
@@ -39,30 +40,19 @@ class Clockwork {
 
     this.actions = new Denque<Action>();
     this.subscribers = new SubscriberContainer();
+    this.tickRate = 1000 / 20; // Number of milliseconds per tick (tick rate = 20 per second)
   }
 
   tick(delta: number) {
     this.loop = null;
 
     if (this.running) {
-      // TODO: Could just be a reduce function for worst ping in the future
-      const pings: number[] = _.map(this.connections, (conn) => conn.getPing());
-
-      // Worst of *average* pings! This way we even the playing field so the
-      // player with fiber doesn't whoop on the guy with dialup.
-      // Math.max prevents ping rounding error from ever being negative.
-      // Defaults using || 20.
-      const worstPing = Math.max(0, _.max(pings)) || 20;
-      Logger.silly('Worst ping: %j, %o', pings, worstPing);
-
       if (delta > 0) {
         const actionArray = this.actions.toArray();
         this.actions.clear(); // Reset the list of actions for next tick
 
         const sortedActions = _.sortBy(actionArray, (act) => act.timestamp);
-        const span = sortedActions.length > 0
-          ? _.last(sortedActions).timestamp - _.first(sortedActions).timestamp
-          : 0;
+        let tickTimeRemaining = this.tickRate;
 
         // We're going to line the actions in the order they fired, apply each
         // to the world state, and tick the physics by the amount of time
@@ -74,15 +64,22 @@ class Clockwork {
 
           if (lastTime) {
             // Tick the world by the difference in time between the actions.
-            this.world.tick((lastTime - act.timestamp) / 1000);
+            const thisTickTimeMillis = act.timestamp - lastTime;
+            tickTimeRemaining -= thisTickTimeMillis;
+            if (thisTickTimeMillis > 0) {
+              this.world.tick(thisTickTimeMillis / 1000);
+            }
           }
 
           lastTime = act.timestamp;
         });
 
         // Get remainder time
-        const remainder = worstPing - span;
-        this.world.tick(remainder / 1000); // Decimal seconds
+        const remainder = Math.max(0, tickTimeRemaining);
+        if (remainder > 0) {
+          this.world.tick(remainder / 1000); // Decimal seconds
+        }
+        // Logger.debug('Ticked %o actions at %o with remainder %o', actionArray.length, Timer.now(), remainder);
 
         // Finally, update world state for all clients
         this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
@@ -105,7 +102,7 @@ class Clockwork {
 
       // Kick off the interval.
       // Keep the local context by using an arrow function.
-      this.loop = setTimeout(() => this.tick(worstPing), worstPing);
+      this.loop = setTimeout(() => this.tick(this.tickRate), this.tickRate);
     }
   }
 
