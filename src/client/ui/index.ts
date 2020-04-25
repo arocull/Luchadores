@@ -4,6 +4,7 @@ import UIUsernameSelect from './UsernameSelect';
 import UIClassSelect from './ClassSelect';
 import UILuchadorPortrait from './LuchadorPortrait';
 import UIHealthbar from './Healthbar';
+import UIPlayerInfo from './PlayerInfo';
 import UIDeathNotification from './DeathNotification';
 
 export {
@@ -13,5 +14,6 @@ export {
   UIClassSelect,
   UILuchadorPortrait,
   UIHealthbar,
+  UIPlayerInfo,
   UIDeathNotification,
 };

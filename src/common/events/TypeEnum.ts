@@ -15,6 +15,7 @@ enum TypeEnum {
   PlayerInputState = 302,
   PlayerDied = 303,
   PlayerState = 304,
+  PlayerDisconnect = 305,
 
   WorldState = 400,
 };

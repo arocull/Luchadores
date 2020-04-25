@@ -31,6 +31,7 @@ enum UIFrameType {
   Basic = 0,
   Text = 1,
   DeathNotification = 2,
+  PlayerInfo = 3,
 }
 
 const FighterTypeStrings = [
