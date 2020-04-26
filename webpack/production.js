@@ -11,11 +11,6 @@ const commonConfig = {
     maxEntrypointSize: 900000,
     maxAssetSize: 900000,
   },
-  optimization: {
-    splitChunks: {
-      chunks: 'all',
-    },
-  },
 };
 
 const clientConfig = webpackMerge(development[0], _.defaultsDeep(_.cloneDeep(commonConfig), {
@@ -23,7 +18,12 @@ const clientConfig = webpackMerge(development[0], _.defaultsDeep(_.cloneDeep(com
 }));
 
 const serverConfig = webpackMerge(development[1], _.defaultsDeep(_.cloneDeep(commonConfig), {
-
+  optimization: {
+    // This optimization breaks initialization on client side.
+    splitChunks: {
+      chunks: 'all',
+    },
+  },
 }));
 
 module.exports = [clientConfig, serverConfig];
