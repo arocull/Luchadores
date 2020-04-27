@@ -55,7 +55,7 @@ const renderSettings = new RenderSettings(3, 5, true);
 renderSettings.FPScounter = true;
 const fpsCount: number[] = [];
 
-const cam = new Camera(viewport.width, viewport.height, 18, 12, renderSettings);
+const cam = new Camera(viewport.width, viewport.height, 18, 14, renderSettings);
 cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 
 const uiLoadScreen = new UILoadScreen();
