@@ -156,17 +156,25 @@ class World {
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
       // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
-      if (obj.Position.x < 0) accel.x += this.Map.wallStrength * Math.abs(obj.Position.x);
-      else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.wallStrength * (obj.Position.x - this.Map.Width);
+      if (!obj.riding) {
+        if (obj.Position.x < 0) accel.x += this.Map.wallStrength * Math.abs(obj.Position.x);
+        else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.wallStrength * (obj.Position.x - this.Map.Width);
 
-      if (obj.Position.y < 0) accel.y += this.Map.wallStrength * Math.abs(obj.Position.y);
-      else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.wallStrength * (obj.Position.y - this.Map.Height);
+        if (obj.Position.y < 0) accel.y += this.Map.wallStrength * Math.abs(obj.Position.y);
+        else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.wallStrength * (obj.Position.y - this.Map.Height);
+      }
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
-      if (obj.Position.z <= 0) {
+      if (obj.Position.z <= 0 || obj.riding) {
         const leveled = new Vector(obj.Velocity.x, obj.Velocity.y, 0);
-        const frict = Vector.Multiply(Vector.UnitVector(leveled), -this.Map.Friction).clamp(0, obj.Velocity.length() * 3);
-        accel = Vector.Add(accel, frict);
+        accel = Vector.Add(accel, Vector.Multiply(Vector.UnitVector(leveled), -this.Map.Friction).clamp(0, obj.Velocity.length() * 3));
+      }
+
+      // If this character is riding another fighter, they should inherit its acceleration and max momentum as well
+      // Should allow for smooth movement while ontop of them
+      // Could potentially lead to a bug where one gains lots of momentum by landing ontop of someone while at terminal velocity?
+      if (obj.riding) {
+        obj.rodeThisTick = obj.riding;
       }
 
 
@@ -182,6 +190,7 @@ class World {
         deltaX = Vector.Multiply(Vector.UnitVector(deltaX), maxSpeed * DeltaTime);
       }
 
+      obj.lastPosition = obj.Position;
       obj.Position = Vector.Add(obj.Position, deltaX);
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
 
@@ -196,6 +205,24 @@ class World {
       if (obj.Position.z < 0) {
         obj.Position.z = 0;
         obj.Velocity.z = 0;
+        obj.Land();
+      }
+
+      obj.riding = null; // Clear ridership for current frame--if they sink into whoever they're riding, they'll collide and this will be reset
+    }
+
+    // Apply rider position offsets
+    for (let i = 0; i < this.Fighters.length; i++) {
+      if (this.Fighters[i].rodeThisTick) {
+        const a = this.Fighters[i];
+        a.Position = Vector.Add(a.Position, Vector.Subtract(a.rodeThisTick.Position, a.rodeThisTick.lastPosition));
+
+        if (a.dismountRider || a.rodeThisTick.dismountRider) {
+          a.Velocity = Vector.Add(a.Velocity, a.rodeThisTick.Velocity);
+          a.dismountRider = false;
+          a.rodeThisTick.dismountRider = false;
+          a.rodeThisTick = null;
+        }
       }
     }
 
@@ -225,30 +252,42 @@ class World {
             || (b.Position.z <= a.Position.z + a.Height && b.Position.z >= a.Position.z)
           )
         ) { // If they are within collision range...
-          const moment1 = a.Velocity.length() * a.Mass; // Momentum of fighter A
-          const moment2 = b.Velocity.length() * b.Mass; // Momentum of fighter B
+          if (!(a.rodeThisTick === b || b.rodeThisTick === a)) { // If they are not riding each other, treat it like a standard collision
+            let moment1 = a.Velocity.length() * a.Mass; // Momentum of fighter A
+            let moment2 = b.Velocity.length() * b.Mass; // Momentum of fighter B
 
-          a.CollideWithFighter(b, moment1); // Trigger collision events
-          b.CollideWithFighter(a, moment2);
+            // Apply ridership momentum additions
+            if (a.rodeThisTick) moment1 += a.rodeThisTick.Velocity.length() * a.Mass;
+            if (b.rodeThisTick) moment2 += b.rodeThisTick.Velocity.length() * b.Mass;
 
-          // Momentum Transfer--should we swap momentums or sum them (essentially, what collision do we want)
-          const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / a.Mass);
-          b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / b.Mass);
-          a.Velocity = aVelo;
+            a.CollideWithFighter(b, moment1); // Trigger collision events
+            b.CollideWithFighter(a, moment2);
+
+            // Momentum Transfer--should we swap momentums or sum them (essentially, what collision do we want)
+            const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / a.Mass);
+            b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / b.Mass);
+            a.Velocity = aVelo;
+          }
 
           // Slight bounceback on air collisions used to prevent characters from getting stuck in eachother
           if (a.Position.z > b.Position.z + b.Height / 2) { // A landed on B
-            const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
+            /* const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
             a.Velocity = Vector.Subtract(a.Velocity, Vector.Multiply(separate, 150 / a.Mass));
-            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / a.Mass));
+            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / b.Mass)); */
+
             a.Position.z = b.Position.z + b.Height;
+            a.Velocity.z = 0;
             a.JustLanded = true; // Allows jump
+            a.riding = b;
           } else if (b.Position.z > a.Position.z + a.Height / 2) { // B landed on A
-            const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
+            /* const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
             a.Velocity = Vector.Subtract(a.Velocity, Vector.Multiply(separate, 150 / a.Mass));
-            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / a.Mass));
+            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / b.Mass)); */
+
             b.Position.z = a.Position.z + a.Height;
+            b.Velocity.z = 0;
             b.JustLanded = true; // Allows jumping
+            b.riding = a;
           } else { // Otherwise just force them apart
             const separate = Vector.UnitVectorXY(Vector.Subtract(b.Position, a.Position));
             a.Position = Vector.Subtract(a.Position, Vector.Multiply(separate, (rad - separation) / 2));
