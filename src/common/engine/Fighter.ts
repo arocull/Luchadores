@@ -149,7 +149,6 @@ class Fighter extends Entity {
   // Called when the fighter has just landed after spending time in the air, can be overriden for special functionality
   public Land() {
     this.JustLanded = true;
-    this.dismountRider = false;
   }
 
   // Sets aim direction of fighter

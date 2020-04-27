@@ -219,11 +219,10 @@ class World {
 
         if (a.dismountRider || a.rodeThisTick.dismountRider) {
           a.Velocity = Vector.Add(a.Velocity, a.rodeThisTick.Velocity);
-          a.dismountRider = false;
-          a.rodeThisTick.dismountRider = false;
           a.rodeThisTick = null;
         }
       }
+      // Note: cannot debounce dismount variable here in case this fighter is being rode and they are trying to buck off rider
     }
 
     // Tick bullets
@@ -239,6 +238,7 @@ class World {
     //      - Note: This is only an issue if DeltaTime and Velocity are too great
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
+      a.dismountRider = false; // Reset dismount
 
       // Fighter collisions
       for (let j = i + 1; j < this.Fighters.length; j++) { // If the entity was already iterated through by main loop, should not need to do it again
