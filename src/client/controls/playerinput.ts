@@ -42,6 +42,12 @@ const Input: PlayerInput = {
 };
 
 document.addEventListener('keydown', (event) => {
+  if (event.key === 'Backspace') {
+    // For example, don't accidentally go backwards
+    // in browser history when typing in username.
+    event.preventDefault();
+  }
+
   Input.Keys[event.key] = true;
 
   const output: KeyboardButtonInput = {
