@@ -72,7 +72,8 @@ export class PingPongHandler {
     }
     this.intervalHandle = setInterval(() => {
       this.ping()
-        .then((pingInfo) => this.publish(pingInfo));
+        .then((pingInfo) => this.publish(pingInfo))
+        .catch((err) => console.error('Ping interval error:', err));
     }, intervalMs);
   }
 

@@ -4,7 +4,7 @@ import {
   sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput,
 } from './controls/playerinput';
 import NetworkClient from './network/client';
-import { MessageBus } from '../common/messaging/bus';
+import { MessageBus, Topics as BusTopics } from '../common/messaging/bus';
 import { SubscriberContainer } from '../common/messaging/container';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
@@ -462,7 +462,6 @@ function DoFrame(tick: number) {
 
   if (Input.GUIMode) {
     Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
-    if (!clientConnected) Renderer.DrawUIFrame(canvas, cam, connectingText);
   } else if ((character && character.HP > 0) || uiHealthbar.collapsing) {
     if (character) uiHealthbar.healthPercentage = character.HP / character.MaxHP;
     uiHealthbar.tick(DeltaTime);
@@ -544,6 +543,11 @@ function DoFrame(tick: number) {
     Renderer.DrawFPS(canvas, cam, avgDT);
   }
 
+  // Draw connection status last so it goes on top
+  if (!clientConnected) {
+    Renderer.DrawUIFrame(canvas, cam, connectingText);
+  }
+
   Input.MouseDownLastFrame = Input.MouseDown;
 
   return window.requestAnimationFrame(DoFrame);
@@ -594,7 +598,7 @@ const preloader = new AssetPreloader([
       console.log('Connected OK!', connected);
 
       console.log('Synchronizing wristwatches...');
-      return Wristwatch.syncWith(ws.getPingHandler(), 5000);
+      return Wristwatch.syncWith(ws.getPingHandler());
     })
     .then(() => {
       console.log(
@@ -605,6 +609,13 @@ const preloader = new AssetPreloader([
     })
     .then(() => {
       clientConnected = true;
+      MessageBus.subscribe(BusTopics.Connections, (msg: IEvent) => {
+        if (msg.type === TypeEnum.ClientDisconnected) {
+          clientConnected = false;
+          connectingText.text = 'Connection lost. Let the tears flow 😭 (and reload the game)';
+        }
+      });
+
       MessageBus.subscribe(topics.ClientNetworkFromServer, (msg: IEvent) => {
         switch (msg.type) {
           case TypeEnum.WorldState:
@@ -628,7 +639,10 @@ const preloader = new AssetPreloader([
         }
       });
     })
-    .catch((err) => console.error('Failed to connect!', err))
+    .catch((err) => {
+      console.error('Failed to connect!', err);
+      connectingText.text = 'Connection failed 😭';
+    })
     .finally(() => console.log('... and finally!'));
 }());
 /* eslint-enable no-console */
