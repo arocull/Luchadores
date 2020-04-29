@@ -34,6 +34,11 @@ class Fighter extends Entity {
   public JustHitMomentum: number;
   public JustLanded: boolean;
 
+  public lastPosition: Vector;
+  public riding: Fighter;
+  public rodeThisTick: Fighter;
+  public dismountRider: boolean;
+
   protected ranged: boolean;
   protected AimDirection: Vector;
   public Firing: boolean;
@@ -66,6 +71,10 @@ class Fighter extends Entity {
 
     this.JustHitPosition = new Vector(0, 0, 0);
     this.JustHitMomentum = 0;
+
+    this.riding = null;
+    this.rodeThisTick = null;
+    this.dismountRider = false;
 
     this.ranged = true;
     this.AimDirection = new Vector(1, 0, 0);
@@ -126,7 +135,10 @@ class Fighter extends Entity {
 
   // Jump if this character is currently on the ground
   public Jump() {
-    if (this.Position.z <= 0 || this.JustLanded) this.Velocity.z += this.JumpVelocity;
+    if (this.Position.z <= 0 || this.JustLanded) {
+      this.Velocity.z += this.JumpVelocity;
+      this.dismountRider = true;
+    }
   }
 
   // Sets the fighter's acceleration in the given vector
@@ -151,6 +163,7 @@ class Fighter extends Entity {
   public tickCooldowns(DeltaTime: number) {
     // Reset states
     this.JustLanded = false;
+    this.rodeThisTick = null;
     this.JustHitMomentum = 0;
     this.BulletShock = 0;
 
