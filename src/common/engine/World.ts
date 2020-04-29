@@ -271,19 +271,11 @@ class World {
 
           // Slight bounceback on air collisions used to prevent characters from getting stuck in eachother
           if (a.Position.z > b.Position.z + b.Height / 2) { // A landed on B
-            /* const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
-            a.Velocity = Vector.Subtract(a.Velocity, Vector.Multiply(separate, 150 / a.Mass));
-            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / b.Mass)); */
-
             a.Position.z = b.Position.z + b.Height;
             a.Velocity.z = 0;
             a.JustLanded = true; // Allows jump
             a.riding = b;
           } else if (b.Position.z > a.Position.z + a.Height / 2) { // B landed on A
-            /* const separate = Vector.UnitVector(Vector.Subtract(b.Position, a.Position));
-            a.Velocity = Vector.Subtract(a.Velocity, Vector.Multiply(separate, 150 / a.Mass));
-            b.Velocity = Vector.Add(b.Velocity, Vector.Multiply(separate, 150 / b.Mass)); */
-
             b.Position.z = a.Position.z + a.Height;
             b.Velocity.z = 0;
             b.JustLanded = true; // Allows jumping
