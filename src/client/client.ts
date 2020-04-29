@@ -594,7 +594,7 @@ const preloader = new AssetPreloader([
       console.log('Connected OK!', connected);
 
       console.log('Synchronizing wristwatches...');
-      return Wristwatch.syncWith(ws.getPingHandler(), 5000);
+      return Wristwatch.syncWith(ws.getPingHandler());
     })
     .then(() => {
       console.log(

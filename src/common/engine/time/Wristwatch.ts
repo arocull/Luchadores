@@ -1,6 +1,10 @@
 import { Timer } from './Time';
 import { PingPongHandler, PingInfo } from '../../network/pingpong';
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 class Wristwatch {
   /**
    * The number of milliseconds to add to the local clock to correct time.
@@ -37,24 +41,44 @@ class Wristwatch {
   /**
    * Synchronize this time source with a pingable remote source.
    */
-  async syncWith(pingPongHandler: PingPongHandler, targetSyncMillis: number): Promise<void> {
-    const t = new Timer();
+  async syncWith(pingPongHandler: PingPongHandler): Promise<void> {
     const pingInfos: PingInfo[] = [];
-    while (t.duration() < targetSyncMillis) {
-      console.log('Awaiting ping...');
-      const info = await pingPongHandler.ping(); // eslint-disable-line no-await-in-loop
-      console.log('Got ping:', info, 'Duration:', t.duration());
-      pingInfos.push(info);
+    const failures: Error[] = [];
+    let sleepTime = 100;
+    while (pingInfos.length < 20) {
+      try {
+        console.log('Awaiting ping...');
+        const info = await pingPongHandler.ping(); // eslint-disable-line no-await-in-loop
+        console.log('Got ping:', info, 'Count:', pingInfos.length);
+        pingInfos.push(info);
+      } catch (err) {
+        console.error('Error during wristwatch sync:', err);
+        failures.push(err);
+        if (failures.length > 3) {
+          throw err;
+        }
+        await sleep(sleepTime); // eslint-disable-line no-await-in-loop
+        sleepTime *= 2; // Back off on next attempt
+      }
     }
     if (pingInfos.length <= 0) {
       throw new Error('No samples were collected - average clock drift calculation impossible!');
     }
 
+    // TODO: I think this could be better still. Removing outliers, trying to get more consistent
     const clockDrifts = pingInfos.map((x) => x.clockDriftMilliseconds);
-    console.log('Averaging clock samples: ', clockDrifts);
+    console.log('Finding best of clock samples: ', clockDrifts);
+    clockDrifts.sort((a, b) => a - b);
     const avgDrift = Math.round(clockDrifts.reduce((acc, x) => acc + x, 0) / clockDrifts.length);
-    console.log('Averaged to ', avgDrift);
-    this.clockDriftToRemote = avgDrift;
+    const medianDrift = clockDrifts[Math.floor(clockDrifts.length / 2)];
+    const min = clockDrifts[0];
+    const max = clockDrifts[clockDrifts.length - 1];
+    console.log('Average:', avgDrift,
+      'Median:', medianDrift,
+      'Min:', min,
+      'Max:', max,
+      'Spread:', max - min);
+    this.clockDriftToRemote = medianDrift;
   }
 }
 
