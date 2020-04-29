@@ -47,9 +47,7 @@ class Wristwatch {
     let sleepTime = 100;
     while (pingInfos.length < 20) {
       try {
-        console.log('Awaiting ping...');
         const info = await pingPongHandler.ping(); // eslint-disable-line no-await-in-loop
-        console.log('Got ping:', info, 'Count:', pingInfos.length);
         pingInfos.push(info);
       } catch (err) {
         console.error('Error during wristwatch sync:', err);
@@ -66,6 +64,7 @@ class Wristwatch {
     }
 
     // TODO: I think this could be better still. Removing outliers, trying to get more consistent
+    console.log('Synchronizing with collection of pings:', pingInfos);
     const clockDrifts = pingInfos.map((x) => x.clockDriftMilliseconds);
     console.log('Finding best of clock samples: ', clockDrifts);
     clockDrifts.sort((a, b) => a - b);

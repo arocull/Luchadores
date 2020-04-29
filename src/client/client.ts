@@ -462,7 +462,9 @@ function DoFrame(tick: number) {
 
   if (Input.GUIMode) {
     Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
-    if (!clientConnected) Renderer.DrawUIFrame(canvas, cam, connectingText);
+    if (!clientConnected) {
+      Renderer.DrawUIFrame(canvas, cam, connectingText);
+    }
   } else if ((character && character.HP > 0) || uiHealthbar.collapsing) {
     if (character) uiHealthbar.healthPercentage = character.HP / character.MaxHP;
     uiHealthbar.tick(DeltaTime);
@@ -628,7 +630,10 @@ const preloader = new AssetPreloader([
         }
       });
     })
-    .catch((err) => console.error('Failed to connect!', err))
+    .catch((err) => {
+      console.error('Failed to connect!', err);
+      connectingText.text = 'Connection failed 😭';
+    })
     .finally(() => console.log('... and finally!'));
 }());
 /* eslint-enable no-console */
