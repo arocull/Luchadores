@@ -2,6 +2,9 @@ import Vector from '../common/engine/Vector';
 import Fighter from '../common/engine/Fighter';
 import RenderSettings from './RenderSettings';
 
+const ClipBound = -0.2; // Only stop drawing the object if it is X * Zoom out of frame
+const ClipBoundPlusOne = 1 - ClipBound;
+
 class Camera {
   private Focus: Fighter;
   private FocusPosition: Vector;
@@ -91,11 +94,29 @@ class Camera {
   }
   // Converts the position into a 2D coordinate that can be drawn on the canvas
   public PositionOffset(pos: Vector): Vector {
-    const vect = Vector.Multiply(Vector.Subtract(this.FocusPosition, pos), this.Zoom);
-    vect.x *= -1;
-    vect.x += this.OffsetX;
-    vect.y += vect.z + this.OffsetY;
-    return vect;
+    return new Vector(
+      -(this.FocusPosition.x - pos.x) * this.Zoom + this.OffsetX,
+      (
+        (this.FocusPosition.y - pos.y)
+        + (this.FocusPosition.z - pos.z)
+      ) * this.Zoom + this.OffsetY,
+      0,
+    );
+  }
+  // Returns true of the position is "in frame" and should be drawn
+  public InFrame(input: Vector): boolean {
+    const pos = this.PositionOffset(input);
+
+    return (
+      pos.x > this.Width * ClipBound
+      && pos.x < this.Width * ClipBoundPlusOne
+      && pos.y > this.Height * ClipBound
+      && pos.y < this.Height * ClipBoundPlusOne
+    );
+  }
+
+  public ApplyAspect(num: number): number {
+    return Math.max(num * this.MaxDrawWidth, num * this.MaxDrawHeight);
   }
 }
 

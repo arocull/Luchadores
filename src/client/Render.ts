@@ -104,7 +104,7 @@ class Renderer {
 
     // Draw arena boundaries
     const corners = GetArenaBounds(camera, map, fighters);
-    canvas.drawImage(
+    canvas.drawImage( // Still draws entire map texture, but was extremely hard to try and it do it the other way
       map.Texture,
       0, 0,
       3076, 3076,
@@ -126,7 +126,19 @@ class Renderer {
     canvas.stroke();
 
     // Depth-Sort all entities before drawing
-    const toDraw: Entity[] = [].concat(fighters, particles, projectiles).sort(DepthSort);
+    let toDraw: Entity[] = [];
+    // Go through each list and only add objects that are within the camera frame
+    for (let i = 0; i < fighters.length; i++) {
+      if (camera.InFrame(fighters[i].Position)) toDraw.push(fighters[i]);
+    }
+    for (let i = 0; i < projectiles.length; i++) {
+      if (camera.InFrame(projectiles[i].Position)) toDraw.push(projectiles[i]);
+    }
+    for (let i = 0; i < particles.length; i++) {
+      if (camera.InFrame(particles[i].Position)) toDraw.push(particles[i]);
+    }
+
+    toDraw = toDraw.sort(DepthSort); // Do depth sorting
 
     // Draw in fighters
     for (let i = 0; i < toDraw.length; i++) {
