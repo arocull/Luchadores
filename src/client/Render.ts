@@ -12,51 +12,22 @@ import Camera from './Camera';
 import Map from '../common/engine/Map';
 /* eslint-enable object-curly-newline */
 
-function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
-  const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.y - fi.Radius < 0) {
-      const pos = Vector.Clone(fi.Position);
-      pos.y -= fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.x + fi.Radius > map.Width) {
-      const pos = Vector.Clone(fi.Position);
-      pos.x += fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.y + fi.Radius > map.Height) {
-      const pos = Vector.Clone(fi.Position);
-      pos.y += fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.x - fi.Radius < 0) {
-      const pos = Vector.Clone(fi.Position);
-      pos.x -= fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  return corners;
-}
-
 
 function DepthSort(a: Entity, b: Entity): number {
   if (a.Position.y < b.Position.y) return 1;
   if (a.Position.y > b.Position.y) return -1;
   return 0;
+}
+function SortByYNegative(a: Entity, b: Entity): number {
+  return -DepthSort(a, b);
+}
+function SortByXPositive(a: Entity, b: Entity): number {
+  if (a.Position.x < b.Position.x) return -1;
+  if (a.Position.x > b.Position.x) return 1;
+  return 0;
+}
+function SortByXNegative(a: Entity, b: Entity): number {
+  return -SortByXPositive(a, b);
 }
 
 
@@ -73,6 +44,69 @@ function GetKillMethod(fighter: FighterType): string {
     case FighterType.Toad: return ' electrocuted ';
     default: return ' died';
   }
+}
+
+
+function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
+  const center = camera.GetFocusPosition();
+
+  const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
+
+  if (camera.Settings.Quality > 1 && camera.InFrame(new Vector(center.x, 0, 0))) {
+    const f = fighters.sort(SortByXPositive);
+    for (let i = 0; i < f.length; i++) {
+      const fi = f[i];
+      if (fi.Position.y - fi.Radius < 0 && !fi.riding) {
+        const pos = Vector.Clone(fi.Position);
+        pos.y -= fi.Radius;
+        corners.push(camera.PositionOffset(pos));
+      }
+    }
+  }
+
+  corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
+
+  if (camera.Settings.Quality > 1 && camera.InFrame(new Vector(map.Width, center.y, 0))) {
+    const f = fighters.sort(SortByYNegative);
+    for (let i = 0; i < f.length; i++) {
+      const fi = fighters[i];
+      if (fi.Position.x + fi.Radius > map.Width && !fi.riding) {
+        const pos = Vector.Clone(fi.Position);
+        pos.x += fi.Radius;
+        corners.push(camera.PositionOffset(pos));
+      }
+    }
+  }
+
+  corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
+
+  if (camera.Settings.Quality > 1 && camera.InFrame(new Vector(center.x, map.Height, 0))) {
+    const f = fighters.sort(SortByXNegative);
+    for (let i = 0; i < f.length; i++) {
+      const fi = fighters[i];
+      if (fi.Position.y + fi.Radius > map.Height && !fi.riding) {
+        const pos = Vector.Clone(fi.Position);
+        pos.y += fi.Radius;
+        corners.push(camera.PositionOffset(pos));
+      }
+    }
+  }
+
+  corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
+
+  if (camera.Settings.Quality > 1 && camera.InFrame(new Vector(0, center.y, 0))) {
+    const f = fighters.sort(DepthSort);
+    for (let i = 0; i < f.length; i++) {
+      const fi = fighters[i];
+      if (fi.Position.x - fi.Radius < 0 && !fi.riding) {
+        const pos = Vector.Clone(fi.Position);
+        pos.x -= fi.Radius;
+        corners.push(camera.PositionOffset(pos));
+      }
+    }
+  }
+
+  return corners;
 }
 
 

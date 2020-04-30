@@ -114,10 +114,6 @@ class Camera {
       && pos.y < this.Height * ClipBoundPlusOne
     );
   }
-
-  public ApplyAspect(num: number): number {
-    return Math.max(num * this.MaxDrawWidth, num * this.MaxDrawHeight);
-  }
 }
 
 export { Camera as default };
