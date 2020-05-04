@@ -60,34 +60,35 @@ test('bullet timeout test', () => {
 test('bullet jump-dodge test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World();
-  world.Map = new Map(20, 20, 0, '');
+  world.Map = new Map(20, 20, 10, '');
 
-  const flam = new Flamingo(1, new Vector(0, 0, 0));
-  flam.aim(new Vector(1, 0, 0));
-  flam.Firing = true;
-  const deer = new Deer(2, new Vector(4, 0, 0));
+  const deer = new Deer(1, new Vector(5, 0, 0));
+  deer.aim(new Vector(1, 0, 0));
+  deer.Firing = true;
+  const flam = new Flamingo(2, new Vector(8.5, 0, 0));
 
-  world.Fighters.push(flam, deer);
+  world.Fighters.push(deer, flam);
 
   for (let i = 0; i < 40; i++) {
     world.tick(0.1);
 
-    if (i === 5) flam.Firing = false;
+    if (i === 10) deer.Firing = false;
   }
 
-  expect(deer.HP).toBeLessThan(deer.MaxHP - 5); // Gets hit when no action is taken
-  const hp = deer.HP;
+  expect(flam.HP).toBeLessThan(flam.MaxHP - 5); // Gets hit when no action is taken
+  const hp = flam.HP;
 
-  deer.Jump();
-  flam.Firing = true;
+  flam.Jump();
+  deer.Position = new Vector(5, 0, 0);
+  deer.Firing = true;
   for (let i = 0; i < 50; i++) {
     world.tick(0.05);
 
     if (i === 5) {
-      flam.Firing = false;
+      deer.Firing = false;
       expect(world.Bullets.length).toBeGreaterThan(0); // There should at least be some fire to dodge
     }
   }
 
-  expect(deer.HP).toBe(hp); // Not hit when bullets are leaped over
+  expect(flam.HP).toBe(hp); // Not hit when bullets are leaped over
 });
