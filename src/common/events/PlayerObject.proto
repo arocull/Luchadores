@@ -1,0 +1,6 @@
+message PlayerObject {
+    required int32 ownerId = 1;
+    required string username = 2;
+    required int32 kills = 3;
+    required int32 averagePing = 4;
+}

@@ -1,0 +1,7 @@
+import "PlayerObject.proto";
+
+message PlayerListState {
+    required int32 type = 1;
+    required int32 characterId = 2;
+    repeated PlayerObject players = 3;
+}

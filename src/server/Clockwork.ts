@@ -14,10 +14,10 @@ import {
   IPlayerConnect,
   IPlayerInputState,
   IPlayerSpawned,
-  IPlayerDisconnect,
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
+import { IPlayerListState } from '../common/events/events';
 
 interface Action {
   player: Player;
@@ -125,6 +125,27 @@ class Clockwork {
       });
     }
   }
+  public updatePlayerList() {
+    const list = [];
+    for (let i = 0; i < this.connections.length; i++) { // Build player list info
+      list.push({
+        ownerId: this.connections[i].getCharacterID(),
+        username: this.connections[i].getUsername(),
+        kills: this.connections[i].getKills(),
+        averagePing: Math.floor(this.connections[i].getPing() + 0.5),
+      });
+    }
+
+    for (let i = 0; i < this.connections.length; i++) { // Send to each client
+      MessageBus.publish(this.connections[i].getTopicSend(), <IPlayerListState>{
+        type: TypeEnum.PlayerListState,
+        characterId: this.connections[i].getCharacterID(), // Individualize with player's character ID to prevent client-side duplicates
+        players: list,
+      });
+    }
+
+    Logger.debug('Broadcasting player list, %i players left', list.length);
+  }
 
   // TODO: Needs tests?
   private getLowestUnusedCharacterID(): number {
@@ -150,32 +171,8 @@ class Clockwork {
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
     plr.setUsername(message.username);
 
-    // Must be sent here--any publishes before full ACK are ignored
-    MessageBus.publish(plr.getTopicSend(), { // Update client-side player ID
-      type: TypeEnum.PlayerState,
-      characterID: plr.getCharacterID(),
-      health: 0, // No character yet, just say they have 0 HP
-    });
-    // Might not be recieved before broadcast is sent out, potentially causing a dual-entry on a client's player list
-    // Can we fire this sooner while still allowing it to be catched by the client?
-
-    // Broadcast the username to all clients, they will all receive a message of "player joined the game"
-    this.broadcast(<IPlayerConnect>{
-      type: TypeEnum.PlayerConnect,
-      ownerId: plr.getCharacterID(), // Sync ID down to client's world state
-      username: message.username,
-    });
-
-    // Broadcast an initial state of all player names on new connection
-    for (let i = 0; i < this.connections.length; i++) {
-      if (this.connections[i] !== plr) {
-        MessageBus.publish(plr.getTopicSend(), <IPlayerConnect>{
-          type: TypeEnum.PlayerConnect,
-          ownerId: this.connections[i].getCharacterID(),
-          username: this.connections[i].getUsername(),
-        });
-      }
-    }
+    // Broadcast an state of all player names, scores, IDs, etc; also sends clients their character IDs
+    this.updatePlayerList();
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
     if (!plr.getCharacter() || plr.getCharacter().HP <= 0) {
@@ -247,11 +244,8 @@ class Clockwork {
       player.getCharacter().HP = -100; // Character will automatically be cleaned up by world in the next update
     }
 
-    // Notify all other players of the disconnect so they can remove the player from their player lists
-    this.broadcast(<IPlayerDisconnect>{
-      type: TypeEnum.PlayerDisconnect,
-      ownerId: player.getCharacterID(),
-    });
+    Logger.info(`Disconnected player ${message.id}`);
+    this.updatePlayerList();
   }
 
   start() {

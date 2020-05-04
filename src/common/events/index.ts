@@ -66,6 +66,10 @@ export interface IWorldState extends events.IWorldState {
   type: TypeEnum.WorldState;
 }
 
+export interface IPlayerListState extends events.IPlayerListState {
+  type: TypeEnum.PlayerListState;
+}
+
 export type IEvent =
   | IClientConnecting
   | IClientAcknowledged
@@ -82,4 +86,5 @@ export type IEvent =
   | IPing
   | IPong
   | IWorldState
+  | IPlayerListState
   ;
