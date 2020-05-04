@@ -49,9 +49,9 @@ test('bullet timeout test', () => {
 
   world.Bullets.push(bullet3);
 
-  for (let i = 0; i < 25; i++) {
-    world.TickPhysics(0.05);
-    if (i === 9) expect(bullet3.getLifePercentage()).toBeCloseTo(0.5);
+  for (let i = 0; i < 31; i++) {
+    world.TickPhysics(0.1);
+    if (i === 14) expect(bullet3.getLifePercentage()).toBeCloseTo(0.5);
   }
 
   expect(world.Bullets.indexOf(bullet3)).toBe(-1); // Bullet timing out
