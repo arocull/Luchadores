@@ -49,7 +49,9 @@ class Camera {
       // Focus camera on center of character
       this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0);
 
-      focusSpeed = Math.max(Math.min(this.Focus.Velocity.lengthXY(), 50), 0) / 100;
+      let moveSpeed = this.Focus.Velocity.lengthXY(); // Get velocity of player
+      if (this.Focus.riding) moveSpeed += this.Focus.riding.Velocity.lengthXY(); // Don't forget to tack in velocity of who they're riding!
+      focusSpeed = Math.max(Math.min(moveSpeed, 50), 0) / 100;
       if (this.Focus.isRanged()) zoomBoost = 0.9;
 
       // If camera shake is enabled, do it
