@@ -14,10 +14,10 @@ import {
   IPlayerConnect,
   IPlayerInputState,
   IPlayerSpawned,
+  IPlayerListState,
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
-import { IPlayerListState } from '../common/events/events';
 
 interface Action {
   player: Player;

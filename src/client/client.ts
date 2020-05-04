@@ -79,7 +79,7 @@ MessageBus.subscribe('Effect_NewParticle', (msg) => {
 // Call when a PlayerConnect request is heard
 function OnPlayerConnect(plr: Player) {
   playerConnects.push(plr);
-
+  console.log(plr.getUsername(), ' has joined');
   uiPlayerList.push(new UIPlayerInfo(plr));
 }
 // Call when a PlayerDisconnect request is heard
@@ -90,7 +90,7 @@ function OnPlayerDisconnect(plr: Player) {
       break;
     }
   }
-
+  console.log(plr.getUsername(), ' has left');
   for (let i = 0; i < uiPlayerList.length; i++) {
     if (uiPlayerList[i].getOwner() === plr) {
       uiPlayerList.splice(i, 1);
