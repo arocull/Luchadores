@@ -77,6 +77,11 @@ class Vector { // A structure that holds position data or direction and magnitud
     return this.UnitVectorFromXYZ(Math.cos(angle), Math.sin(angle), 0);
   }
 
+  // Gets the dot product between two vectors
+  static DotProduct(a: Vector, b: Vector): number {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+  }
+
   static Distance(a: Vector, b:Vector):number {
     return Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2) + ((a.z - b.z) ** 2));
   }

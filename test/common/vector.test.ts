@@ -79,3 +79,19 @@ test('vector angles testing', () => {
   expect(res2).toBeCloseTo(Math.PI, 3);
   expect(res3).toBeCloseTo(Math.PI / 2, 3);
 });
+
+test('vector dot product testing', () => {
+  const vect1 = new Vector(1, 0, 0);
+  const vect2 = new Vector(0, 1, 0);
+  const vect3 = new Vector(-1, 0, 0);
+
+  const vect4 = Vector.UnitVector(new Vector(1, 1, 0));
+  const vect5 = Vector.UnitVector(new Vector(2, 2, 0));
+
+  expect(Vector.DotProduct(vect1, vect1)).toBeCloseTo(1);
+  expect(Vector.DotProduct(vect1, vect2)).toBeCloseTo(0);
+  expect(Vector.DotProduct(vect1, vect3)).toBeCloseTo(-1);
+
+  expect(Vector.DotProduct(vect1, vect4)).toBeCloseTo(vect4.x);
+  expect(Vector.DotProduct(vect1, vect5)).toBeCloseTo(vect5.x);
+});
