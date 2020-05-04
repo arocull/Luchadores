@@ -33,6 +33,13 @@ class Flamingo extends Fighter {
     this.breathing = false;
   }
 
+  public EarnKill() {
+    super.EarnKill();
+
+    this.breath = this.maxBreath; // Refill breath meter upon earning a kill
+    this.breathing = false;
+  }
+
   public canFirebullet() {
     return (super.canFirebullet() && this.breath >= 1 && !this.breathing);
   }
