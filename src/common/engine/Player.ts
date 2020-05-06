@@ -6,6 +6,8 @@ class Player {
   private kills: number;
   private deaths: number;
 
+  public accountedFor: boolean; // Client-side only, was this player accounted for?
+
   private character: Fighter;
   private characterID: number; // Used for keeping track between server and clients on who is who
   private pingHistory: Denque<number>;
@@ -18,6 +20,8 @@ class Player {
     this.username = 'Player';
     this.kills = 0;
     this.deaths = 0;
+
+    this.accountedFor = false;
 
     this.character = null;
     this.characterID = -1;
@@ -77,6 +81,9 @@ class Player {
 
   earnKill() {
     this.kills++;
+  }
+  setKills(newKills: number) {
+    this.kills = newKills;
   }
   getKills(): number {
     return this.kills;

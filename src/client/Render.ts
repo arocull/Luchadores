@@ -483,7 +483,7 @@ class Renderer {
       canvas.fillText(card.getOwner().getUsername(), startX + width * 0.15, startY, width * 0.3);
 
       // Ping
-      canvas.fillText(card.ping.toString(), startX + width * 0.9, startY, width * 0.1);
+      canvas.fillText(card.getOwner().getPing().toString(), startX + width * 0.9, startY, width * 0.1);
     }
   }
 

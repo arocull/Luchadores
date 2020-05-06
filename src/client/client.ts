@@ -8,7 +8,7 @@ import { MessageBus, Topics as BusTopics } from '../common/messaging/bus';
 import { SubscriberContainer } from '../common/messaging/container';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
-import { IPlayerConnect, IPlayerState, IWorldState } from '../common/events/events';
+import { IPlayerConnect, IPlayerState, IWorldState, IPlayerListState } from '../common/events/events';
 import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
@@ -77,43 +77,73 @@ MessageBus.subscribe('Effect_NewParticle', (msg) => {
 
 
 // Call when a PlayerConnect request is heard
-function OnPlayerConnect(charID: number, username: string) {
-  if (charID === player.getCharacterID()) return;
-  // Remove the player from the list if they already exist
-  // - could be new player taking up character ID of old player that left
-  for (let i = 0; i < playerConnects.length; i++) {
-    if (playerConnects[i].getCharacterID() === charID) {
-      playerConnects.splice(i, 1);
-      break;
-    }
-  }
-
-  const newPlayer = new Player(`Player${charID}`); // Just fill string with something interesting so we can easier differentiate
-  newPlayer.setUsername(username);
-  newPlayer.assignCharacterID(charID);
-
-  playerConnects.push(newPlayer);
-
-  uiPlayerList.push(new UIPlayerInfo(newPlayer));
+function OnPlayerConnect(plr: Player) {
+  playerConnects.push(plr);
+  console.log(plr.getUsername(), ' has joined');
+  uiPlayerList.push(new UIPlayerInfo(plr));
 }
 // Call when a PlayerDisconnect request is heard
-function OnPlayerDisconnect(charID: number) {
-  let discPlayer = null;
+function OnPlayerDisconnect(plr: Player) {
   for (let i = 0; i < playerConnects.length; i++) {
-    if (playerConnects[i].getCharacterID() === charID) {
-      discPlayer = playerConnects[i];
+    if (playerConnects[i] === plr) {
       playerConnects.splice(i, 1);
       break;
     }
   }
-
+  console.log(plr.getUsername(), ' has left');
   for (let i = 0; i < uiPlayerList.length; i++) {
-    if (uiPlayerList[i].getOwner() === discPlayer) {
+    if (uiPlayerList[i].getOwner() === plr) {
       uiPlayerList.splice(i, 1);
       return;
     }
   }
 }
+// Updates player list state and the player list GUI
+function OnPlayerListUpdate(msg: IPlayerListState) {
+  player.assignCharacterID(msg.characterId);
+
+  for (let i = 0; i < playerConnects.length; i++) {
+    playerConnects[i].accountedFor = false;
+  }
+
+  for (let i = 0; i < msg.players.length; i++) {
+    const id = msg.players[i].ownerId;
+    let plr = null;
+    let isNew: boolean = false;
+
+    if (id === player.getCharacterID()) plr = player;
+    else {
+      for (let j = 0; j < playerConnects.length; j++) {
+        if (id === playerConnects[j].getCharacterID()) {
+          plr = playerConnects[j];
+          break;
+        }
+      }
+      if (!plr) {
+        plr = new Player(`Player${id}`);
+        isNew = true;
+      }
+    }
+
+    plr.setUsername(msg.players[i].username);
+    plr.assignCharacterID(id);
+    plr.setKills(msg.players[i].kills);
+    plr.updatePing(msg.players[i].averagePing);
+    plr.accountedFor = true; // Mark that this player has been updated and thus accounted for
+
+    if (isNew) OnPlayerConnect(plr);
+  }
+
+  // Prune any players that were not accounted for and count them as disconnects
+  for (let i = 0; i < playerConnects.length; i++) {
+    if (!playerConnects[i].accountedFor) {
+      OnPlayerDisconnect(playerConnects[i]);
+      i--;
+    }
+  }
+}
+
+
 // Call when server says a fighter died, hand it player ID's
 function OnDeath(died: number, killer: number) {
   let diedName: string = '';
@@ -623,17 +653,14 @@ const preloader = new AssetPreloader([
             stateUpdate = msg;
             stateUpdateLastPacketTime = decodeInt64(msg.timestamp);
             break;
+          case TypeEnum.PlayerListState:
+            OnPlayerListUpdate(msg);
+            break;
           case TypeEnum.PlayerState:
             UpdatePlayerState(msg);
             break;
           case TypeEnum.PlayerDied:
             OnDeath(msg.characterId, msg.killerId);
-            break;
-          case TypeEnum.PlayerConnect:
-            OnPlayerConnect(msg.ownerId, msg.username);
-            break;
-          case TypeEnum.PlayerDisconnect:
-            OnPlayerDisconnect(msg.ownerId);
             break;
           default: // None
         }

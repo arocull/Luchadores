@@ -40,6 +40,8 @@ function getProtobufType(object: IEvent): ProtobufTypeSerde {
       return events.PingPong;
     case TypeEnum.WorldState:
       return events.WorldState;
+    case TypeEnum.PlayerListState:
+      return events.PlayerListState;
     default:
       // TODO: Figure out how to make this an exhaustive switch
       // and produce a compile error if not all cases are covered.
