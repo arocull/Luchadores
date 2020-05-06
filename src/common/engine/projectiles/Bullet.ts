@@ -6,7 +6,7 @@ import { ProjectileType } from '../Enums';
 // BFire - Type bullet of variant Fire
 class BBullet extends Projectile {
   constructor(position: Vector, direction: Vector, owner: Fighter) {
-    super(ProjectileType.Bullet, owner, 5, 1, position, Vector.Multiply(direction, 20));
+    super(ProjectileType.Bullet, owner, 5, 3, position, Vector.Multiply(direction, 20));
   }
 }
 

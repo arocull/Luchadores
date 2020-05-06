@@ -33,6 +33,13 @@ class Flamingo extends Fighter {
     this.breathing = false;
   }
 
+  public EarnKill() {
+    super.EarnKill();
+
+    this.breath = this.maxBreath; // Refill breath meter upon earning a kill
+    this.breathing = false;
+  }
+
   public canFirebullet() {
     return (super.canFirebullet() && this.breath >= 1 && !this.breathing);
   }
@@ -44,6 +51,16 @@ class Flamingo extends Fighter {
     // If flamingo runs out of breath, halt all fire-breathing
     if (this.breath < 1) this.breathing = true;
 
+    if (this.AimDirection.x < 0) this.Flipped = true;
+    else if (this.AimDirection.x > 0) this.Flipped = false;
+
+    const fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
+    if (this.riding) {
+      fireVelo.x += this.riding.Velocity.x;
+      fireVelo.y += this.riding.Velocity.y;
+    }
+    fireVelo.z = 0;
+
     // Get position to fire from
     const pos = Vector.Clone(this.Position);
     pos.z += this.Height * 0.5;
@@ -52,8 +69,6 @@ class Flamingo extends Fighter {
 
     // Recoil and sprite-flipping
     this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(this.AimDirection, 0.1));
-    if (this.AimDirection.x < 0) this.Flipped = true;
-    else if (this.AimDirection.x > 0) this.Flipped = false;
 
     // Get randomized direction
     const dir = Vector.UnitVectorFromXYZ(
@@ -64,6 +79,7 @@ class Flamingo extends Fighter {
     dir.z = -1;
 
     const proj = new BFire(pos, dir, this);
+    proj.Velocity = Vector.Add(proj.Velocity, fireVelo);
     MessageBus.publish('NewProjectile', proj);
     return proj;
   }

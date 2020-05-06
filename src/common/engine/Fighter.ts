@@ -20,6 +20,8 @@ Any ranged classes should also replicate:
  - specified in class files
 */
 class Fighter extends Entity {
+  public static KILL_HEALTH_RETURN: number = 0.25; // Percentage of max health that is restored upon earning a kill
+
   public MaxHP: number;
 
   public Kills: number;
@@ -52,7 +54,7 @@ class Fighter extends Entity {
     public Radius: number, // Collision and draw radius
     public Height: number, // Collision and draw height
     private JumpVelocity: number, // The velocity or power this character jumps with
-    private MoveAcceleration: number, // Maximum acceleration one can reach from standard inputs
+    protected MoveAcceleration: number, // Maximum acceleration one can reach from standard inputs
     private character: FighterType, // What class this fighter is so we can differentiate between characters
     private ID: number, // Player/entity ID of this fighter so we can tell who's who
     position: Vector,
@@ -94,6 +96,9 @@ class Fighter extends Entity {
   // Award this fighter a kill, can be overridden by subclasses for special abilities
   public EarnKill() {
     this.Kills++;
+
+    // Restore some HP upon earning a kill
+    this.HP = Math.min(this.HP + Fighter.KILL_HEALTH_RETURN * this.MaxHP, this.MaxHP);
   }
 
 

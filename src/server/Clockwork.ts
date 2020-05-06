@@ -89,10 +89,11 @@ class Clockwork {
         for (let i = 0; i < kills.length; i++) { // Count each kill and death toward respective counts
           Logger.debug('Character IDs %j was killed by %j', kills[i].characterId, kills[i].killerId);
           for (let j = 0; j < this.connections.length; j++) {
-            if (this.connections[i].getCharacterID() === kills[i].killerId) { // Earn kill
-              this.connections[i].earnKill();
-            } else if (this.connections[i].getCharacterID() === kills[i].characterId) { // Earn death
-              this.connections[i].earnDeath();
+            if (this.connections[j].getCharacterID() === kills[i].killerId) { // Earn kill
+              this.connections[j].earnKill();
+              this.connections[j].getCharacter().EarnKill();
+            } else if (this.connections[j].getCharacterID() === kills[i].characterId) { // Earn death
+              this.connections[j].earnDeath();
             }
           }
         }
