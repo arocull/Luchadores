@@ -12,51 +12,23 @@ import Camera from './Camera';
 import Map from '../common/engine/Map';
 /* eslint-enable object-curly-newline */
 
-function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
-  const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.y - fi.Radius < 0) {
-      const pos = Vector.Clone(fi.Position);
-      pos.y -= fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.x + fi.Radius > map.Width) {
-      const pos = Vector.Clone(fi.Position);
-      pos.x += fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.y + fi.Radius > map.Height) {
-      const pos = Vector.Clone(fi.Position);
-      pos.y += fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
-  for (let i = 0; camera.Settings.Quality > 1 && i < fighters.length; i++) {
-    const fi = fighters[i];
-    if (fi.Position.x - fi.Radius < 0) {
-      const pos = Vector.Clone(fi.Position);
-      pos.x -= fi.Radius;
-      corners.push(camera.PositionOffset(pos));
-    }
-  }
-  return corners;
-}
-
+let ArenaBoundFrontPassIndex = 0;
 
 function DepthSort(a: Entity, b: Entity): number {
   if (a.Position.y < b.Position.y) return 1;
   if (a.Position.y > b.Position.y) return -1;
   return 0;
+}
+function SortByYNegative(a: Entity, b: Entity): number {
+  return -DepthSort(a, b);
+}
+function SortByXPositive(a: Entity, b: Entity): number {
+  if (a.Position.x < b.Position.x) return -1;
+  if (a.Position.x > b.Position.x) return 1;
+  return 0;
+}
+function SortByXNegative(a: Entity, b: Entity): number {
+  return -SortByXPositive(a, b);
 }
 
 
@@ -73,6 +45,71 @@ function GetKillMethod(fighter: FighterType): string {
     case FighterType.Toad: return ' electrocuted ';
     default: return ' died';
   }
+}
+
+
+function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
+  const corners = [camera.PositionOffset(new Vector(0, 0, 0))];
+
+  if (camera.Settings.Quality > 1) { // If the player has higher quality render settings, try to do arena bound deform
+    const f: Fighter[] = fighters.slice();
+    const center = camera.GetFocusPosition();
+
+    if (camera.InFrame(new Vector(center.x, 0, 0))) {
+      f.sort(SortByXPositive);
+      for (let i = 0; i < f.length; i++) {
+        const fi = f[i];
+        if (!fi.riding && fi.Position.y < 0) {
+          const pos = Vector.Clone(fi.Position);
+          corners.push(camera.PositionOffset(pos));
+        }
+      }
+    }
+    corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
+    ArenaBoundFrontPassIndex = corners.length - 1;
+    if (camera.InFrame(new Vector(map.Width, center.y, 0))) {
+      f.sort(SortByYNegative);
+      for (let i = 0; i < f.length; i++) {
+        const fi = fighters[i];
+        if (!fi.riding && fi.Position.x + fi.Radius > map.Width) {
+          const pos = Vector.Clone(fi.Position);
+          pos.x += fi.Radius;
+          corners.push(camera.PositionOffset(pos));
+        }
+      }
+    }
+    corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
+    if (camera.InFrame(new Vector(center.x, map.Height, 0))) {
+      f.sort(SortByXNegative);
+      for (let i = 0; i < f.length; i++) {
+        const fi = fighters[i];
+        if (!fi.riding && fi.Position.y + fi.Radius > map.Height) {
+          const pos = Vector.Clone(fi.Position);
+          pos.y += fi.Radius;
+          corners.push(camera.PositionOffset(pos));
+        }
+      }
+    }
+    corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
+    if (camera.InFrame(new Vector(0, center.y, 0))) {
+      f.sort(DepthSort);
+      for (let i = 0; i < f.length; i++) {
+        const fi = fighters[i];
+        if (!fi.riding && fi.Position.x - fi.Radius < 0) {
+          const pos = Vector.Clone(fi.Position);
+          pos.x -= fi.Radius;
+          corners.push(camera.PositionOffset(pos));
+        }
+      }
+    }
+  } else { // Otherwise, just do the simple four corners
+    ArenaBoundFrontPassIndex = 1;
+    corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
+    corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
+    corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
+  }
+
+  return corners;
 }
 
 
@@ -104,7 +141,7 @@ class Renderer {
 
     // Draw arena boundaries
     const corners = GetArenaBounds(camera, map, fighters);
-    canvas.drawImage(
+    canvas.drawImage( // Still draws entire map texture, but was extremely hard to try and it do it the other way
       map.Texture,
       0, 0,
       3076, 3076,
@@ -117,16 +154,30 @@ class Renderer {
     canvas.globalAlpha = 1;
     canvas.lineWidth = zoom * 0.1;
     canvas.lineCap = 'round';
+
+    // Draw all arena boundaries except for frontmost
     canvas.beginPath();
-    canvas.moveTo(corners[0].x, corners[0].y);
-    for (let i = 1; i < corners.length; i++) {
+    canvas.moveTo(corners[ArenaBoundFrontPassIndex].x, corners[ArenaBoundFrontPassIndex].y);
+    for (let i = ArenaBoundFrontPassIndex + 1; i < corners.length; i++) {
       canvas.lineTo(corners[i].x, corners[i].y);
     }
-    canvas.closePath();
+    canvas.lineTo(corners[0].x, corners[0].y);
     canvas.stroke();
 
     // Depth-Sort all entities before drawing
-    const toDraw: Entity[] = [].concat(fighters, particles, projectiles).sort(DepthSort);
+    let toDraw: Entity[] = [];
+    // Go through each list and only add objects that are within the camera frame
+    for (let i = 0; i < fighters.length; i++) {
+      if (camera.InFrame(fighters[i].Position)) toDraw.push(fighters[i]);
+    }
+    for (let i = 0; i < projectiles.length; i++) {
+      if (camera.InFrame(projectiles[i].Position)) toDraw.push(projectiles[i]);
+    }
+    for (let i = 0; i < particles.length; i++) {
+      if (camera.InFrame(particles[i].Position)) toDraw.push(particles[i]);
+    }
+
+    toDraw = toDraw.sort(DepthSort); // Do depth sorting
 
     // Draw in fighters
     for (let i = 0; i < toDraw.length; i++) {
@@ -229,6 +280,18 @@ class Renderer {
         canvas.stroke();
       }
     }
+
+    // Finish up with the front arena bound
+    canvas.strokeStyle = '#ff0000';
+    canvas.globalAlpha = 1;
+    canvas.lineWidth = zoom * 0.1;
+    canvas.lineCap = 'round';
+    canvas.beginPath();
+    canvas.moveTo(corners[0].x, corners[0].y);
+    for (let i = 1; i < ArenaBoundFrontPassIndex + 2; i++) {
+      canvas.lineTo(corners[i].x, corners[i].y);
+    }
+    canvas.stroke();
   }
 
   public static DrawPlayerList(canvas: CanvasRenderingContext2D, cam: Camera, data: string) {

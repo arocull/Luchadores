@@ -5,6 +5,17 @@ import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import { MessageBus } from '../../common/messaging/bus';
 import { PFire, PSmoke } from '../particles/index';
 
+
+enum AnimationState {
+  Idle = 0,
+  IdleUnique = 1,
+  Falling = 2,
+  Moving = 3,
+  Attacking = 4,
+  AttackingMoving = 5,
+}
+
+
 class Animator {
   public SpriteSheet: HTMLImageElement;
 
@@ -17,7 +28,7 @@ class Animator {
 
   public timer: number;
   public timerTick: number;
-  public lastState: number;
+  public lastState: AnimationState;
   protected timeToUniqueIdle: number;
   protected inUniqueIdle: boolean;
 
@@ -45,7 +56,7 @@ class Animator {
 
     this.timer = 0;
     this.timerTick = 0;
-    this.lastState = 0;
+    this.lastState = AnimationState.Idle;
     this.timeToUniqueIdle = Math.random() * 13;
 
     this.killEffectCountdown = -1;
@@ -109,36 +120,36 @@ class Animator {
   }
 
   public Tick(DeltaTime: number) {
-    let state = 0;
+    let state = AnimationState.Idle;
     this.timerTick++;
 
     // If they are moving, set the state to that
-    if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = 3;
-    else if (this.owner.Position.z > 0.05 && !this.owner.riding) state = 2; // otherwise if they are in the air, display falling animation
+    if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = AnimationState.Moving;
+    else if (this.owner.Position.z > 0.05 && !this.owner.riding) state = AnimationState.Falling; // otherwise if they are in the air, display falling animation
 
-    if (state === 0 && this.inUniqueIdle) state = 1; // If they are in a unique idle, then set idle to that
+    if (state === AnimationState.Idle && this.inUniqueIdle) state = AnimationState.IdleUnique; // If they are in a unique idle, then set idle to that
     else this.inUniqueIdle = false; // If unique idle was interrupted, stop it
 
     if (state !== this.lastState) this.timer = 0; // Reset animation timer if state has changed
     this.lastState = state;
 
     // If they are moving and on the ground, timer should increase at a rate proportional to their speed
-    if (state === 3 && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
+    if (state === AnimationState.Moving && this.owner.Position.z <= 0) this.timer += DeltaTime * (this.owner.Velocity.lengthXY() / 8);
     else this.timer += DeltaTime;
 
     if (this.owner.getBulletCooldown() > 0) { // If they are recovering from firing a bullet (likely shooting)
-      if (state === 3) state = 5; // If moving, do a moving attack animation
-      else state = 4; // Otherwise, do a standard attack
+      if (state === 3) state = AnimationState.AttackingMoving; // If moving, do a moving attack animation
+      else state = AnimationState.Attacking; // Otherwise, do a standard attack
     }
 
     switch (state) {
-      case 1: // Unique idle
+      case AnimationState.IdleUnique: // Unique idle
         this.frame = (Math.floor(this.timer * 5) % 5) + 5;
         this.row = 0;
         this.tickUniqueIdle();
         break;
 
-      case 2: // Falling animation
+      case AnimationState.Falling: // Falling animation
         this.frame = 6;
         if (this.owner.getCharacter() === FighterType.Flamingo) {
           this.row = 1;
@@ -147,18 +158,18 @@ class Animator {
         }
         break;
 
-      case 3: // Move animation
+      case AnimationState.Moving: // Move animation
         this.frame = Math.floor(this.timer * 10) % 10;
         this.row = 1;
         break;
 
-      case 4: // Attack
+      case AnimationState.Attacking: // Attack
         this.frame = Math.floor(this.timer * 5) % 5;
         this.row = 2;
         this.tickAttacking();
         break;
 
-      case 5: // Attack while moving
+      case AnimationState.AttackingMoving: // Attack while moving
         this.frame = (Math.floor(this.timer * 5) % 5) + 5;
         this.row = 2;
         this.tickAttacking();
