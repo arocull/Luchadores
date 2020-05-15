@@ -25,6 +25,8 @@ enum ParticleType {
   Fire = 3,
   Smoke = 4,
   Lightning = 5,
+  BulletFire = 6,
+  BulletShell =7,
 }
 
 enum UIFrameType {

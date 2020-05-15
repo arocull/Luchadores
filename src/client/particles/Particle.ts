@@ -67,7 +67,17 @@ class Particle extends Entity {
       // Bounce
       if (this.Position.z <= 0 || this.End.z <= 0) {
         this.Velocity.z *= -this.BounceReturn;
-        if (this.StopOnGround) this.UsePhysics = false;
+        if (this.Position.z < 0) this.Position.z = 0;
+        if (this.End.z < 0) this.End.z = 0;
+
+        if (this.StopOnGround) {
+          if (this.BounceReturn > 0) { // If the object is still supposed to bounce, then just lower its velocity
+            this.Velocity.x *= this.BounceReturn;
+            this.Velocity.y *= this.BounceReturn;
+          } else { // Otherwise, stop it completely
+            this.UsePhysics = false;
+          }
+        }
       }
       // Apply drag
       if (this.Drag > 0) this.Velocity = Vector.Multiply(this.Velocity, 1 - this.Drag * DeltaTime);

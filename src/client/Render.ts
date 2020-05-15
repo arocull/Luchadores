@@ -6,7 +6,7 @@ import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters/index';
 import Animator from './animation/Animator';
 import { Projectile } from '../common/engine/projectiles/index';
-import { Particle, PLightning } from './particles/index';
+import { Particle, PLightning, PBulletFire } from './particles/index';
 import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
@@ -264,10 +264,19 @@ class Renderer {
         canvas.globalAlpha = a.Alpha;
         canvas.lineWidth = zoom * a.Width;
 
+        switch (a.particleType) { // Changes how lines draw
+          case ParticleType.BulletShell: // Bullet shells aren't round!
+            canvas.lineCap = 'butt';
+            break;
+          default: // However, everything else is
+            canvas.lineCap = 'round';
+        }
+
         const pos1 = camera.PositionOffset(a.Position);
         const pos2 = camera.PositionOffset(a.End);
 
         canvas.beginPath();
+
         canvas.moveTo(pos1.x, pos1.y);
         if (a.particleType === ParticleType.Lightning) { // If it is lightning, draw all segments in center of path
           const l = <PLightning>(a);
@@ -275,9 +284,20 @@ class Renderer {
             const seg = camera.PositionOffset(l.Segments[j]);
             canvas.lineTo(seg.x, seg.y);
           }
+        } else if (a.particleType === ParticleType.BulletFire) {
+          canvas.fillStyle = a.RenderStyle;
+          const f = <PBulletFire>(a);
+          for (let j = 0; j < f.points.length; j++) {
+            const seg = camera.PositionOffset(f.points[j]);
+            canvas.lineTo(seg.x, seg.y);
+          }
         }
         canvas.lineTo(pos2.x, pos2.y);
-        canvas.stroke();
+        if (a.particleType === ParticleType.BulletFire) {
+          canvas.fill();
+        } else {
+          canvas.stroke();
+        }
       }
     }
 

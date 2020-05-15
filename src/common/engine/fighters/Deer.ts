@@ -20,7 +20,6 @@ Properties that need to be replicated from server to client:
 class Deer extends Fighter {
   private bulletCooldownBase: number;
   private bulletCooldownTime: number;
-  private boostTimer: number;
 
   constructor(id: number, position: Vector) {
     super(100, 100, 2000, 0.45, 1.05, 17, 30, FighterType.Deer, id, position);

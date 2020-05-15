@@ -47,6 +47,8 @@ class Fighter extends Entity {
   protected BulletCooldown: number;
   public BulletShock: number;
 
+  protected boostTimer: number;
+
   constructor(
     public HP: number,
     public Mass: number, // How much mass this fighter has, used in momentum calculations
@@ -83,6 +85,8 @@ class Fighter extends Entity {
     this.Firing = false;
     this.BulletCooldown = 0;
     this.BulletShock = 0;
+
+    this.boostTimer = 0;
   }
 
 
@@ -191,6 +195,10 @@ class Fighter extends Entity {
   }
   public setBulletCooldown(newCooldown: number) {
     this.BulletCooldown = newCooldown;
+  }
+
+  public inKillEffect(): boolean {
+    return (this.boostTimer > 0);
   }
 }
 
