@@ -22,7 +22,7 @@ class Deer extends Fighter {
   private bulletCooldownTime: number;
 
   constructor(id: number, position: Vector) {
-    super(100, 100, 2000, 0.45, 1.05, 17, 30, FighterType.Deer, id, position);
+    super(100, 100, 2000, 0.45, 1.05, 17, 40, FighterType.Deer, id, position);
 
     this.bulletCooldownBase = 0.125;
     this.bulletCooldownTime = this.bulletCooldownBase;
@@ -45,10 +45,12 @@ class Deer extends Fighter {
     else if (aim.x > 0) this.Flipped = false;
 
     const fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
-    if (this.riding) {
-      fireVelo.x += this.riding.Velocity.x;
-      fireVelo.y += this.riding.Velocity.y;
-      aim.z = -this.riding.Height / 10;
+    // Inherit velocity from bottom of stack as well
+    const stackBottom = this.getBottomOfStack();
+    if (stackBottom !== this) {
+      fireVelo.x += stackBottom.Velocity.x;
+      fireVelo.y += stackBottom.Velocity.y;
+      aim.z = -this.Position.z / 10;
       aim.clamp(1, 1);
     }
     fireVelo.x /= 3;
@@ -60,8 +62,8 @@ class Deer extends Fighter {
       aim.y += ((Random.getFloat() - 0.5) * this.boostTimer) / 3;
       aim.clamp(1, 1);
 
-      if (this.riding) { // Apply recoil to rider to prevent kill reward from dismounting rider
-        this.riding.Velocity = Vector.Add(this.riding.Velocity, Vector.Multiply(aim, -this.boostTimer));
+      if (stackBottom !== this) { // Apply recoil to rider to prevent kill reward from dismounting rider
+        stackBottom.Velocity = Vector.Add(stackBottom.Velocity, Vector.Multiply(aim, -this.boostTimer));
       } else {
         this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(aim, -this.boostTimer));
       }

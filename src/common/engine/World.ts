@@ -33,7 +33,7 @@ class World {
   private kills: IPlayerDied[];
 
   constructor() {
-    this.Map = new Map(40, 40, 10, 'Maps/Grass.jpg');
+    this.Map = new Map(40, 40, 25, 'Maps/Grass.jpg', 10000);
 
     this.Fighters = [];
     this.Bullets = [];
@@ -147,7 +147,8 @@ class World {
     // Tick general fighter physics
     for (let i = 0; i < this.Fighters.length; i++) {
       const obj = this.Fighters[i];
-      const maxSpeed = obj.MaxMomentum / obj.Mass;
+      const mass = obj.Mass + obj.passengerMass; // Passengers increase mass for other calculations
+      const maxSpeed = obj.MaxMomentum / obj.Mass; // Max speed still remains the same, we do not want passengers causing slowdown
 
       // First, apply any potential accelerations due to physics, start with friction as base for optimization
       let accel = new Vector(0, 0, 0);
@@ -162,6 +163,10 @@ class World {
 
         if (obj.Position.y < 0) accel.y += this.Map.wallStrength * Math.abs(obj.Position.y);
         else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.wallStrength * (obj.Position.y - this.Map.Height);
+
+        // Force divided by mass equals acceleration
+        accel.x /= mass;
+        accel.y /= mass;
       }
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
@@ -208,18 +213,24 @@ class World {
         obj.Land();
       }
 
-      obj.riding = null; // Clear ridership for current frame--if they sink into whoever they're riding, they'll collide and this will be reset
+      // Clear ridership for current frame--if they sink into whoever they're riding, they'll collide and this will be reset
+      obj.riding = null;
+      obj.passengerMass = 0;
+      obj.passengerMaxMomentum = 0;
     }
 
     // Apply rider position offsets
     for (let i = 0; i < this.Fighters.length; i++) {
       if (this.Fighters[i].rodeThisTick) {
         const a = this.Fighters[i];
-        a.Position = Vector.Add(a.Position, Vector.Subtract(a.rodeThisTick.Position, a.rodeThisTick.lastPosition));
+        a.Position = Vector.Add(a.Position, a.getTotalStackPositionChange());
 
-        if (a.dismountRider || a.rodeThisTick.dismountRider) {
+        if (a.dismountRider || a.rodeThisTick.dismountRider) { // Dismount if requested
           a.Velocity = Vector.Add(a.Velocity, a.rodeThisTick.Velocity);
           a.rodeThisTick = null;
+        } else { // Otherwise, tally up their mass for future stuff
+          a.getBottomOfStackPhysics().passengerMass += a.Mass + a.passengerMass;
+          a.getBottomOfStackPhysics().passengerMaxMomentum += a.MaxMomentum + a.passengerMaxMomentum;
         }
       }
       // Note: cannot debounce dismount variable here in case this fighter is being rode and they are trying to buck off rider
@@ -253,19 +264,21 @@ class World {
           )
         ) { // If they are within collision range...
           if (!(a.rodeThisTick === b || b.rodeThisTick === a)) { // If they are not riding each other, treat it like a standard collision
-            let moment1 = a.Velocity.length() * a.Mass; // Momentum of fighter A
-            let moment2 = b.Velocity.length() * b.Mass; // Momentum of fighter B
+            const massA = a.Mass + a.passengerMass;
+            const massB = b.Mass + b.passengerMass;
+            let moment1 = a.Velocity.length() * massA; // Momentum of fighter A
+            let moment2 = b.Velocity.length() * massB; // Momentum of fighter B
 
             // Apply ridership momentum additions
-            if (a.rodeThisTick) moment1 += a.rodeThisTick.Velocity.length() * a.Mass;
-            if (b.rodeThisTick) moment2 += b.rodeThisTick.Velocity.length() * b.Mass;
+            if (a.rodeThisTick) moment1 += a.rodeThisTick.Velocity.length() * massA;
+            if (b.rodeThisTick) moment2 += b.rodeThisTick.Velocity.length() * massB;
 
             a.CollideWithFighter(b, moment1); // Trigger collision events
             b.CollideWithFighter(a, moment2);
 
             // Momentum Transfer--should we swap momentums or sum them (essentially, what collision do we want)
-            const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / a.Mass);
-            b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / b.Mass);
+            const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / massA);
+            b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / massB);
             a.Velocity = aVelo;
           }
 

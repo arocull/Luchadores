@@ -16,7 +16,7 @@ class Sheep extends Fighter {
   private baseMoveAccel: number;
 
   constructor(id: number, position: Vector) {
-    super(200, 200, 8000, 0.6, 1.2, 8, 20, FighterType.Sheep, id, position);
+    super(200, 200, 8000, 0.6, 1.2, 8, 30, FighterType.Sheep, id, position);
 
     this.ranged = false;
     this.baseMoveAccel = this.MoveAcceleration;
@@ -25,7 +25,7 @@ class Sheep extends Fighter {
   public CollideWithFighter(hit: Fighter, momentum: number) {
     super.CollideWithFighter(hit, momentum);
 
-    if (momentum > this.MaxMomentum / 3) {
+    if (momentum > this.MaxMomentum / 3) { // Stacking passengers adds to max momentum
       hit.TakeDamage((momentum / this.MaxMomentum) * 40, this);
     }
   }

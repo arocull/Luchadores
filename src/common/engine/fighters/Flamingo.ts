@@ -25,7 +25,7 @@ class Flamingo extends Fighter {
   private breathing: boolean;
 
   constructor(id: number, position: Vector) {
-    super(100, 80, 1500, 0.4, 2, 20, 25, FighterType.Flamingo, id, position);
+    super(80, 80, 1300, 0.4, 2, 20, 35, FighterType.Flamingo, id, position);
 
     // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;
@@ -55,9 +55,11 @@ class Flamingo extends Fighter {
     else if (this.AimDirection.x > 0) this.Flipped = false;
 
     const fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
-    if (this.riding) {
-      fireVelo.x += this.riding.Velocity.x;
-      fireVelo.y += this.riding.Velocity.y;
+    // Inherit velocity from bottom of stack as well
+    const stackBottom = this.getBottomOfStack();
+    if (stackBottom !== this) {
+      fireVelo.x += stackBottom.Velocity.x;
+      fireVelo.y += stackBottom.Velocity.y;
     }
     fireVelo.z = 0;
 

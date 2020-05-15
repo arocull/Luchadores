@@ -40,6 +40,8 @@ class Fighter extends Entity {
   public riding: Fighter;
   public rodeThisTick: Fighter;
   public dismountRider: boolean;
+  public passengerMass: number;
+  public passengerMaxMomentum: number;
 
   protected ranged: boolean;
   protected AimDirection: Vector;
@@ -79,6 +81,8 @@ class Fighter extends Entity {
     this.riding = null;
     this.rodeThisTick = null;
     this.dismountRider = false;
+    this.passengerMass = 0;
+    this.passengerMaxMomentum = 0;
 
     this.ranged = true;
     this.AimDirection = new Vector(1, 0, 0);
@@ -199,6 +203,27 @@ class Fighter extends Entity {
 
   public inKillEffect(): boolean {
     return (this.boostTimer > 0);
+  }
+
+  // Returns the fighter at the bottom of a stack of players
+  public getBottomOfStack(): Fighter {
+    if (this.riding) return this.riding.getBottomOfStack();
+    return this;
+  }
+  // FOR USE IN PHYSICS ONLY--Returns the fighter at the bottom of a stack of players
+  public getBottomOfStackPhysics(): Fighter {
+    if (this.rodeThisTick) return this.rodeThisTick.getBottomOfStackPhysics();
+    return this;
+  }
+  // FOR USE IN PHYSICS ONLY--Returns the total delta position from the bottom of a stack
+  public getTotalStackPositionChange(): Vector {
+    if (this.rodeThisTick) {
+      return Vector.Add(
+        Vector.Subtract(this.Position, this.lastPosition),
+        this.rodeThisTick.getTotalStackPositionChange(),
+      );
+    }
+    return Vector.Subtract(this.Position, this.lastPosition);
   }
 }
 
