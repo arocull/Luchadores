@@ -217,14 +217,19 @@ class Fighter extends Entity {
     return this;
   }
   // FOR USE IN PHYSICS ONLY--Returns the total delta position from the bottom of a stack
-  public getTotalStackPositionChange(): Vector {
-    if (this.rodeThisTick) {
+  public getTotalStackPositionChange(stackTop: boolean = true): Vector {
+    if (stackTop) { // If this is the character at the top of a stack, we do not want to include their position in the change
+      return this.rodeThisTick.getTotalStackPositionChange(false);
+    }
+
+    if (this.rodeThisTick) { // If there is someone below this fighter in the stack, include them too
       return Vector.Add(
         Vector.Subtract(this.Position, this.lastPosition),
-        this.rodeThisTick.getTotalStackPositionChange(),
+        this.rodeThisTick.getTotalStackPositionChange(false),
       );
     }
-    return Vector.Subtract(this.Position, this.lastPosition);
+
+    return Vector.Subtract(this.Position, this.lastPosition); // Bottom-of-stack case--return delta position
   }
 }
 
