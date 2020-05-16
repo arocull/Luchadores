@@ -130,13 +130,14 @@ class Fighter extends Entity {
   }
 
   // Attempt to fire a bullet--fires as many bullets as it can until the cooldown is positive or some other condition
-  public tryBullet() {
+  public tryBullet(capShock: boolean = false) {
     if (!this.Firing) return;
 
     // Fire a bullet--if time had passed to the point where multiple bullets could have been fired, fire all of them and tick them accordingly
     while (this.canFirebullet()) {
       const t = Math.abs(this.BulletCooldown); // Time since bullet was fireable
 
+      if (capShock) this.BulletShock = 0; // Prevent stacking when multiple bullets are fired (happens on higher-latency clients)
       const b = this.fireBullet();
 
       if (b === null) return; // If no bullet was generated, stop here

@@ -114,19 +114,20 @@ class World {
   // Normal World Things //
 
   // Run all general world-tick functions
-  // Note that DeltaTime should be in seconds
-  public tick(DeltaTime: number) {
-    this.doUpdates(DeltaTime);
+  // - DeltaTime should be in seconds
+  // - latencyChecks is used to cap certain values that may otherwise act in unexpected ways in a high-latency settings; client-only
+  public tick(DeltaTime: number, latencyChecks: boolean = false) {
+    this.doUpdates(DeltaTime, latencyChecks);
     this.TickPhysics(DeltaTime);
   }
 
   // Do various updates that are not realted to physics
-  public doUpdates(DeltaTime: number) {
+  public doUpdates(DeltaTime: number, latencyChecks: boolean) {
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
 
       a.tickCooldowns(DeltaTime);
-      a.tryBullet(); // Fire bullets (bullets are automatically added to list with events)
+      a.tryBullet(latencyChecks); // Fire bullets (bullets are automatically added to list with events)
 
       // If they are dead, add them to the kill list, then remove them from future interactions
       if (this.doReaping && a.HP <= 0) {

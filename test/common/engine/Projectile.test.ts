@@ -92,3 +92,32 @@ test('bullet jump-dodge test', () => {
 
   expect(flam.HP).toBe(hp); // Not hit when bullets are leaped over
 });
+
+test('bullet shock latency test', () => {
+  Random.setSeed(1); // Set the random seed so it is always the same for this unit test
+  const world = new World();
+  world.Map = new Map(10, 10, 0, '');
+  const flam = new Flamingo(1, new Vector(5, 5, 0));
+  world.Fighters.push(flam);
+
+  expect(flam.BulletShock).toBe(0);
+
+  flam.Firing = true;
+  for (let i = 0; i < 40; i++) {
+    world.tick(0.1);
+    flam.setBreath(50, false); // Make sure they don't run out of breath, lol
+  }
+  expect(flam.BulletShock).toBeGreaterThan(0); // There should be some value to add to screen shake
+
+  flam.BulletShock = 0;
+
+  world.tick(1); // Tick world in high-latency setting; in this case, client has low frame rate
+  // Flamingo gets ~0.6 bullet shock per bullet (as of May 16th 2020), so they should have a lot stored up here
+  expect(flam.BulletShock).toBeGreaterThan(3);
+  flam.BulletShock = 0;
+
+  flam.setBreath(50, false); // Reset breath
+  world.tick(1, true); // Pretend client recieved a world state packet that took way too long to send
+  expect(flam.BulletShock).toBeGreaterThan(0); // Racking up a single extra bullet shock is not bad
+  expect(flam.BulletShock).toBeLessThan(1); // But we don't want a large amount stacked up, because the client has not had any time for it to dissipate
+});
