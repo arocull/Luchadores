@@ -616,14 +616,16 @@ const preloader = new AssetPreloader([
     }
   });
 
-  const ws = new NetworkClient(`ws://${window.location.host}/socket`);
-
-  Promise.all([preloader.preload(), ws.connect()])
-    .then((results) => {
-      const connected = results[1];
+  const preloadPromise = preloader.preload()
+    .then(() => {
       console.log('Asset preloading complete.');
       window.requestAnimationFrame(DoFrame);
+    });
+  const ws = new NetworkClient(`ws://${window.location.host}/socket`);
 
+  Promise.all([preloadPromise, ws.connect()])
+    .then((results) => {
+      const connected = results[1];
       topics.ClientNetworkFromServer = connected.topicInbound;
       topics.ClientNetworkToServer = connected.topicOutbound;
       console.log('Connected OK!', connected);
