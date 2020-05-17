@@ -603,10 +603,6 @@ const preloader = new AssetPreloader([
     Renderer.DrawUIFrame(canvas, cam, uiLoadScreen.frames[i]);
   }
 
-  preloader.preload().then(() => {
-    console.log('Asset preloading complete.');
-    window.requestAnimationFrame(DoFrame);
-  });
   preloader.on('progress', (status) => {
     console.log(`Preload progress: ${_.round(status.progress * 100, 1)}% ... (${status.file})`);
 
@@ -621,8 +617,16 @@ const preloader = new AssetPreloader([
   });
 
   const ws = new NetworkClient(`ws://${window.location.host}/socket`);
-  ws.connect()
-    .then((connected) => {
+  Promise.all([
+    preloader.preload()
+      .then(() => {
+        console.log('Asset preloading complete.');
+        window.requestAnimationFrame(DoFrame);
+      }),
+    ws.connect(),
+  ])
+    .then((results) => {
+      const connected = results[1];
       topics.ClientNetworkFromServer = connected.topicInbound;
       topics.ClientNetworkToServer = connected.topicOutbound;
       console.log('Connected OK!', connected);
