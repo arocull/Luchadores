@@ -563,6 +563,9 @@ function DoFrame(tick: number) {
   if (Input.SettingsMenuOpen) {
     for (let i = 0; i < uiSettingsMenu.frames.length; i++) {
       doUIFrameInteraction(uiSettingsMenu.frames[i]);
+    }
+    uiSettingsMenu.Tick(DeltaTime);
+    for (let i = 0; i < uiSettingsMenu.frames.length; i++) {
       Renderer.DrawUIFrame(canvas, cam, uiSettingsMenu.frames[i]);
     }
   } else if (!Input.GUIMode && !Input.PlayerListOpen) {

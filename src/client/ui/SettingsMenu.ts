@@ -2,6 +2,8 @@ import UIFrame from './UIFrame';
 import UITextBox from './UITextBox';
 import RenderSettings from '../RenderSettings';
 import { MessageBus } from '../../common/messaging/bus';
+import { RenderQuality } from '../../common/engine/Enums';
+import { Particle } from '../particles';
 
 class UISettingsMenu {
   private static WIDTH = 0.75;
@@ -9,15 +11,26 @@ class UISettingsMenu {
 
   private static TITLE_HEIGHT = 0.05;
   private static CLOSE_BUTTON_WIDTH = 0.125;
-  private static RENDERQUALITY_OFFSET = (UISettingsMenu.WIDTH / 4) / 4;
-  private static RENDERQUALITY_SPACING = UISettingsMenu.RENDERQUALITY_OFFSET + (UISettingsMenu.WIDTH / 4);
+  private static BUTTON_OFFSET = (UISettingsMenu.WIDTH / 4) / 4;
+  private static BUTTON_SPACING = UISettingsMenu.BUTTON_OFFSET + (UISettingsMenu.WIDTH / 4);
 
   private static BASECOLOR = '#737373';
   private static BASEBORDER = '#454545';
   private static HOVERCOLOR = '#646464';
   private static HOVERBORDER = '#373737';
 
+  private static BORDERTHICKNESS_SELECTED = 0.05;
+  private static BORDERTHICKNESS_DEFAULT = 0.01;
+
   public frames: UIFrame[];
+  private time: number = 0;
+
+  private qualityLow: UIFrame;
+  private qualityMedium: UIFrame;
+  private qualityHigh: UIFrame;
+  private particleLow: UIFrame;
+  private particleMedium: UIFrame;
+  private particleHigh: UIFrame;
 
   constructor(private renderSettings: RenderSettings) {
     const base = new UIFrame(
@@ -62,7 +75,7 @@ class UISettingsMenu {
 
     // Render Quality Settings
     const qualityText = new UITextBox(
-      base.cornerX + 0.05,
+      base.cornerX + UISettingsMenu.WIDTH * 0.05,
       base.cornerY + UISettingsMenu.HEIGHT * 0.05,
       UISettingsMenu.WIDTH,
       UISettingsMenu.HEIGHT * 0.05,
@@ -75,12 +88,12 @@ class UISettingsMenu {
     qualityText.textAlignment = 'left';
 
     const qualityDescript = new UITextBox(
-      base.cornerX + 0.025,
+      base.cornerX + UISettingsMenu.WIDTH * 0.025,
       base.cornerY + UISettingsMenu.HEIGHT * 0.1,
       UISettingsMenu.WIDTH * 0.95,
       UISettingsMenu.HEIGHT * 0.05,
       false,
-      'Determines drawing of certain effects like arena bound stretching and depth sorting.',
+      'Determines drawing of certain special effects like arena bound stretching and rotations. Performance impact varies by platform.',
     );
     qualityDescript.textFontSize = 18;
     qualityDescript.textStyle = '#ffffff';
@@ -89,41 +102,38 @@ class UISettingsMenu {
     qualityDescript.textWrapping = true;
 
     const qualityLow = new UITextBox(
-      base.cornerX + UISettingsMenu.RENDERQUALITY_OFFSET,
-      base.cornerY + UISettingsMenu.HEIGHT * 0.2,
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.15,
       UISettingsMenu.WIDTH / 4,
       UISettingsMenu.HEIGHT * 0.075,
-      true,
-      'Low',
+      true, 'Fast',
+    );
+    const qualityMedium = new UITextBox(
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET + UISettingsMenu.BUTTON_SPACING,
+      qualityLow.cornerY, qualityLow.width, qualityLow.height, true, 'Balanced',
+    );
+    const qualityHigh = new UITextBox(
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET + 2 * UISettingsMenu.BUTTON_SPACING,
+      qualityLow.cornerY, qualityLow.width, qualityLow.height, true, 'Pretty',
     );
     this.MakeButton(qualityLow);
-    qualityLow.onClick = (() => {
-      this.renderSettings.Quality = 1;
-    });
-    const qualityMedium = new UITextBox(
-      base.cornerX + UISettingsMenu.RENDERQUALITY_OFFSET + UISettingsMenu.RENDERQUALITY_SPACING,
-      qualityLow.cornerY, qualityLow.width, qualityLow.height, true,
-      'Medium',
-    );
     this.MakeButton(qualityMedium);
-    qualityMedium.onClick = (() => {
-      this.renderSettings.Quality = 2;
-    });
-    const qualityHigh = new UITextBox(
-      base.cornerX + UISettingsMenu.RENDERQUALITY_OFFSET + 2 * UISettingsMenu.RENDERQUALITY_SPACING,
-      qualityLow.cornerY, qualityLow.width, qualityLow.height, true,
-      'High',
-    );
     this.MakeButton(qualityHigh);
+    qualityLow.onClick = (() => {
+      this.renderSettings.Quality = RenderQuality.Low;
+    });
+    qualityMedium.onClick = (() => {
+      this.renderSettings.Quality = RenderQuality.Medium;
+    });
     qualityHigh.onClick = (() => {
-      this.renderSettings.Quality = 3;
+      this.renderSettings.Quality = RenderQuality.High;
     });
 
 
     // Particle Amount Settings
     const particleText = new UITextBox(
-      base.cornerX + 0.05,
-      base.cornerY + 0.3,
+      base.cornerX + UISettingsMenu.WIDTH * 0.05,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.3,
       UISettingsMenu.WIDTH,
       UISettingsMenu.HEIGHT * 0.05,
       false,
@@ -135,12 +145,12 @@ class UISettingsMenu {
     particleText.textAlignment = 'left';
 
     const particleDescript = new UITextBox(
-      base.cornerX + 0.025,
-      base.cornerY + 0.35,
+      base.cornerX + UISettingsMenu.WIDTH * 0.025,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.35,
       UISettingsMenu.WIDTH * 0.95,
       UISettingsMenu.HEIGHT * 0.05,
       false,
-      'How many particles should be drawn. The more particles the prettier the game, but the more processing power it takes to draw them.',
+      'How many particles should be simulated. The more particles the prettier the game, but the more processing power each frame takes.',
     );
     particleDescript.textWrapping = true;
     particleDescript.textFontSize = 18;
@@ -148,7 +158,103 @@ class UISettingsMenu {
     particleDescript.alpha = 0;
     particleDescript.textAlignment = 'left';
 
-    this.frames = [base, title, close, qualityText, qualityDescript, qualityLow, qualityMedium, qualityHigh, particleText, particleDescript];
+    const particleLow = new UITextBox(
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.4,
+      UISettingsMenu.WIDTH / 4,
+      UISettingsMenu.HEIGHT * 0.075,
+      true, 'Minimal',
+    );
+    const particleMedium = new UITextBox(
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET + UISettingsMenu.BUTTON_SPACING,
+      particleLow.cornerY, particleLow.width, particleLow.height, true, 'Medium',
+    );
+    const particleHigh = new UITextBox(
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET + 2 * UISettingsMenu.BUTTON_SPACING,
+      particleLow.cornerY, particleLow.width, particleLow.height, true, 'Excessive',
+    );
+    this.MakeButton(particleLow);
+    this.MakeButton(particleMedium);
+    this.MakeButton(particleHigh);
+    particleLow.onClick = (() => {
+      this.renderSettings.ParticleAmount = 1;
+    });
+    particleMedium.onClick = (() => {
+      this.renderSettings.ParticleAmount = 3;
+    });
+    particleHigh.onClick = (() => {
+      this.renderSettings.ParticleAmount = 5;
+    });
+
+    this.qualityLow = qualityLow;
+    this.qualityMedium = qualityMedium;
+    this.qualityHigh = qualityHigh;
+    this.particleLow = particleLow;
+    this.particleMedium = particleMedium;
+    this.particleHigh = particleHigh;
+
+    // Booleans
+    const cameraShakeText = new UITextBox(
+      base.cornerX + UISettingsMenu.WIDTH * 0.05,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.6,
+      UISettingsMenu.WIDTH,
+      UISettingsMenu.HEIGHT * 0.05,
+      false,
+      'Camera Shake',
+    );
+    cameraShakeText.textFontSize = 24;
+    cameraShakeText.textStyle = '#ffffff';
+    cameraShakeText.alpha = 0;
+    cameraShakeText.textAlignment = 'left';
+
+    const cameraShake = new UITextBox(
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.65,
+      UISettingsMenu.WIDTH / 4,
+      UISettingsMenu.HEIGHT * 0.075,
+      true, 'Enabled',
+    );
+    this.MakeButton(cameraShake);
+    cameraShake.onClick = (() => {
+      this.renderSettings.EnableCameraShake = !this.renderSettings.EnableCameraShake;
+      if (this.renderSettings.EnableCameraShake) {
+        cameraShake.text = 'Enabled';
+      } else {
+        cameraShake.text = 'Disabled';
+      }
+    });
+
+    const fpsCounterText = new UITextBox(
+      base.cornerX + UISettingsMenu.WIDTH * 0.05 + 2 * UISettingsMenu.BUTTON_SPACING,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.6,
+      UISettingsMenu.WIDTH,
+      UISettingsMenu.HEIGHT * 0.05,
+      false,
+      'FPS Counter',
+    );
+    fpsCounterText.textFontSize = 24;
+    fpsCounterText.textStyle = '#ffffff';
+    fpsCounterText.alpha = 0;
+    fpsCounterText.textAlignment = 'left';
+
+    const fpsCounter = new UITextBox(
+      base.cornerX + UISettingsMenu.BUTTON_OFFSET + 2 * UISettingsMenu.BUTTON_SPACING,
+      base.cornerY + UISettingsMenu.HEIGHT * 0.65,
+      UISettingsMenu.WIDTH / 4,
+      UISettingsMenu.HEIGHT * 0.075,
+      true, 'Disabled',
+    );
+    this.MakeButton(fpsCounter);
+    fpsCounter.onClick = (() => {
+      this.renderSettings.FPScounter = !this.renderSettings.FPScounter;
+      if (this.renderSettings.FPScounter) {
+        fpsCounter.text = 'Enabled';
+      } else {
+        fpsCounter.text = 'Disabled';
+      }
+    });
+
+    this.frames = [base, title, close, qualityText, qualityDescript, qualityLow, qualityMedium, qualityHigh, particleText, particleDescript, particleLow, particleMedium, particleHigh, cameraShakeText, cameraShake, fpsCounterText, fpsCounter];
   }
 
   /* eslint-disable no-param-reassign */
@@ -161,9 +267,65 @@ class UISettingsMenu {
     button.colorHover = UISettingsMenu.HOVERCOLOR;
     button.borderColorHover = UISettingsMenu.HOVERBORDER;
     button.renderStyle = button.color; button.borderRenderStyle = button.borderColor;
-    button.borderThickness = 0.01;
+    button.borderThickness = UISettingsMenu.BORDERTHICKNESS_DEFAULT;
+  }
+
+  private SetBorder(button: UIFrame, selected: boolean) {
+    if (selected) {
+      button.borderColor = Particle.RGBToHex(75, 200, 100 + 50 * (Math.sin(Math.PI * this.time) + 1)); // 1 to 2
+      button.borderColorHover = button.borderColor;
+      button.borderThickness = UISettingsMenu.BORDERTHICKNESS_SELECTED;
+    } else {
+      button.borderColor = UISettingsMenu.BASEBORDER;
+      button.borderColorHover = UISettingsMenu.HOVERBORDER;
+      button.borderThickness = UISettingsMenu.BORDERTHICKNESS_DEFAULT;
+    }
   }
   /* eslint-enable no-param-reassign */
+
+  public Tick(DeltaTime: number) {
+    this.time += DeltaTime;
+
+    switch (this.renderSettings.Quality) {
+      case RenderQuality.Low:
+        this.SetBorder(this.qualityLow, true);
+        this.SetBorder(this.qualityMedium, false);
+        this.SetBorder(this.qualityHigh, false);
+        break;
+      case RenderQuality.Medium:
+        this.SetBorder(this.qualityLow, false);
+        this.SetBorder(this.qualityMedium, true);
+        this.SetBorder(this.qualityHigh, false);
+        break;
+      case RenderQuality.High:
+      default:
+        this.SetBorder(this.qualityLow, false);
+        this.SetBorder(this.qualityMedium, false);
+        this.SetBorder(this.qualityHigh, true);
+        break;
+    }
+
+    switch (this.renderSettings.ParticleAmount) {
+      case 1:
+        this.SetBorder(this.particleLow, true);
+        this.SetBorder(this.particleMedium, false);
+        this.SetBorder(this.particleHigh, false);
+        break;
+      case 2:
+      case 3:
+        this.SetBorder(this.particleLow, false);
+        this.SetBorder(this.particleMedium, true);
+        this.SetBorder(this.particleHigh, false);
+        break;
+      case 4:
+      case 5:
+      default:
+        this.SetBorder(this.particleLow, false);
+        this.SetBorder(this.particleMedium, false);
+        this.SetBorder(this.particleHigh, true);
+        break;
+    }
+  }
 }
 
 export { UISettingsMenu as default };
