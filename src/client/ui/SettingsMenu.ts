@@ -9,7 +9,8 @@ class UISettingsMenu {
 
   private static TITLE_HEIGHT = 0.05;
   private static CLOSE_BUTTON_WIDTH = 0.125;
-  private static RENDERQUALITY_OFFSET = (UISettingsMenu.WIDTH - (UISettingsMenu.WIDTH * (3 / 4))) / 2;
+  private static RENDERQUALITY_OFFSET = (UISettingsMenu.WIDTH / 4) / 4;
+  private static RENDERQUALITY_SPACING = UISettingsMenu.RENDERQUALITY_OFFSET + (UISettingsMenu.WIDTH / 4);
 
   private static BASECOLOR = '#737373';
   private static BASEBORDER = '#454545';
@@ -100,11 +101,8 @@ class UISettingsMenu {
       this.renderSettings.Quality = 1;
     });
     const qualityMedium = new UITextBox(
-      base.cornerX + UISettingsMenu.RENDERQUALITY_OFFSET + (UISettingsMenu.WIDTH / 3),
-      base.cornerY + UISettingsMenu.HEIGHT * 0.2,
-      UISettingsMenu.WIDTH / 4,
-      UISettingsMenu.HEIGHT * 0.075,
-      true,
+      base.cornerX + UISettingsMenu.RENDERQUALITY_OFFSET + UISettingsMenu.RENDERQUALITY_SPACING,
+      qualityLow.cornerY, qualityLow.width, qualityLow.height, true,
       'Medium',
     );
     this.MakeButton(qualityMedium);
@@ -112,11 +110,8 @@ class UISettingsMenu {
       this.renderSettings.Quality = 2;
     });
     const qualityHigh = new UITextBox(
-      base.cornerX + UISettingsMenu.RENDERQUALITY_OFFSET + 2 * (UISettingsMenu.WIDTH / 3),
-      base.cornerY + UISettingsMenu.HEIGHT * 0.2,
-      UISettingsMenu.WIDTH / 4,
-      UISettingsMenu.HEIGHT * 0.075,
-      true,
+      base.cornerX + UISettingsMenu.RENDERQUALITY_OFFSET + 2 * UISettingsMenu.RENDERQUALITY_SPACING,
+      qualityLow.cornerY, qualityLow.width, qualityLow.height, true,
       'High',
     );
     this.MakeButton(qualityHigh);

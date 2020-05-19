@@ -327,7 +327,19 @@ uiKillCam.textFont = 'flamenco';
 uiKillCam.textFontSize = 60;
 uiSpecialBar.POSY -= UIHealthbar.HEIGHT * 1.25;
 uiSpecialBar.reset();
-// uiSettingsMenuOpen.constrainAspect = true;
+uiSettingsMenuOpen.constrainAspect = true;
+uiSettingsMenuOpen.constrainAspectCenterX = false;
+uiSettingsMenuOpen.constrainAspectCenterY = false;
+uiSettingsMenuOpen.image = new Image();
+uiSettingsMenuOpen.image.src = 'Interface/Gear.png';
+uiSettingsMenuOpen.alpha = 0;
+uiSettingsMenuOpen.onHover = ((hovering) => {
+  if (hovering) {
+    uiSettingsMenuOpen.imageAlpha = 1;
+  } else {
+    uiSettingsMenuOpen.imageAlpha = 0.8;
+  }
+});
 uiSettingsMenuOpen.onClick = (() => {
   Input.SettingsMenuOpen = true;
 });
@@ -602,6 +614,7 @@ function DoFrame(tick: number) {
 }
 
 const preloader = new AssetPreloader([
+  'Interface/Gear.png',
   'Maps/Arena.jpg',
   'Maps/Grass.jpg',
   'Portraits/Deer.png',
