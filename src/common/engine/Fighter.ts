@@ -37,6 +37,7 @@ class Fighter extends Entity {
   public JustLanded: boolean;
 
   public lastPosition: Vector;
+  public newPosition: Vector;
   public riding: Fighter;
   public rodeThisTick: Fighter;
   public dismountRider: boolean;
@@ -224,12 +225,12 @@ class Fighter extends Entity {
 
     if (this.rodeThisTick) { // If there is someone below this fighter in the stack, include them too
       return Vector.Add(
-        Vector.Subtract(this.Position, this.lastPosition),
+        Vector.Subtract(this.newPosition, this.lastPosition),
         this.rodeThisTick.getTotalStackPositionChange(false),
       );
     }
 
-    return Vector.Subtract(this.Position, this.lastPosition); // Bottom-of-stack case--return delta position
+    return Vector.Subtract(this.newPosition, this.lastPosition); // Bottom-of-stack case--return delta position
   }
 }
 

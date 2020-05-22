@@ -199,14 +199,17 @@ class World {
       obj.lastPosition = obj.Position;
       obj.Position = Vector.Add(obj.Position, deltaX);
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
+      obj.newPosition = obj.Position;
 
       // Terminal velocity
       if (obj.Velocity.length() > maxSpeed) {
         obj.Velocity = Vector.Multiply(Vector.UnitVector(obj.Velocity), maxSpeed);
       }
 
-      if (obj.Acceleration.x < -1) obj.Flipped = true;
-      else if (obj.Acceleration.x > 1) obj.Flipped = false;
+      if (obj.getBulletCooldown() <= 0) {
+        if (obj.Acceleration.x < -1) obj.Flipped = true;
+        else if (obj.Acceleration.x > 1) obj.Flipped = false;
+      }
 
       if (obj.Position.z < 0) {
         obj.Position.z = 0;

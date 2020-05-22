@@ -31,12 +31,13 @@ class Animator {
   public timer: number;
   public timerTick: number;
   public lastState: AnimationState;
-  protected timeToUniqueIdle: number;
-  protected inUniqueIdle: boolean;
-  protected bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
+  private timeToUniqueIdle: number;
+  private inUniqueIdle: boolean;
+  private bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
 
   public killEffectCountdown: number; // Ticks down until rose petals effects show after a kill
 
+  private attackSpeed: number;
 
   constructor(protected owner: Fighter, private settings: RenderSettings) {
     this.SpriteSheet = new Image();
@@ -45,12 +46,14 @@ class Animator {
     this.FrameWidth = 512;
     this.FrameHeight = 512;
     this.Upscale = 1;
+    this.attackSpeed = 1;
     switch (owner.getCharacter()) {
       case FighterType.Sheep:
         this.Upscale = 1.3;
         break;
       case FighterType.Deer:
-        this.SpriteSheet = null;
+        this.Upscale = 1.9;
+        this.attackSpeed = 3;
         break;
       default:
     }
@@ -106,14 +109,14 @@ class Animator {
     ) {
       const fireDir = Vector.Multiply(this.owner.getAim(), -1);
       const firePos = Vector.Clone(this.owner.Position);
-      firePos.z += this.owner.Height * (2 / 3);
-      if (this.owner.Flipped === true) firePos.x -= this.owner.Radius * 0.8;
-      else firePos.x += this.owner.Radius * 0.8;
+      firePos.z += this.owner.Height * (5 / 3);
+      if (this.owner.Flipped === true) firePos.x -= this.owner.Radius;
+      else firePos.x += this.owner.Radius;
 
       MessageBus.publish('Effect_NewParticle', new PBulletShell(firePos, fireDir));
       MessageBus.publish('Effect_NewParticle', new PBulletFire(firePos, fireDir, 1));
 
-      this.bulletTimer = 0.07;
+      this.bulletTimer = 0.05;
 
     // Flamingo - Fire on back and smoke breathing
     } else if (this.owner.getCharacter() === FighterType.Flamingo) {
@@ -188,7 +191,7 @@ class Animator {
         break;
 
       case AnimationState.Attacking: // Attack
-        this.frame = Math.floor(this.timer * 5) % 5;
+        this.frame = Math.floor(this.timer * 5 * this.attackSpeed) % 5;
         this.row = 2;
         this.tickAttacking();
         break;

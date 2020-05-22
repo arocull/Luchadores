@@ -588,11 +588,12 @@ function DoFrame(tick: number) {
 const preloader = new AssetPreloader([
   'Maps/Arena.jpg',
   'Maps/Grass.jpg',
+  'Portraits/Sheep.png',
   'Portraits/Deer.png',
   'Portraits/Flamingo.png',
-  'Portraits/Sheep.png',
-  'Sprites/Flamingo.png',
   'Sprites/Sheep.png',
+  'Sprites/Deer.png',
+  'Sprites/Flamingo.png',
 ]);
 
 /* eslint-disable no-console */

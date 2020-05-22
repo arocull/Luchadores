@@ -185,17 +185,17 @@ class Renderer {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);
 
-        let upscaleoffset = 0;
-        if (a.Animator) upscaleoffset = Math.max(0, a.Animator.Upscale - 1);
+        let upscale = 0;
+        if (a.Animator) upscale = a.Animator.Upscale;
 
         // First, draw shadow
         canvas.fillStyle = '#000000';
-        canvas.globalAlpha = 0.5;
+        canvas.globalAlpha = 0.3;
         canvas.fillRect(
-          (-pos.x - a.Radius * 1.1) * zoom + offsetX,
-          (pos.y + (pos.z / 2) + upscaleoffset) * zoom + offsetY,
-          2 * a.Radius * 1.1 * zoom,
-          -(a.Height / 2) * zoom,
+          (-pos.x - a.Radius) * zoom + offsetX,
+          (pos.y + (pos.z / 2)) * zoom + offsetY,
+          2 * a.Radius * zoom,
+          -((a.Height * upscale) * zoom) / 2,
         );
         canvas.globalAlpha = 1;
 
@@ -212,7 +212,7 @@ class Renderer {
             b.FrameWidth,
             b.FrameHeight,
             (-pos.x - (a.Height / 2) * b.Upscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
-            (pos.y + pos.z + (a.Height * (b.Upscale - 1))) * zoom + offsetY,
+            (pos.y + pos.z) * zoom + offsetY,
             a.Height * b.Upscale * zoom, // 2 * Radius originally used in place of a.Height
             -a.Height * b.Upscale * zoom,
           );
@@ -234,7 +234,7 @@ class Renderer {
           canvas.fillText(
             a.DisplayName,
             offsetX - pos.x * camera.Zoom,
-            (pos.y + pos.z - a.Height - 0.175) * camera.Zoom + offsetY,
+            (pos.y + pos.z - a.Height * upscale - 0.175) * camera.Zoom + offsetY,
           );
         }
       } else if (toDraw[i].type === EntityType.Projectile) {
