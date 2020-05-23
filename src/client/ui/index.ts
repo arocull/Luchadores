@@ -7,6 +7,7 @@ import UIHealthbar from './Healthbar';
 import UIPlayerInfo from './PlayerInfo';
 import UIDeathNotification from './DeathNotification';
 import UILoadScreen from './LoadScreen';
+import UISettingsMenu from './SettingsMenu';
 
 export {
   UIFrame,
@@ -18,4 +19,5 @@ export {
   UIPlayerInfo,
   UIDeathNotification,
   UILoadScreen,
+  UISettingsMenu,
 };

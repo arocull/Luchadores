@@ -1,10 +1,10 @@
 import UIFrame from './UIFrame';
 import UITextBox from './UITextBox';
 
-class UILoadScreen {
-  public static BAR_WIDTH: number = 0.995;
-  public static BAR_HEIGHT: number = 0.9;
+const BAR_WIDTH: number = 0.995;
+const BAR_HEIGHT: number = 0.9;
 
+class UILoadScreen {
   public frames: UIFrame[];
 
   private bwid: number;
@@ -17,8 +17,8 @@ class UILoadScreen {
     const base = new UIFrame(0.1, 0.45, 0.8, 0.1, false);
     base.renderStyle = '#777777'; // Should this be an image texture?
 
-    this.bwid = base.width * UILoadScreen.BAR_WIDTH;
-    const bhei = base.height * UILoadScreen.BAR_HEIGHT;
+    this.bwid = base.width * BAR_WIDTH;
+    const bhei = base.height * BAR_HEIGHT;
 
     const background = new UIFrame(0, 0, 1, 1, false);
     background.renderStyle = '#333333';

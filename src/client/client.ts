@@ -19,7 +19,7 @@ import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo, UILoadScreen } from './ui/index';
+import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo, UILoadScreen, UISettingsMenu } from './ui/index';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 import Wristwatch from '../common/engine/time/Wristwatch';
@@ -52,7 +52,6 @@ const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
 
 const renderSettings = new RenderSettings(3, 5, true);
-renderSettings.FPScounter = true;
 const fpsCount: number[] = [];
 
 const cam = new Camera(viewport.width, viewport.height, 18, 14, renderSettings);
@@ -63,6 +62,8 @@ const connectingText = new UITextBox(0.01, 0.925, 1, 0.05, false, 'Stabilizing c
 const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
 const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
+const uiSettingsMenu = new UISettingsMenu(renderSettings);
+const uiSettingsMenuOpen = new UIFrame(0, 0, 0.03, 0.03, true);
 const uiHealthbar = new UIHealthbar();
 const uiSpecialBar = new UIHealthbar();
 const uiKillCam = new UITextBox(0, 0.9, 1, 0.1, false, '');
@@ -208,6 +209,7 @@ const Input = {
   GUIMode: false,
   UsernameSelectOpen: true,
   ClassSelectOpen: false,
+  SettingsMenuOpen: false,
   PlayerListOpen: false, // Opens player list GUI on local client--does not need to be networked
   MouseX: 0,
   MouseY: 0,
@@ -257,10 +259,10 @@ function parseMouse(input: PlayerInput) {
   // Button 0 is left click
   Input.MouseDown = (input.MouseButtons[0] === true);
 
-  if (Input.GUIMode) {
-    Input.MouseX = input.MouseCoordinates.x;
-    Input.MouseY = input.MouseCoordinates.y;
-  } else if (character && character.isRanged() && Input.MouseDown) {
+  Input.MouseX = input.MouseCoordinates.x;
+  Input.MouseY = input.MouseCoordinates.y;
+
+  if (character && character.isRanged() && Input.MouseDown) {
     // If the character is present, we should grab mouse location based off of where projectiles are likely to be fired
     const dir = Vector.UnitVectorXY(
       Vector.Subtract(
@@ -325,6 +327,22 @@ uiKillCam.textFont = 'flamenco';
 uiKillCam.textFontSize = 60;
 uiSpecialBar.POSY -= UIHealthbar.HEIGHT * 1.25;
 uiSpecialBar.reset();
+uiSettingsMenuOpen.constrainAspect = true;
+uiSettingsMenuOpen.constrainAspectCenterX = false;
+uiSettingsMenuOpen.constrainAspectCenterY = false;
+uiSettingsMenuOpen.image = new Image();
+uiSettingsMenuOpen.image.src = 'Interface/Gear.png';
+uiSettingsMenuOpen.alpha = 0;
+uiSettingsMenuOpen.onHover = ((hovering) => {
+  if (hovering) {
+    uiSettingsMenuOpen.imageAlpha = 1;
+  } else {
+    uiSettingsMenuOpen.imageAlpha = 0.8;
+  }
+});
+uiSettingsMenuOpen.onClick = (() => {
+  Input.SettingsMenuOpen = true;
+});
 function doUIFrameInteraction(frame: UIFrame) {
   const hovering = frame.checkMouse(Input.MouseX / viewport.width, Input.MouseY / viewport.height);
   frame.onHover(hovering);
@@ -355,6 +373,9 @@ MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   });
 
   // character = world.spawnFighter(player, luchador);
+});
+MessageBus.subscribe('UI_SettingsClose', () => {
+  Input.SettingsMenuOpen = false;
 });
 
 
@@ -388,7 +409,7 @@ function DoFrame(tick: number) {
   // Capture inputs (updates `Input` global)
   ScrapeInput();
 
-  Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen);
+  Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen || Input.SettingsMenuOpen);
 
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
@@ -541,6 +562,18 @@ function DoFrame(tick: number) {
       Renderer.DrawUIFrame(canvas, cam, uiUsernameSelect.frames[i]);
     }
   }
+  if (Input.SettingsMenuOpen) {
+    for (let i = 0; i < uiSettingsMenu.frames.length; i++) {
+      doUIFrameInteraction(uiSettingsMenu.frames[i]);
+    }
+    uiSettingsMenu.Tick(DeltaTime);
+    for (let i = 0; i < uiSettingsMenu.frames.length; i++) {
+      Renderer.DrawUIFrame(canvas, cam, uiSettingsMenu.frames[i]);
+    }
+  } else if (!Input.GUIMode && !Input.PlayerListOpen) {
+    doUIFrameInteraction(uiSettingsMenuOpen);
+    Renderer.DrawUIFrame(canvas, cam, uiSettingsMenuOpen);
+  }
   if (Input.PlayerListOpen && !Input.GUIMode) {
     Renderer.DrawPlayerList(canvas, cam, 'Player List');
     for (let i = 0; i < uiPlayerList.length; i++) {
@@ -586,6 +619,7 @@ function DoFrame(tick: number) {
 }
 
 const preloader = new AssetPreloader([
+  'Interface/Gear.png',
   'Maps/Arena.jpg',
   'Maps/Grass.jpg',
   'Portraits/Sheep.png',

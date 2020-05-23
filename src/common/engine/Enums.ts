@@ -36,6 +36,12 @@ enum UIFrameType {
   PlayerInfo = 3,
 }
 
+enum RenderQuality {
+  Low = 1,
+  Medium = 2,
+  High = 3,
+}
+
 const FighterTypeStrings = [
   'Sheep',
   'Deer',
@@ -53,5 +59,6 @@ export {
   ProjectileType,
   ParticleType,
   UIFrameType,
+  RenderQuality,
   fighterTypeToString,
 };
