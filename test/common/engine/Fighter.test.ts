@@ -53,7 +53,7 @@ test('fighter riding test', () => {
   expect(b.riding).toBe(a);
   expect(c.riding).toBe(b);
 
-  expect(a.getBottomOfStack()).toBe(a);
+  expect(a.getBottomOfStack()).toBe(null);
   expect(b.getBottomOfStack()).toBe(a);
   expect(c.getBottomOfStack()).toBe(a);
 

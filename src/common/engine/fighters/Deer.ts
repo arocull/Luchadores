@@ -52,7 +52,7 @@ class Deer extends Fighter {
     const fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
     // Inherit velocity from bottom of stack as well
     const stackBottom = this.getBottomOfStack();
-    if (stackBottom !== this) {
+    if (stackBottom) {
       fireVelo.x += stackBottom.Velocity.x;
       fireVelo.y += stackBottom.Velocity.y;
       aim.z -= this.Position.z / 10;
@@ -67,7 +67,7 @@ class Deer extends Fighter {
       aim.y += ((Random.getFloat() - 0.5) * this.boostTimer) / 3;
       aim.clamp(1, 1);
 
-      if (stackBottom !== this) { // Apply recoil to rider to prevent kill reward from dismounting rider
+      if (stackBottom) { // Apply recoil to rider to prevent kill reward from dismounting rider
         stackBottom.Velocity = Vector.Add(stackBottom.Velocity, Vector.Multiply(aim, -this.boostTimer));
       } else {
         this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(aim, -this.boostTimer));
@@ -80,7 +80,7 @@ class Deer extends Fighter {
     else firePos.x += this.Radius;
 
     const bullet = new BBullet(firePos, aim, this);
-    bullet.Velocity = Vector.Add(bullet.Velocity, fireVelo);
+    // bullet.Velocity = Vector.Add(bullet.Velocity, fireVelo);
 
     MessageBus.publish('NewProjectile', bullet);
     return bullet;
@@ -94,14 +94,10 @@ class Deer extends Fighter {
     } else { // Otherwise return to normal
       this.MaxMomentum = this.baseMaxMomentum;
     }
+  }
 
-    if (this.boostTimer > 0) {
-      this.boostTimer -= DeltaTime;
-      if (this.boostTimer <= 0) {
-        this.boostTimer = 0;
-        this.bulletCooldownTime = this.bulletCooldownBase;
-      }
-    }
+  protected boostEnded() {
+    this.bulletCooldownTime = this.bulletCooldownBase;
   }
 }
 

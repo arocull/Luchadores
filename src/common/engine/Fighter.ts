@@ -184,6 +184,14 @@ class Fighter extends Entity {
 
     if (this.BulletCooldown <= 0) this.BulletCooldown = 0; // Zeros cooldown
     else this.BulletCooldown -= DeltaTime; // Otherwise, tick cooldown (if it gets below zero and player is still firing, stream stays continous)
+
+    if (this.boostTimer > 0) {
+      this.boostTimer -= DeltaTime;
+      if (this.boostTimer <= 0) {
+        this.boostTimer = 0;
+        this.boostEnded();
+      }
+    }
   }
 
 
@@ -203,13 +211,18 @@ class Fighter extends Entity {
     this.BulletCooldown = newCooldown;
   }
 
-  public inKillEffect(): boolean {
+  public inKillEffect(): boolean { // Returns true if fighter is in a kill effect
     return (this.boostTimer > 0);
   }
+  /* eslint-disable class-methods-use-this */
+  // Called when a kill effect / boost ends; Overridden by subclasses
+  protected boostEnded() { }
+  /* eslint-enable class-methods-use-this */
 
   // Returns the fighter at the bottom of a stack of players
-  public getBottomOfStack(): Fighter {
-    if (this.riding) return this.riding.getBottomOfStack();
+  public getBottomOfStack(stackTop: boolean = true): Fighter {
+    if (this.riding) return this.riding.getBottomOfStack(false);
+    if (stackTop) return null;
     return this;
   }
   // FOR USE IN PHYSICS ONLY--Returns the fighter at the bottom of a stack of players

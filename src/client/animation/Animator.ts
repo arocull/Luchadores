@@ -53,7 +53,7 @@ class Animator {
         break;
       case FighterType.Deer:
         this.Upscale = 1.9;
-        this.attackSpeed = 3;
+        this.attackSpeed = 2.5;
         break;
       default:
     }

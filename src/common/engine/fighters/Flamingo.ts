@@ -57,7 +57,7 @@ class Flamingo extends Fighter {
     const fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
     // Inherit velocity from bottom of stack as well
     const stackBottom = this.getBottomOfStack();
-    if (stackBottom !== this) {
+    if (stackBottom) {
       fireVelo.x += stackBottom.Velocity.x;
       fireVelo.y += stackBottom.Velocity.y;
     }

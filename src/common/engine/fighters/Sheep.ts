@@ -37,16 +37,8 @@ class Sheep extends Fighter {
     this.boostTimer += 3; // We add to the speed boost time, so they can continue to have a high accel after a multi-kill
   }
 
-  public tickCooldowns(DeltaTime: number) {
-    super.tickCooldowns(DeltaTime);
-
-    if (this.boostTimer > 0) {
-      this.boostTimer -= DeltaTime;
-      if (this.boostTimer <= 0) {
-        this.boostTimer = 0;
-        this.MoveAcceleration = this.baseMoveAccel;
-      }
-    }
+  protected boostEnded() {
+    this.MoveAcceleration = this.baseMoveAccel;
   }
 }
 

@@ -22,7 +22,6 @@ class PBulletShell extends Particle {
     this.BounceReturn = 0.7;
     this.StopOnGround = true;
     this.Trail = 1;
-    // this.Drag = 1;
     this.Velocity = Vector.Multiply(
       Vector.Add(
         direction,
