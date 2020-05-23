@@ -112,7 +112,7 @@ class Vector { // A structure that holds position data or direction and magnitud
     while (a < 0) {
       a += TwoPI;
     }
-    while (a >= Math.PI * 2) {
+    while (a >= TwoPI) {
       a -= TwoPI;
     }
     return Math.max(min, Math.min(a, max));

@@ -3,7 +3,9 @@ import RenderSettings from '../RenderSettings';
 import Fighter from '../../common/engine/Fighter';
 import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import { MessageBus } from '../../common/messaging/bus';
-import { PFire, PSmoke } from '../particles/index';
+import {
+  PFire, PSmoke, PBulletFire, PBulletShell,
+} from '../particles/index';
 
 
 enum AnimationState {
@@ -29,10 +31,13 @@ class Animator {
   public timer: number;
   public timerTick: number;
   public lastState: AnimationState;
-  protected timeToUniqueIdle: number;
-  protected inUniqueIdle: boolean;
+  private timeToUniqueIdle: number;
+  private inUniqueIdle: boolean;
+  private bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
 
-  public killEffectCountdown: number;
+  public killEffectCountdown: number; // Ticks down until rose petals effects show after a kill
+
+  private attackSpeed: number;
 
   constructor(protected owner: Fighter, private settings: RenderSettings) {
     this.SpriteSheet = new Image();
@@ -41,12 +46,14 @@ class Animator {
     this.FrameWidth = 512;
     this.FrameHeight = 512;
     this.Upscale = 1;
+    this.attackSpeed = 1;
     switch (owner.getCharacter()) {
       case FighterType.Sheep:
         this.Upscale = 1.3;
         break;
       case FighterType.Deer:
-        this.SpriteSheet = null;
+        this.Upscale = 1.9;
+        this.attackSpeed = 2.5;
         break;
       default:
     }
@@ -58,6 +65,7 @@ class Animator {
     this.timerTick = 0;
     this.lastState = AnimationState.Idle;
     this.timeToUniqueIdle = Math.random() * 13;
+    this.bulletTimer = 0;
 
     this.killEffectCountdown = -1;
   }
@@ -92,9 +100,28 @@ class Animator {
 
   // Tick special effects for when the entity is attacking
   protected tickAttacking() {
-    if (this.owner.getCharacter() === FighterType.Flamingo) {
+    // Deer - Fires bullet casings and the pow effects
+    if (
+      this.owner.getCharacter() === FighterType.Deer
+      && this.owner.BulletShock > 0
+      && (this.bulletTimer <= 0 || this.owner.inKillEffect()) // Prevent double-firing from world state updates
+      && this.settings.nextParticle()
+    ) {
+      const fireDir = Vector.Multiply(this.owner.getAim(), -1);
+      const firePos = Vector.Clone(this.owner.Position);
+      firePos.z += this.owner.Height * (5 / 3);
+      if (this.owner.Flipped === true) firePos.x -= this.owner.Radius;
+      else firePos.x += this.owner.Radius;
+
+      MessageBus.publish('Effect_NewParticle', new PBulletShell(firePos, fireDir));
+      MessageBus.publish('Effect_NewParticle', new PBulletFire(firePos, fireDir, 1));
+
+      this.bulletTimer = 0.05;
+
+    // Flamingo - Fire on back and smoke breathing
+    } else if (this.owner.getCharacter() === FighterType.Flamingo) {
       if (this.timerTick % 3 === 1 && this.settings.nextParticle()) {
-        const fire = new PFire(
+        MessageBus.publish('Effect_NewParticle', new PFire(
           Vector.Add(this.owner.Position, new Vector(
             (Math.random() - 0.5) * this.owner.Radius * 1.4,
             this.owner.Radius / 2,
@@ -102,8 +129,7 @@ class Animator {
           )),
           new Vector(0, 0, 1),
           0.75,
-        );
-        MessageBus.publish('Effect_NewParticle', fire);
+        ));
       } else if (this.timerTick % 5 === 4 && this.settings.nextParticle()) {
         let dir = 1;
         if (this.owner.Flipped === true) dir = -1;
@@ -113,8 +139,7 @@ class Animator {
         pos.x += this.owner.Radius * 1.2 * dir;
         pos.y -= 0.1;
 
-        const smoke = new PSmoke(pos, new Vector(3 * dir, 0, -1.75), 1);
-        MessageBus.publish('Effect_NewParticle', smoke);
+        MessageBus.publish('Effect_NewParticle', new PSmoke(pos, new Vector(3 * dir, 0, -1.75), 1));
       }
     }
   }
@@ -122,6 +147,8 @@ class Animator {
   public Tick(DeltaTime: number) {
     let state = AnimationState.Idle;
     this.timerTick++;
+
+    this.bulletTimer -= DeltaTime;
 
     // If they are moving, set the state to that
     if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = AnimationState.Moving;
@@ -164,7 +191,7 @@ class Animator {
         break;
 
       case AnimationState.Attacking: // Attack
-        this.frame = Math.floor(this.timer * 5) % 5;
+        this.frame = Math.floor(this.timer * 5 * this.attackSpeed) % 5;
         this.row = 2;
         this.tickAttacking();
         break;

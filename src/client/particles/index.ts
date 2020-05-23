@@ -5,6 +5,8 @@ import PRosePetal from './RosePetal';
 import PFire from './Fire';
 import PSmoke from './Smoke';
 import PLightning from './Lightning';
+import PBulletFire from './BulletFire';
+import PBulletShell from './BulletShell';
 
 export {
   Particle,
@@ -14,4 +16,6 @@ export {
   PFire,
   PSmoke,
   PLightning,
+  PBulletFire,
+  PBulletShell,
 };

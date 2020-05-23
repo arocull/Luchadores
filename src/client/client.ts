@@ -383,6 +383,7 @@ function DoFrame(tick: number) {
   const DeltaTime = (tick / 1000) - LastFrame;
   let worldDeltaTime = DeltaTime;
   LastFrame = tick / 1000;
+  let appliedWorldState = false;
 
   // Capture inputs (updates `Input` global)
   ScrapeInput();
@@ -397,6 +398,7 @@ function DoFrame(tick: number) {
     }
 
     decodeWorldState(stateUpdate, world);
+    appliedWorldState = true;
 
     for (let i = 0; i < world.Fighters.length; i++) {
       // Prune fighters who have not been included in the world state 5 consecutive times
@@ -420,7 +422,7 @@ function DoFrame(tick: number) {
     cam.SetFocus(character);
   }
 
-  world.tick(worldDeltaTime);
+  world.tick(worldDeltaTime, appliedWorldState);
 
   // Update Camera
   viewport.width = window.innerWidth;
@@ -586,11 +588,12 @@ function DoFrame(tick: number) {
 const preloader = new AssetPreloader([
   'Maps/Arena.jpg',
   'Maps/Grass.jpg',
+  'Portraits/Sheep.png',
   'Portraits/Deer.png',
   'Portraits/Flamingo.png',
-  'Portraits/Sheep.png',
-  'Sprites/Flamingo.png',
   'Sprites/Sheep.png',
+  'Sprites/Deer.png',
+  'Sprites/Flamingo.png',
 ]);
 
 /* eslint-disable no-console */

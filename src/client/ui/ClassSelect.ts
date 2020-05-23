@@ -71,8 +71,8 @@ class UIClassSelect {
     fighterName.textFont = 'flamenco';
     this.frames.push(fighterName);
 
-    const flavorText = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.125, UIClassSelect.SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
-    flavorText.textFontSize = 16;
+    const flavorText = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.1325, UIClassSelect.SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
+    flavorText.textFontSize = 18;
     flavorText.alpha = 0;
     flavorText.textStyle = '#dddddd';
     flavorText.textFont = 'flamenco';
@@ -116,14 +116,14 @@ class UIClassSelect {
           descript.text = '\tRoll around and build momentum, before slamming into enemies and crushing them under your immense weight.';
           break;
         case FighterType.Deer:
-          fighterName.text = 'El Ciervo something';
-          flavorText.text = 'Don\'t ask where he got the gun.';
-          descript.text = '\tFire a constant stream of bullets with high precision.';
+          fighterName.text = 'El Ciervo Macabro';
+          flavorText.text = 'Don\'t ask where he got the guns.';
+          descript.text = '\tFire a constant stream of long-range bullets with precision, and dodge attacks with superior agility.';
           break;
         case FighterType.Flamingo:
           fighterName.text = 'El Flamenacre';
-          flavorText.text = 'On fire 90% of the time and freaking out the other 10%.';
-          descript.text = '\tReign terror upon your foes by setting them ablaze--just don\'t run out of breath.';
+          flavorText.text = 'He\'s just really weird.';
+          descript.text = '\tReign terror upon your foes by spewing fire upon them--just don\'t run out of breath.';
           break;
         case FighterType.Toad:
           fighterName.text = 'spanish pun about electricity + toad';
