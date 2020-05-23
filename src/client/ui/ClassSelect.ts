@@ -4,10 +4,10 @@ import UILuchadorPortrait from './LuchadorPortrait';
 import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import { MessageBus } from '../../common/messaging/bus';
 
-class UIClassSelect {
-  private static SIDEBAR_WIDTH: number = 0.3;
-  private static INNER_WIDTH: number = 1 - UIClassSelect.SIDEBAR_WIDTH;
+const SIDEBAR_WIDTH: number = 0.3;
+const INNER_WIDTH: number = 1 - SIDEBAR_WIDTH;
 
+class UIClassSelect {
   public frames: UIFrame[];
   private selected: FighterType;
 
@@ -18,17 +18,17 @@ class UIClassSelect {
     this.frames = [];
     this.selected = FighterType.Sheep;
 
-    const sidebar = new UIFrame(UIClassSelect.INNER_WIDTH, 0, UIClassSelect.SIDEBAR_WIDTH, 1, false);
+    const sidebar = new UIFrame(INNER_WIDTH, 0, SIDEBAR_WIDTH, 1, false);
     sidebar.renderStyle = '#b5651d';
     sidebar.borderRenderStyle = '#a4540c';
     sidebar.borderThickness = 0.05;
     this.frames.push(sidebar);
 
-    const scaleX = UIClassSelect.INNER_WIDTH / (columns + 1);
+    const scaleX = INNER_WIDTH / (columns + 1);
     const scaleY = 1 / (rows + 1);
     const scale = Math.max(scaleX, scaleY);
 
-    const gapX = (UIClassSelect.INNER_WIDTH - scale * columns) / columns;
+    const gapX = (INNER_WIDTH - scale * columns) / columns;
     const gapY = (1 - scale * rows) / rows;
 
     let luchador: number = 0;
@@ -52,7 +52,7 @@ class UIClassSelect {
     // Displayed class portrait
     const portraitScale = scaleY * 1.3;
     const portrait = new UIFrame(
-      UIClassSelect.INNER_WIDTH + (UIClassSelect.SIDEBAR_WIDTH - portraitScale) / 2,
+      INNER_WIDTH + (SIDEBAR_WIDTH - portraitScale) / 2,
       0.05,
       portraitScale,
       portraitScale,
@@ -64,21 +64,21 @@ class UIClassSelect {
     portrait.borderThickness = 0.1;
     this.frames.push(portrait);
 
-    const fighterName = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.075, UIClassSelect.SIDEBAR_WIDTH, 0.05, false, 'Name');
+    const fighterName = new UITextBox(INNER_WIDTH, portraitScale + 0.075, SIDEBAR_WIDTH, 0.05, false, 'Name');
     fighterName.textFontSize = 56;
     fighterName.alpha = 0;
     fighterName.textStyle = '#ffffff';
     fighterName.textFont = 'flamenco';
     this.frames.push(fighterName);
 
-    const flavorText = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.125, UIClassSelect.SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
+    const flavorText = new UITextBox(INNER_WIDTH, portraitScale + 0.125, SIDEBAR_WIDTH, 0.025, false, 'Flavor Text');
     flavorText.textFontSize = 16;
     flavorText.alpha = 0;
     flavorText.textStyle = '#dddddd';
     flavorText.textFont = 'flamenco';
     this.frames.push(flavorText);
 
-    const descript = new UITextBox(UIClassSelect.INNER_WIDTH, portraitScale + 0.16, UIClassSelect.SIDEBAR_WIDTH, 0.045, false, 'Description');
+    const descript = new UITextBox(INNER_WIDTH, portraitScale + 0.16, SIDEBAR_WIDTH, 0.045, false, 'Description');
     descript.textFontSize = 24;
     descript.alpha = 0;
     descript.textStyle = '#eeeeee';
@@ -89,9 +89,9 @@ class UIClassSelect {
 
     // Select button
     const button = new UITextBox(
-      UIClassSelect.INNER_WIDTH + UIClassSelect.SIDEBAR_WIDTH * 0.15,
+      INNER_WIDTH + SIDEBAR_WIDTH * 0.15,
       0.9,
-      UIClassSelect.SIDEBAR_WIDTH * 0.7,
+      SIDEBAR_WIDTH * 0.7,
       0.075,
       true,
       'Please wait...',

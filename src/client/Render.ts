@@ -105,21 +105,6 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
   return corners;
 }
 
-/*
-function RotateCanvas(canvas: CanvasRenderingContext2D, camera: Camera, angle: number) {
-  if (camera.Settings.Quality >= RenderQuality.High && angle > 0.001) {
-    canvas.rotate(angle);
-    CanvasRotated = true;
-  }
-}
-function ResetCanvas(canvas: CanvasRenderingContext2D) {
-  if (CanvasRotated) {
-    canvas.resetTransform();
-    CanvasRotated = false;
-  }
-}
-*/
-
 
 class Renderer {
   /* eslint-disable no-param-reassign */
@@ -131,7 +116,6 @@ class Renderer {
     projectiles: Projectile[],
     particles: Particle[],
   ) {
-    // ResetCanvas(canvas);
     canvas.fillStyle = '#003001';
     canvas.fillRect(0, 0, camera.Width, camera.Height);
 
@@ -203,8 +187,6 @@ class Renderer {
 
     // Draw in fighters
     for (let i = 0; i < toDraw.length; i++) {
-      // ResetCanvas(canvas);
-
       if (toDraw[i].type === EntityType.Fighter) {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);
@@ -277,6 +259,7 @@ class Renderer {
           canvas.lineWidth = zoom * a.Width;
         }
 
+        canvas.lineCap = 'round';
         canvas.beginPath();
         canvas.moveTo(pos1.x, pos1.y);
         canvas.lineTo(pos2.x, pos2.y);
@@ -320,7 +303,6 @@ class Renderer {
   }
 
   public static DrawPlayerList(canvas: CanvasRenderingContext2D, cam: Camera, data: string) {
-    // ResetCanvas(canvas);
     const startX = cam.Width * UIPlayerInfo.CORNERX_OFFSET;
     let startY = cam.Height * UIPlayerInfo.CORNERY_OFFSET;
     const width = cam.Width * UIPlayerInfo.LIST_WIDTH;
@@ -360,8 +342,6 @@ class Renderer {
   }
 
   public static DrawUIFrame(canvas: CanvasRenderingContext2D, cam: Camera, frame: UIFrame) {
-    // ResetCanvas(canvas);
-
     let startX = frame.cornerX * cam.Width;
     let startY = frame.cornerY * cam.Height;
     let width = frame.width * cam.Width;
