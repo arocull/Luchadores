@@ -14,20 +14,18 @@ Properties that need to be replicated from server to client:
 */
 class Sheep extends Fighter {
   private baseMoveAccel: number;
-  private accelBoostTimer: number;
 
   constructor(id: number, position: Vector) {
-    super(200, 200, 8000, 0.6, 1.2, 8, 20, FighterType.Sheep, id, position);
+    super(200, 200, 8000, 0.6, 1.2, 8, 30, FighterType.Sheep, id, position);
 
     this.ranged = false;
     this.baseMoveAccel = this.MoveAcceleration;
-    this.accelBoostTimer = 0;
   }
 
   public CollideWithFighter(hit: Fighter, momentum: number) {
     super.CollideWithFighter(hit, momentum);
 
-    if (momentum > this.MaxMomentum / 3) {
+    if (momentum > this.MaxMomentum / 3) { // Stacking passengers adds to max momentum
       hit.TakeDamage((momentum / this.MaxMomentum) * 40, this);
     }
   }
@@ -36,19 +34,11 @@ class Sheep extends Fighter {
     super.EarnKill();
 
     this.MoveAcceleration = this.baseMoveAccel * 3; // Allows the sheep to quickly get back to speed after a kill
-    this.accelBoostTimer += 3; // We add to the speed boost time, so they can continue to have a high accel after a multi-kill
+    this.boostTimer += 3; // We add to the speed boost time, so they can continue to have a high accel after a multi-kill
   }
 
-  public tickCooldowns(DeltaTime: number) {
-    super.tickCooldowns(DeltaTime);
-
-    if (this.accelBoostTimer > 0) {
-      this.accelBoostTimer -= DeltaTime;
-      if (this.accelBoostTimer <= 0) {
-        this.accelBoostTimer = 0;
-        this.MoveAcceleration = this.baseMoveAccel;
-      }
-    }
+  protected boostEnded() {
+    this.MoveAcceleration = this.baseMoveAccel;
   }
 }
 

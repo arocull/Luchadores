@@ -37,15 +37,20 @@ class Fighter extends Entity {
   public JustLanded: boolean;
 
   public lastPosition: Vector;
+  public newPosition: Vector;
   public riding: Fighter;
   public rodeThisTick: Fighter;
   public dismountRider: boolean;
+  public passengerMass: number;
+  public passengerMaxMomentum: number;
 
   protected ranged: boolean;
   protected AimDirection: Vector;
   public Firing: boolean;
   protected BulletCooldown: number;
   public BulletShock: number;
+
+  protected boostTimer: number;
 
   constructor(
     public HP: number,
@@ -77,12 +82,16 @@ class Fighter extends Entity {
     this.riding = null;
     this.rodeThisTick = null;
     this.dismountRider = false;
+    this.passengerMass = 0;
+    this.passengerMaxMomentum = 0;
 
     this.ranged = true;
     this.AimDirection = new Vector(1, 0, 0);
     this.Firing = false;
     this.BulletCooldown = 0;
     this.BulletShock = 0;
+
+    this.boostTimer = 0;
   }
 
 
@@ -122,13 +131,14 @@ class Fighter extends Entity {
   }
 
   // Attempt to fire a bullet--fires as many bullets as it can until the cooldown is positive or some other condition
-  public tryBullet() {
+  public tryBullet(capShock: boolean = false) {
     if (!this.Firing) return;
 
     // Fire a bullet--if time had passed to the point where multiple bullets could have been fired, fire all of them and tick them accordingly
     while (this.canFirebullet()) {
       const t = Math.abs(this.BulletCooldown); // Time since bullet was fireable
 
+      if (capShock) this.BulletShock = 0; // Prevent stacking when multiple bullets are fired (happens on higher-latency clients)
       const b = this.fireBullet();
 
       if (b === null) return; // If no bullet was generated, stop here
@@ -174,6 +184,14 @@ class Fighter extends Entity {
 
     if (this.BulletCooldown <= 0) this.BulletCooldown = 0; // Zeros cooldown
     else this.BulletCooldown -= DeltaTime; // Otherwise, tick cooldown (if it gets below zero and player is still firing, stream stays continous)
+
+    if (this.boostTimer > 0) {
+      this.boostTimer -= DeltaTime;
+      if (this.boostTimer <= 0) {
+        this.boostTimer = 0;
+        this.boostEnded();
+      }
+    }
   }
 
 
@@ -191,6 +209,41 @@ class Fighter extends Entity {
   }
   public setBulletCooldown(newCooldown: number) {
     this.BulletCooldown = newCooldown;
+  }
+
+  public inKillEffect(): boolean { // Returns true if fighter is in a kill effect
+    return (this.boostTimer > 0);
+  }
+  /* eslint-disable class-methods-use-this */
+  // Called when a kill effect / boost ends; Overridden by subclasses
+  protected boostEnded() { }
+  /* eslint-enable class-methods-use-this */
+
+  // Returns the fighter at the bottom of a stack of players
+  public getBottomOfStack(stackTop: boolean = true): Fighter {
+    if (this.riding) return this.riding.getBottomOfStack(false);
+    if (stackTop) return null;
+    return this;
+  }
+  // FOR USE IN PHYSICS ONLY--Returns the fighter at the bottom of a stack of players
+  public getBottomOfStackPhysics(): Fighter {
+    if (this.rodeThisTick) return this.rodeThisTick.getBottomOfStackPhysics();
+    return this;
+  }
+  // FOR USE IN PHYSICS ONLY--Returns the total delta position from the bottom of a stack
+  public getTotalStackPositionChange(stackTop: boolean = true): Vector {
+    if (stackTop) { // If this is the character at the top of a stack, we do not want to include their position in the change
+      return this.rodeThisTick.getTotalStackPositionChange(false);
+    }
+
+    if (this.rodeThisTick) { // If there is someone below this fighter in the stack, include them too
+      return Vector.Add(
+        Vector.Subtract(this.newPosition, this.lastPosition),
+        this.rodeThisTick.getTotalStackPositionChange(false),
+      );
+    }
+
+    return Vector.Subtract(this.newPosition, this.lastPosition); // Bottom-of-stack case--return delta position
   }
 }
 

@@ -6,7 +6,7 @@ import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters/index';
 import Animator from './animation/Animator';
 import { Projectile } from '../common/engine/projectiles/index';
-import { Particle, PLightning } from './particles/index';
+import { Particle, PLightning, PBulletFire } from './particles/index';
 import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
@@ -191,17 +191,17 @@ class Renderer {
         const a = <Fighter>(toDraw[i]);
         const pos = camera.PositionOffsetBasic(a.Position);
 
-        let upscaleoffset = 0;
-        if (a.Animator) upscaleoffset = Math.max(0, a.Animator.Upscale - 1);
+        let upscale = 0;
+        if (a.Animator) upscale = a.Animator.Upscale;
 
         // First, draw shadow
         canvas.fillStyle = '#000000';
-        canvas.globalAlpha = 0.5;
+        canvas.globalAlpha = 0.3;
         canvas.fillRect(
-          (-pos.x - a.Radius * 1.1) * zoom + offsetX,
-          (pos.y + (pos.z / 2) + upscaleoffset) * zoom + offsetY,
-          2 * a.Radius * 1.1 * zoom,
-          -(a.Height / 2) * zoom,
+          (-pos.x - a.Radius) * zoom + offsetX,
+          (pos.y + (pos.z / 2)) * zoom + offsetY,
+          2 * a.Radius * zoom,
+          -((a.Height * upscale) * zoom) / 2,
         );
         canvas.globalAlpha = 1;
 
@@ -218,7 +218,7 @@ class Renderer {
             b.FrameWidth,
             b.FrameHeight,
             (-pos.x - (a.Height / 2) * b.Upscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
-            (pos.y + pos.z + (a.Height * (b.Upscale - 1))) * zoom + offsetY,
+            (pos.y + pos.z) * zoom + offsetY,
             a.Height * b.Upscale * zoom, // 2 * Radius originally used in place of a.Height
             -a.Height * b.Upscale * zoom,
           );
@@ -239,7 +239,7 @@ class Renderer {
           canvas.fillText(
             a.DisplayName,
             offsetX - pos.x * camera.Zoom,
-            (pos.y + pos.z - a.Height - 0.175) * camera.Zoom + offsetY,
+            (pos.y + pos.z - a.Height * upscale - 0.175) * camera.Zoom + offsetY,
           );
         }
       } else if (toDraw[i].type === EntityType.Projectile) {
@@ -270,10 +270,19 @@ class Renderer {
         canvas.globalAlpha = a.Alpha;
         canvas.lineWidth = zoom * a.Width;
 
+        switch (a.particleType) { // Changes how lines draw
+          case ParticleType.BulletShell: // Bullet shells aren't round!
+            canvas.lineCap = 'butt';
+            break;
+          default: // However, everything else is
+            canvas.lineCap = 'round';
+        }
+
         const pos1 = camera.PositionOffset(a.Position);
         const pos2 = camera.PositionOffset(a.End);
 
         canvas.beginPath();
+
         canvas.moveTo(pos1.x, pos1.y);
         if (a.particleType === ParticleType.Lightning) { // If it is lightning, draw all segments in center of path
           const l = <PLightning>(a);
@@ -281,9 +290,20 @@ class Renderer {
             const seg = camera.PositionOffset(l.Segments[j]);
             canvas.lineTo(seg.x, seg.y);
           }
+        } else if (a.particleType === ParticleType.BulletFire) {
+          canvas.fillStyle = a.RenderStyle;
+          const f = <PBulletFire>(a);
+          for (let j = 0; j < f.points.length; j++) {
+            const seg = camera.PositionOffset(f.points[j]);
+            canvas.lineTo(seg.x, seg.y);
+          }
         }
         canvas.lineTo(pos2.x, pos2.y);
-        canvas.stroke();
+        if (a.particleType === ParticleType.BulletFire) {
+          canvas.fill();
+        } else {
+          canvas.stroke();
+        }
       }
     }
 
