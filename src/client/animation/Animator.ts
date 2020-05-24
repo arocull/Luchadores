@@ -1,12 +1,6 @@
-import Vector from '../../common/engine/Vector';
 import RenderSettings from '../RenderSettings';
 import Fighter from '../../common/engine/Fighter';
-import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
-import { MessageBus } from '../../common/messaging/bus';
-import {
-  PFire, PSmoke, PBulletFire, PBulletShell,
-} from '../particles/index';
-
+import { fighterTypeToString } from '../../common/engine/Enums';
 
 enum AnimationState {
   Idle = 0,
@@ -33,30 +27,17 @@ class Animator {
   public lastState: AnimationState;
   private timeToUniqueIdle: number;
   private inUniqueIdle: boolean;
-  private bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
+  protected bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
 
   public killEffectCountdown: number; // Ticks down until rose petals effects show after a kill
 
-  private attackSpeed: number;
-
-  constructor(protected owner: Fighter, private settings: RenderSettings) {
+  constructor(protected owner: Fighter, protected settings: RenderSettings) {
     this.SpriteSheet = new Image();
     this.SpriteSheet.src = `Sprites/${fighterTypeToString(owner.getCharacter())}.png`;
 
     this.FrameWidth = 512;
     this.FrameHeight = 512;
     this.Upscale = 1;
-    this.attackSpeed = 1;
-    switch (owner.getCharacter()) {
-      case FighterType.Sheep:
-        this.Upscale = 1.3;
-        break;
-      case FighterType.Deer:
-        this.Upscale = 1.9;
-        this.attackSpeed = 2.5;
-        break;
-      default:
-    }
 
     this.frame = 0;
     this.row = 0;
@@ -80,75 +61,81 @@ class Animator {
     this.timeToUniqueIdle = 8 + Math.random() * 5;
   }
 
-  // Tick special effects for unique idle animations
-  protected tickUniqueIdle() {
-    if (this.timer >= 1) this.inUniqueIdle = false; // Idle timeout
+  /* eslint-disable class-methods-use-this */
+  protected tickUniqueIdle() {} // Tick special effects for when entity is in their unique idle state; overridden by subclasses
+  protected tickAttacking() {} // Tick special effects for when entity is attacking; overriden by subclasses
+  public destruct() {} // Removes bullet listeners
+  /* eslint-enable class-methods-use-this */
 
-    if (this.owner.getCharacter() === FighterType.Flamingo && this.settings.nextParticle()) {
-      const fire = new PFire(
-        Vector.Add(this.owner.Position, new Vector(
-          (Math.random() - 0.5) * this.owner.Radius * 1.5,
-          this.owner.Radius / 2,
-          this.owner.Height * 0.75,
-        )),
-        new Vector(0, 0, 1),
-        0.75,
-      );
-      MessageBus.publish('Effect_NewParticle', fire);
-    }
+  protected frameIdle() {
+    this.frame = Math.floor(this.timer * 5) % 5;
+    this.row = 0;
   }
-
-  // Tick special effects for when the entity is attacking
-  protected tickAttacking() {
-    // Deer - Fires bullet casings and the pow effects
-    if (
-      this.owner.getCharacter() === FighterType.Deer
-      && this.owner.BulletShock > 0
-      && (this.bulletTimer <= 0 || this.owner.inKillEffect()) // Prevent double-firing from world state updates
-      && this.settings.nextParticle()
-    ) {
-      const fireDir = Vector.Multiply(this.owner.getAim(), -1);
-      const firePos = Vector.Clone(this.owner.Position);
-      firePos.z += this.owner.Height * (5 / 3);
-      if (this.owner.Flipped === true) firePos.x -= this.owner.Radius;
-      else firePos.x += this.owner.Radius;
-
-      MessageBus.publish('Effect_NewParticle', new PBulletShell(firePos, fireDir));
-      MessageBus.publish('Effect_NewParticle', new PBulletFire(firePos, fireDir, 1));
-
-      this.bulletTimer = 0.05;
-
-    // Flamingo - Fire on back and smoke breathing
-    } else if (this.owner.getCharacter() === FighterType.Flamingo) {
-      if (this.timerTick % 3 === 1 && this.settings.nextParticle()) {
-        MessageBus.publish('Effect_NewParticle', new PFire(
-          Vector.Add(this.owner.Position, new Vector(
-            (Math.random() - 0.5) * this.owner.Radius * 1.4,
-            this.owner.Radius / 2,
-            this.owner.Height * 0.75,
-          )),
-          new Vector(0, 0, 1),
-          0.75,
-        ));
-      } else if (this.timerTick % 5 === 4 && this.settings.nextParticle()) {
-        let dir = 1;
-        if (this.owner.Flipped === true) dir = -1;
-
-        const pos = Vector.Clone(this.owner.Position);
-        pos.z += this.owner.Height * 0.5;
-        pos.x += this.owner.Radius * 1.2 * dir;
-        pos.y -= 0.1;
-
-        MessageBus.publish('Effect_NewParticle', new PSmoke(pos, new Vector(3 * dir, 0, -1.75), 1));
-      }
-    }
+  protected frameIdleUnique() {
+    this.frame = (Math.floor(this.timer * 5) % 5) + 5;
+    this.row = 0;
+  }
+  protected frameFalling() {
+    this.frame = 6;
+    this.row = 0;
+  }
+  protected frameMove() {
+    this.frame = Math.floor(this.timer * 10) % 10;
+    this.row = 1;
+  }
+  protected frameAttack() {
+    this.frame = Math.floor(this.timer * 5) % 5;
+    this.row = 2;
+  }
+  protected frameAttackMove() {
+    this.frame = (Math.floor(this.timer * 5) % 5) + 5;
+    this.row = 2;
   }
 
   public Tick(DeltaTime: number) {
-    let state = AnimationState.Idle;
     this.timerTick++;
-
     this.bulletTimer -= DeltaTime;
+
+    switch (this.getAnimationState(DeltaTime)) {
+      case AnimationState.IdleUnique: // Unique idle
+        this.frameIdleUnique();
+        this.tickUniqueIdle();
+        if (this.timer >= 1) this.inUniqueIdle = false; // Idle timeout
+        break;
+
+      case AnimationState.Falling: // Falling animation
+        this.frameFalling();
+        break;
+
+      case AnimationState.Moving: // Move animation
+        this.frameMove();
+        break;
+
+      case AnimationState.Attacking: // Attack
+        this.frameAttack();
+        this.tickAttacking();
+        break;
+
+      case AnimationState.AttackingMoving: // Attack while moving
+        this.frameAttackMove();
+        this.tickAttacking();
+        break;
+
+      default: // Idle animation
+        this.frameIdle();
+        if (this.timer > this.timeToUniqueIdle) {
+          this.triggerUniqueIdle();
+        }
+    }
+
+    if (this.killEffectCountdown > 0) {
+      this.killEffectCountdown -= DeltaTime;
+      if (this.killEffectCountdown < 0) this.killEffectCountdown = 0;
+    } else this.killEffectCountdown = -1;
+  }
+
+  private getAnimationState(DeltaTime: number): number {
+    let state = AnimationState.Idle;
 
     // If they are moving, set the state to that
     if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = AnimationState.Moving;
@@ -169,51 +156,7 @@ class Animator {
       else state = AnimationState.Attacking; // Otherwise, do a standard attack
     }
 
-    switch (state) {
-      case AnimationState.IdleUnique: // Unique idle
-        this.frame = (Math.floor(this.timer * 5) % 5) + 5;
-        this.row = 0;
-        this.tickUniqueIdle();
-        break;
-
-      case AnimationState.Falling: // Falling animation
-        this.frame = 6;
-        if (this.owner.getCharacter() === FighterType.Flamingo) {
-          this.row = 1;
-        } else {
-          this.row = 0;
-        }
-        break;
-
-      case AnimationState.Moving: // Move animation
-        this.frame = Math.floor(this.timer * 10) % 10;
-        this.row = 1;
-        break;
-
-      case AnimationState.Attacking: // Attack
-        this.frame = Math.floor(this.timer * 5 * this.attackSpeed) % 5;
-        this.row = 2;
-        this.tickAttacking();
-        break;
-
-      case AnimationState.AttackingMoving: // Attack while moving
-        this.frame = (Math.floor(this.timer * 5) % 5) + 5;
-        this.row = 2;
-        this.tickAttacking();
-        break;
-
-      default: // Idle animation
-        this.frame = Math.floor(this.timer * 5) % 5;
-        this.row = 0;
-        if (this.timer > this.timeToUniqueIdle) {
-          this.triggerUniqueIdle();
-        }
-    }
-
-    if (this.killEffectCountdown > 0) {
-      this.killEffectCountdown -= DeltaTime;
-      if (this.killEffectCountdown < 0) this.killEffectCountdown = 0;
-    } else this.killEffectCountdown = -1;
+    return state;
   }
 }
 

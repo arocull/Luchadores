@@ -26,7 +26,7 @@ class Deer extends Fighter {
   constructor(id: number, position: Vector) {
     super(100, 100, 2000, 0.45, 1.05, 17, 40, FighterType.Deer, id, position);
 
-    this.bulletCooldownBase = 0.125;
+    this.bulletCooldownBase = 0.08;
     this.bulletCooldownTime = this.bulletCooldownBase;
 
     this.baseMaxMomentum = this.MaxMomentum;
@@ -46,21 +46,17 @@ class Deer extends Fighter {
     const aim = Vector.Clone(this.AimDirection);
     if (aim.x < 0) this.Flipped = true;
     else if (aim.x > 0) this.Flipped = false;
-    aim.z = -0.1325;
-    aim.clamp(1, 1);
 
-    const fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
-    // Inherit velocity from bottom of stack as well
+    if (this.Position.z > 0) {
+      aim.z = this.Position.z * (-0.05);
+      aim.clamp(1, 1);
+    }
+
     const stackBottom = this.getBottomOfStack();
     if (stackBottom) {
-      fireVelo.x += stackBottom.Velocity.x;
-      fireVelo.y += stackBottom.Velocity.y;
       aim.z -= this.Position.z / 10;
       aim.clamp(1, 1);
     }
-    fireVelo.x /= 3;
-    fireVelo.y /= 3;
-    fireVelo.z *= -1;
 
     if (this.boostTimer > 0) {
       aim.x += ((Random.getFloat() - 0.5) * this.boostTimer) / 3;
@@ -75,14 +71,14 @@ class Deer extends Fighter {
     }
 
     const firePos = Vector.Clone(this.Position);
-    firePos.z += this.Height * (5 / 3);
+    firePos.z += this.Height * 0.7;
     if (this.Flipped === true) firePos.x -= this.Radius;
     else firePos.x += this.Radius;
 
     const bullet = new BBullet(firePos, aim, this);
-    // bullet.Velocity = Vector.Add(bullet.Velocity, fireVelo);
 
     MessageBus.publish('NewProjectile', bullet);
+    MessageBus.publish(`Animation_FireBullet${this.getOwnerID()}`, bullet);
     return bullet;
   }
 

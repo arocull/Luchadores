@@ -14,7 +14,7 @@ import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
 import { Fighter, Flamingo } from '../common/engine/fighters/index';
-import Animator from './animation/Animator';
+import { MakeAnimator } from './animation';
 import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
@@ -152,9 +152,10 @@ function OnDeath(died: number, killer: number) {
 
   for (let i = 0; i < world.Fighters.length; i++) {
     if (world.Fighters[i].getOwnerID() === died) {
-      PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
-      diedName = world.Fighters[i].DisplayName;
-      world.Fighters.splice(i, 1);
+      if (world.Fighters[i].Animator) world.Fighters[i].Animator.destruct(); // Removes event listeners on animator
+      PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount); // Burst into confetti!
+      diedName = world.Fighters[i].DisplayName; // Get name of character who died
+      world.Fighters.splice(i, 1); // Remove from list
       i--;
     } else if (world.Fighters[i].getOwnerID() === killer) {
       world.Fighters[i].EarnKill();
@@ -458,7 +459,7 @@ function DoFrame(tick: number) {
       if (a.getOwnerID() === player.getCharacterID()) character = a;
 
       // Tick animators, prune and generate new ones based off of need
-      if (!a.Animator) a.Animator = new Animator(a, renderSettings);
+      if (!a.Animator) a.Animator = MakeAnimator(a, renderSettings);
       else if (a.Animator) {
         a.Animator.Tick(DeltaTime);
         if (a.Animator.killEffectCountdown === 0) {
