@@ -9,8 +9,8 @@ import { BBullet } from '../../common/engine/projectiles';
 class AnimDeer extends Animator {
   private bulletChannel: string;
 
-  constructor(owner: Fighter, settings: RenderSettings) {
-    super(owner, settings);
+  constructor(owner: Fighter) {
+    super(owner);
 
     this.Upscale = 1.7;
 
@@ -27,10 +27,10 @@ class AnimDeer extends Animator {
   }
 
   private firedBullet(bullet: BBullet) {
-    if (!this.settings.nextParticle()) return;
-
-    MessageBus.publish('Effect_NewParticle', new PBulletShell(bullet.Position, Vector.UnitVector(bullet.Velocity)));
-    MessageBus.publish('Effect_NewParticle', new PBulletFire(bullet.Position, Vector.UnitVector(bullet.Velocity), 1));
+    if (!RenderSettings.nextParticle()) return;
+    const dir = Vector.Multiply(Vector.UnitVector(bullet.Velocity), -1);
+    MessageBus.publish('Effect_NewParticle', new PBulletShell(bullet.Position, dir));
+    MessageBus.publish('Effect_NewParticle', new PBulletFire(bullet.Position, dir, 1));
   }
 }
 

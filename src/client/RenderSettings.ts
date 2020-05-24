@@ -1,7 +1,7 @@
 import { RenderQuality } from '../common/engine/Enums';
 
 // Render settings for client -- can be raised or lowered to help client
-class RenderSettings {
+class RenderSettingsBase {
   // Quality is general quality of rendering--if this is lowered, we can reduce extra things that are cool but take processing power
   // --such as arena wall stretching or depth sorting--value should range between 0 and 3
 
@@ -21,4 +21,6 @@ class RenderSettings {
   }
 }
 
+// Render settings are global across client
+const RenderSettings = new RenderSettingsBase(3, 5, true);
 export { RenderSettings as default };

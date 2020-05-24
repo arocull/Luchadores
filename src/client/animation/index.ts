@@ -1,5 +1,4 @@
 import { Fighter } from '../../common/engine/fighters';
-import RenderSettings from '../RenderSettings';
 import { FighterType } from '../../common/engine/Enums';
 
 import Animator from './Animator';
@@ -8,16 +7,16 @@ import AnimDeer from './Deer';
 import AnimFlamingo from './Flamingo';
 
 
-function MakeAnimator(owner: Fighter, settings: RenderSettings): Animator {
+function MakeAnimator(owner: Fighter): Animator {
   switch (owner.getCharacter()) {
     case FighterType.Sheep:
-      return new AnimSheep(owner, settings);
+      return new AnimSheep(owner);
     case FighterType.Deer:
-      return new AnimDeer(owner, settings);
+      return new AnimDeer(owner);
     case FighterType.Flamingo:
-      return new AnimFlamingo(owner, settings);
+      return new AnimFlamingo(owner);
     default:
-      return new Animator(owner, settings);
+      return new Animator(owner);
   }
 }
 

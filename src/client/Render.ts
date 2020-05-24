@@ -8,6 +8,7 @@ import Animator from './animation/Animator';
 import { Projectile } from '../common/engine/projectiles/index';
 import { Particle, PLightning, PBulletFire } from './particles/index';
 import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
+import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
 /* eslint-enable object-curly-newline */
@@ -149,7 +150,7 @@ class Renderer {
     canvas.lineCap = 'round';
     canvas.beginPath();
     let corners: Vector[] = null;
-    if (camera.Settings.Quality > RenderQuality.Low) {
+    if (RenderSettings.Quality > RenderQuality.Low) {
       corners = GetArenaBounds(camera, map, fighters);
       // Draw all arena boundaries except for frontmost
       canvas.moveTo(corners[ArenaBoundFrontPassIndex].x, corners[ArenaBoundFrontPassIndex].y);
@@ -308,7 +309,7 @@ class Renderer {
     }
 
     // Finish up with the front arena bound
-    if (camera.Settings.Quality > RenderQuality.Low) {
+    if (RenderSettings.Quality > RenderQuality.Low) {
       canvas.strokeStyle = '#ff0000';
       canvas.globalAlpha = 1;
       canvas.lineWidth = zoom * 0.1;

@@ -1,3 +1,4 @@
+import RenderSettings from '../RenderSettings';
 import { MessageBus } from '../../common/messaging/bus';
 import Vector from '../../common/engine/Vector';
 import Animator from './Animator';
@@ -10,7 +11,7 @@ class AnimFlamingo extends Animator {
   }
 
   protected tickUniqueIdle() {
-    if (this.settings.nextParticle()) {
+    if (RenderSettings.nextParticle()) {
       const fire = new PFire(
         Vector.Add(this.owner.Position, new Vector(
           (Math.random() - 0.5) * this.owner.Radius * 1.5,
@@ -24,7 +25,7 @@ class AnimFlamingo extends Animator {
     }
   }
   protected tickAttacking() { // Flamingo - Fire on back and smoke breathing
-    if (this.timerTick % 3 === 1 && this.settings.nextParticle()) {
+    if (this.timerTick % 3 === 1 && RenderSettings.nextParticle()) {
       MessageBus.publish('Effect_NewParticle', new PFire(
         Vector.Add(this.owner.Position, new Vector(
           (Math.random() - 0.5) * this.owner.Radius * 1.4,
@@ -34,7 +35,7 @@ class AnimFlamingo extends Animator {
         new Vector(0, 0, 1),
         0.75,
       ));
-    } else if (this.timerTick % 5 === 4 && this.settings.nextParticle()) {
+    } else if (this.timerTick % 5 === 4 && RenderSettings.nextParticle()) {
       let dir = 1;
       if (this.owner.Flipped === true) dir = -1;
 

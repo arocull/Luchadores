@@ -21,7 +21,6 @@ class Camera {
     public Height: number,
     public MaxDrawWidth: number,
     public MaxDrawHeight: number,
-    public Settings: RenderSettings,
   ) {
     this.Focus = null;
     this.FocusPosition = new Vector(0, 0, 0);
@@ -58,13 +57,13 @@ class Camera {
       if (this.Focus.isRanged()) zoomBoost = 0.9;
 
       // If camera shake is enabled, do it
-      if (this.Shake > 0 && this.Settings.EnableCameraShake) {
+      if (this.Shake > 0 && RenderSettings.EnableCameraShake) {
         this.Shake -= DeltaTime * 10; // Gradually reduce camera shake over time
         if (this.Shake < 0) this.Shake = 0;
 
         const shake = (new Vector(Math.random() - 0.5, Math.random() - 0.5, 0)).clamp(1, 1); // Generate random shake direction
         this.FocusPosition = Vector.Add(this.FocusPosition, Vector.Multiply(shake, (Math.random() * this.Shake) / 100)); // Offset camera
-      } else if (!this.Settings.EnableCameraShake) this.Shake = 0;
+      } else if (!RenderSettings.EnableCameraShake) this.Shake = 0;
     }
 
     // Use constant aspect ratio

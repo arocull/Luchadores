@@ -1,10 +1,9 @@
 import Animator from './Animator';
 import { Fighter } from '../../common/engine/fighters';
-import RenderSettings from '../RenderSettings';
 
 class AnimSheep extends Animator {
-  constructor(owner: Fighter, settings: RenderSettings) {
-    super(owner, settings);
+  constructor(owner: Fighter) {
+    super(owner);
 
     this.Upscale = 1.3;
 

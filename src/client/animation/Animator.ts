@@ -1,4 +1,3 @@
-import RenderSettings from '../RenderSettings';
 import Fighter from '../../common/engine/Fighter';
 import { fighterTypeToString } from '../../common/engine/Enums';
 
@@ -31,7 +30,7 @@ class Animator {
 
   public killEffectCountdown: number; // Ticks down until rose petals effects show after a kill
 
-  constructor(protected owner: Fighter, protected settings: RenderSettings) {
+  constructor(protected owner: Fighter) {
     this.SpriteSheet = new Image();
     this.SpriteSheet.src = `Sprites/${fighterTypeToString(owner.getCharacter())}.png`;
 
