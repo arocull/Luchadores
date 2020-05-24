@@ -5,6 +5,8 @@ import BBullet from '../projectiles/Bullet';
 import { MessageBus } from '../../messaging/bus';
 import Random from '../Random';
 
+const PIOverTwo = Math.PI / 2;
+
 /* Deer - A general all-around character who can jump high and fire a constant stream of bullets
 
 Properties that need to be replicated from server to client:
@@ -23,6 +25,9 @@ class Deer extends Fighter {
 
   private baseMaxMomentum: number;
 
+  private bulletIndex: number; // Used for tracking which side of deer the bullet should be fired from
+  private bulletDisparity: number; // Difference in gun nozzle positions
+
   constructor(id: number, position: Vector) {
     super(100, 100, 2000, 0.45, 1.05, 17, 40, FighterType.Deer, id, position);
 
@@ -30,6 +35,8 @@ class Deer extends Fighter {
     this.bulletCooldownTime = this.bulletCooldownBase;
 
     this.baseMaxMomentum = this.MaxMomentum;
+    this.bulletIndex = 0;
+    this.bulletDisparity = 0.6 * this.Radius;
   }
 
   public EarnKill() {
@@ -42,6 +49,7 @@ class Deer extends Fighter {
   public fireBullet(): BBullet {
     this.BulletShock += this.bulletCooldownTime * 10;
     this.BulletCooldown += this.bulletCooldownTime;
+    this.bulletIndex++;
 
     const aim = Vector.Clone(this.AimDirection);
     if (aim.x < 0) this.Flipped = true;
@@ -70,10 +78,18 @@ class Deer extends Fighter {
       }
     }
 
-    const firePos = Vector.Clone(this.Position);
-    firePos.z += this.Height * 0.7;
+    let firePos = Vector.Clone(this.Position);
+    firePos.z += this.Height * 0.8;
     if (this.Flipped === true) firePos.x -= this.Radius;
     else firePos.x += this.Radius;
+
+    firePos = Vector.Add(
+      firePos,
+      Vector.Multiply(
+        Vector.UnitVectorFromAngle(Vector.ConstrainAngle(Vector.AngleFromXY(aim) + PIOverTwo)), // Rotate vector 90 degrees
+        ((this.bulletIndex % 2) - 0.5) * this.bulletDisparity, // Difference in gun nozzle positions
+      ),
+    );
 
     const bullet = new BBullet(firePos, aim, this);
 
@@ -86,7 +102,7 @@ class Deer extends Fighter {
     super.tickCooldowns(DeltaTime);
 
     if (this.BulletCooldown > 0 && !(this.boostTimer > 0)) {
-      this.MaxMomentum = this.baseMaxMomentum * (2 / 3); // Limit movement speed to two thirds if firing and not in boost
+      this.MaxMomentum = this.baseMaxMomentum * 0.5; // Limit movement speed to two thirds if firing and not in boost
     } else { // Otherwise return to normal
       this.MaxMomentum = this.baseMaxMomentum;
     }
@@ -94,6 +110,14 @@ class Deer extends Fighter {
 
   protected boostEnded() {
     this.bulletCooldownTime = this.bulletCooldownBase;
+  }
+
+  // Special variable getters/setters
+  public getBulletIndex(): number {
+    return this.bulletIndex;
+  }
+  public setBulletIndex(newIndex: number) {
+    this.bulletIndex = newIndex;
   }
 }
 

@@ -1,7 +1,7 @@
 import Random from '../common/engine/Random';
 import Entity from '../common/engine/Entity';
 import World from '../common/engine/World';
-import { Fighter, Flamingo } from '../common/engine/fighters/index';
+import { Fighter, Deer, Flamingo } from '../common/engine/fighters/index';
 import { Projectile } from '../common/engine/projectiles/index';
 import { EntityType, FighterType } from '../common/engine/Enums';
 import { Timer } from '../common/engine/time/Time';
@@ -26,7 +26,10 @@ function encodeEntity(obj: Entity): any {
     result.specialNumber = 0;
     result.specialBoolean = false;
 
-    if (fight.getCharacter() === FighterType.Flamingo) {
+    if (fight.getCharacter() === FighterType.Deer) { // Bullet index (used for gun nozzle difference in bullet placement)
+      const deer = <Deer>fight;
+      result.specialNumber = deer.getBulletIndex();
+    } else if (fight.getCharacter() === FighterType.Flamingo) { // Breath meter
       const flam = <Flamingo>fight;
       result.specialNumber = flam.getBreath();
       result.specialBoolean = flam.isBreathing();

@@ -29,7 +29,13 @@ class AnimDeer extends Animator {
   private firedBullet(bullet: BBullet) {
     if (!RenderSettings.nextParticle()) return;
     const dir = Vector.Multiply(Vector.UnitVector(bullet.Velocity), -1);
-    MessageBus.publish('Effect_NewParticle', new PBulletShell(bullet.Position, dir));
+    MessageBus.publish('Effect_NewParticle', new PBulletShell(
+      Vector.Add(
+        bullet.Position,
+        Vector.Multiply(dir, 0.5),
+      ),
+      dir,
+    ));
     MessageBus.publish('Effect_NewParticle', new PBulletFire(bullet.Position, dir, 1));
   }
 }
