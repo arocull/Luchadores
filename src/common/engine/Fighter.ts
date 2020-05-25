@@ -211,6 +211,18 @@ class Fighter extends Entity {
     this.BulletCooldown = newCooldown;
   }
 
+  /* eslint-disable class-methods-use-this */
+  // Methods used in WorldState for sending/recieving special properties; overridden by subclasses
+  public getSpecialNumber(): number {
+    return 0;
+  }
+  public getSpecialBoolean(): boolean {
+    return false;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public setSpecialStates(num: number, bool: boolean) { }
+  /* eslint-enable class-methods-use-this */
+
   public inKillEffect(): boolean { // Returns true if fighter is in a kill effect
     return (this.boostTimer > 0);
   }

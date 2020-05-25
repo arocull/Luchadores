@@ -37,6 +37,8 @@ class Deer extends Fighter {
     this.baseMaxMomentum = this.MaxMomentum;
     this.bulletIndex = 0;
     this.bulletDisparity = 0.6 * this.Radius;
+
+    this.getSpecialNumber = this.getBulletIndex;
   }
 
   public EarnKill() {
@@ -118,6 +120,10 @@ class Deer extends Fighter {
   }
   public setBulletIndex(newIndex: number) {
     this.bulletIndex = newIndex;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public setSpecialStates(num: number, bool: boolean) {
+    this.bulletIndex = num;
   }
 }
 

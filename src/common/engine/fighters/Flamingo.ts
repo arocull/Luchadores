@@ -31,6 +31,10 @@ class Flamingo extends Fighter {
     this.maxBreath = 50;
     this.breath = 50;
     this.breathing = false;
+
+    this.getSpecialNumber = this.getBreath;
+    this.getSpecialBoolean = this.isBreathing;
+    this.setSpecialStates = this.setBreath;
   }
 
   public EarnKill() {
