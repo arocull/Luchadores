@@ -151,6 +151,10 @@ class World {
       const mass = obj.Mass + obj.passengerMass; // Passengers increase mass for other calculations
       const maxSpeed = obj.MaxMomentum / obj.Mass; // Max speed still remains the same, we do not want passengers causing slowdown
 
+      // Manipulate move acceleration of the fighter depending on if they're in the air or not
+      let moveAccel = Vector.Clone(obj.Acceleration);
+      if (obj.isFalling()) moveAccel = Vector.Multiply(moveAccel, obj.AirControl);
+
       // First, apply any potential accelerations due to physics, start with friction as base for optimization
       let accel = new Vector(0, 0, 0);
 
@@ -185,15 +189,18 @@ class World {
 
 
       // Add physics-based acceleration and player input acceleration, and then calculate position change
-      accel = Vector.Add(obj.Acceleration, accel);
+      accel = Vector.Add(moveAccel, accel);
       let deltaX = Vector.Add(
         Vector.Multiply(accel, (DeltaTime ** 2) / 2),
         Vector.Multiply(obj.Velocity, DeltaTime),
       );
 
-      // If they attempted to move faster than their max momentum, clamp their movement (should do this?)
-      if (deltaX.length() > maxSpeed * DeltaTime) {
-        deltaX = Vector.Multiply(Vector.UnitVector(deltaX), maxSpeed * DeltaTime);
+      // If they attempted to move faster than their max momentum, clamp their movement (but don't clamp vertical component)
+      if (deltaX.lengthXY() > maxSpeed * DeltaTime) {
+        // eslint-disable-next-line prefer-destructuring
+        const z = deltaX.z;
+        deltaX = Vector.Multiply(Vector.UnitVectorXY(deltaX), maxSpeed * DeltaTime);
+        deltaX.z = z;
       }
 
       obj.lastPosition = obj.Position;
@@ -201,14 +208,17 @@ class World {
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
       obj.newPosition = obj.Position;
 
-      // Terminal velocity
-      if (obj.Velocity.length() > maxSpeed) {
-        obj.Velocity = Vector.Multiply(Vector.UnitVector(obj.Velocity), maxSpeed);
+      // Terminal velocity (don't clamp vertical component)
+      if (obj.Velocity.lengthXY() > maxSpeed) {
+        // eslint-disable-next-line prefer-destructuring
+        const z = obj.Velocity.z;
+        obj.Velocity = Vector.Multiply(Vector.UnitVectorXY(obj.Velocity), maxSpeed);
+        obj.Velocity.z = z;
       }
 
       if (obj.getBulletCooldown() <= 0) {
-        if (obj.Acceleration.x < -1) obj.Flipped = true;
-        else if (obj.Acceleration.x > 1) obj.Flipped = false;
+        if (moveAccel.x < -1) obj.Flipped = true;
+        else if (moveAccel.x > 1) obj.Flipped = false;
       }
 
       if (obj.Position.z < 0) {

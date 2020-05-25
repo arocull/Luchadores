@@ -11,12 +11,20 @@ Properties that need to be replicated from server to client:
 - Velocity
 - Acceleration
 
+Sheep's traits:
+- High health
+- High mass and max velocity
+- Large cube
+- Low move acceleration
+- Little jump height
+- No air control
+
 */
 class Sheep extends Fighter {
   private baseMoveAccel: number;
 
   constructor(id: number, position: Vector) {
-    super(200, 200, 8000, 0.6, 1.2, 8, 30, FighterType.Sheep, id, position);
+    super(200, 200, 8000, 0.6, 1.2, 8, 30, 0, FighterType.Sheep, id, position);
 
     this.ranged = false;
     this.baseMoveAccel = this.MoveAcceleration;
