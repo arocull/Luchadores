@@ -33,7 +33,7 @@ class World {
   private kills: IPlayerDied[];
 
   constructor() {
-    this.Map = new Map(40, 40, 25, 'Maps/Grass.jpg', 10000);
+    this.Map = new Map(40, 40, 23, 'Maps/Grass.jpg', 10000);
 
     this.Fighters = [];
     this.Bullets = [];
@@ -172,8 +172,42 @@ class World {
 
       // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
       if (obj.Position.z <= 0 || obj.riding) {
-        const leveled = new Vector(obj.Velocity.x, obj.Velocity.y, 0);
-        accel = Vector.Add(accel, Vector.Multiply(Vector.UnitVector(leveled), -this.Map.Friction).clamp(0, obj.Velocity.length() * 3));
+        const leveled = new Vector( // Get approximate X and Y velocity by end of frame
+          obj.Velocity.x + (obj.Acceleration.x + accel.x) * DeltaTime,
+          obj.Velocity.y + (obj.Acceleration.y + accel.y) * DeltaTime,
+          0,
+        );
+        const len = leveled.lengthXY(); // Get magnitude of the leveled velocity
+
+        // For reference:
+        // Sheep's max velocity is 40 units per second
+        // Deer's max velocity is 20 units per second
+        // Flamingo's max velocity is 16.25 units per second
+
+        // We want more friction at low velocities and less friction at high velocitites so slowdown seems more realistic
+        // 'Static' friction would in this case be three times as strong as kinetic friction
+        // Frictions are blended using a logarithmic curve
+        const force = Math.max(3 - Math.log(len / 2 + 1), 1);
+
+        // Apply friction as an acceleration
+        accel = Vector.Subtract(
+          accel,
+          Vector.Multiply(
+            Vector.UnitVector(leveled),
+            force * this.Map.Friction,
+          ).clamp(0, len / DeltaTime), // Limit it so it does not push the player backwards while standing still (still acceleration though)
+        );
+
+        // However, we don't want players getting stuck in place, so give them a slight acceleration boost when at low velocities
+        if (force > 1) {
+          accel = Vector.Add(
+            accel,
+            Vector.Multiply(
+              obj.Acceleration,
+              (force - 1), // No boost when at full kinetic friction, but 2x boost when full static
+            ),
+          );
+        }
       }
 
       // If this character is riding another fighter, they should inherit its acceleration and max momentum as well
