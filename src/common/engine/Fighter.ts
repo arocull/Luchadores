@@ -158,7 +158,7 @@ class Fighter extends Entity {
 
   // Sets the fighter's acceleration in the given vector
   public Move(direction: Vector) {
-    this.Acceleration = Vector.Multiply(Vector.UnitVector(direction), this.MoveAcceleration);
+    this.Acceleration = Vector.Multiply(Vector.UnitVectorXY(direction), this.MoveAcceleration);
   }
 
   // Called when the fighter has just landed after spending time in the air, can be overriden for special functionality
