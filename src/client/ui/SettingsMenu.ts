@@ -29,7 +29,7 @@ class UISettingsMenu {
   private particleMedium: UIFrame;
   private particleHigh: UIFrame;
 
-  constructor(private renderSettings: RenderSettings) {
+  constructor() {
     const base = new UIFrame(
       (1 - WIDTH) / 2, // Center X
       (1 - HEIGHT) / 2, // Center Y
@@ -117,13 +117,13 @@ class UISettingsMenu {
     this.MakeButton(qualityMedium);
     this.MakeButton(qualityHigh);
     qualityLow.onClick = (() => {
-      this.renderSettings.Quality = RenderQuality.Low;
+      RenderSettings.Quality = RenderQuality.Low;
     });
     qualityMedium.onClick = (() => {
-      this.renderSettings.Quality = RenderQuality.Medium;
+      RenderSettings.Quality = RenderQuality.Medium;
     });
     qualityHigh.onClick = (() => {
-      this.renderSettings.Quality = RenderQuality.High;
+      RenderSettings.Quality = RenderQuality.High;
     });
 
 
@@ -174,13 +174,13 @@ class UISettingsMenu {
     this.MakeButton(particleMedium);
     this.MakeButton(particleHigh);
     particleLow.onClick = (() => {
-      this.renderSettings.ParticleAmount = 1;
+      RenderSettings.ParticleAmount = 1;
     });
     particleMedium.onClick = (() => {
-      this.renderSettings.ParticleAmount = 3;
+      RenderSettings.ParticleAmount = 3;
     });
     particleHigh.onClick = (() => {
-      this.renderSettings.ParticleAmount = 5;
+      RenderSettings.ParticleAmount = 5;
     });
 
     this.qualityLow = qualityLow;
@@ -213,8 +213,8 @@ class UISettingsMenu {
     );
     this.MakeButton(cameraShake);
     cameraShake.onClick = (() => {
-      this.renderSettings.EnableCameraShake = !this.renderSettings.EnableCameraShake;
-      if (this.renderSettings.EnableCameraShake) {
+      RenderSettings.EnableCameraShake = !RenderSettings.EnableCameraShake;
+      if (RenderSettings.EnableCameraShake) {
         cameraShake.text = 'Enabled';
       } else {
         cameraShake.text = 'Disabled';
@@ -243,8 +243,8 @@ class UISettingsMenu {
     );
     this.MakeButton(fpsCounter);
     fpsCounter.onClick = (() => {
-      this.renderSettings.FPScounter = !this.renderSettings.FPScounter;
-      if (this.renderSettings.FPScounter) {
+      RenderSettings.FPScounter = !RenderSettings.FPScounter;
+      if (RenderSettings.FPScounter) {
         fpsCounter.text = 'Enabled';
       } else {
         fpsCounter.text = 'Disabled';
@@ -283,7 +283,7 @@ class UISettingsMenu {
   public Tick(DeltaTime: number) {
     this.time += DeltaTime;
 
-    switch (this.renderSettings.Quality) {
+    switch (RenderSettings.Quality) {
       case RenderQuality.Low:
         this.SetBorder(this.qualityLow, true);
         this.SetBorder(this.qualityMedium, false);
@@ -302,7 +302,7 @@ class UISettingsMenu {
         break;
     }
 
-    switch (this.renderSettings.ParticleAmount) {
+    switch (RenderSettings.ParticleAmount) {
       case 1:
         this.SetBorder(this.particleLow, true);
         this.SetBorder(this.particleMedium, false);

@@ -14,7 +14,7 @@ import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
 import { Fighter, Flamingo } from '../common/engine/fighters/index';
-import Animator from './animation/Animator';
+import { MakeAnimator } from './animation';
 import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
@@ -50,11 +50,10 @@ const topics = {
 // Get rendering viewport--browser only
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
-
-const renderSettings = new RenderSettings(3, 5, true);
+// RenderSettings generated for global use
 const fpsCount: number[] = [];
 
-const cam = new Camera(viewport.width, viewport.height, 18, 14, renderSettings);
+const cam = new Camera(viewport.width, viewport.height, 18, 14);
 cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 
 const uiLoadScreen = new UILoadScreen();
@@ -62,7 +61,7 @@ const connectingText = new UITextBox(0.01, 0.925, 1, 0.05, false, 'Stabilizing c
 const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
 const uiClassSelect = new UIClassSelect(2, 2, 3);
 const uiUsernameSelect = new UIUsernameSelect();
-const uiSettingsMenu = new UISettingsMenu(renderSettings);
+const uiSettingsMenu = new UISettingsMenu();
 const uiSettingsMenuOpen = new UIFrame(0, 0, 0.03, 0.03, true);
 const uiHealthbar = new UIHealthbar();
 const uiSpecialBar = new UIHealthbar();
@@ -152,9 +151,10 @@ function OnDeath(died: number, killer: number) {
 
   for (let i = 0; i < world.Fighters.length; i++) {
     if (world.Fighters[i].getOwnerID() === died) {
-      PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * renderSettings.ParticleAmount);
-      diedName = world.Fighters[i].DisplayName;
-      world.Fighters.splice(i, 1);
+      if (world.Fighters[i].Animator) world.Fighters[i].Animator.destruct(); // Removes event listeners on animator
+      PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * RenderSettings.ParticleAmount); // Burst into confetti!
+      diedName = world.Fighters[i].DisplayName; // Get name of character who died
+      world.Fighters.splice(i, 1); // Remove from list
       i--;
     } else if (world.Fighters[i].getOwnerID() === killer) {
       world.Fighters[i].EarnKill();
@@ -458,11 +458,11 @@ function DoFrame(tick: number) {
       if (a.getOwnerID() === player.getCharacterID()) character = a;
 
       // Tick animators, prune and generate new ones based off of need
-      if (!a.Animator) a.Animator = new Animator(a, renderSettings);
+      if (!a.Animator) a.Animator = MakeAnimator(a);
       else if (a.Animator) {
         a.Animator.Tick(DeltaTime);
         if (a.Animator.killEffectCountdown === 0) {
-          PRosePetal.Burst(particles, a.Position, 0.2, 5, 20 * renderSettings.ParticleAmount);
+          PRosePetal.Burst(particles, a.Position, 0.2, 5, 20 * RenderSettings.ParticleAmount);
         }
       }
 
@@ -595,7 +595,7 @@ function DoFrame(tick: number) {
     }
   }
 
-  if (renderSettings.FPScounter) {
+  if (RenderSettings.FPScounter) {
     if (fpsCount.length >= 30) fpsCount.shift();
     fpsCount.push(DeltaTime);
 

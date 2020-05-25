@@ -35,14 +35,10 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
   newFighter.Velocity = new Vector(packet.velocity.x, packet.velocity.y, packet.velocity.z);
   newFighter.Acceleration = new Vector(packet.acceleration.x, packet.acceleration.y, packet.acceleration.z);
 
-  newFighter.Firing = packet.firing;
+  newFighter.Firing = packet.attacking;
   newFighter.aim(new Vector(packet.aim.x, packet.aim.y, packet.aim.z));
   newFighter.setBulletCooldown(packet.cooldown);
-
-  if (newFighter.getCharacter() === FighterType.Flamingo) {
-    const flam: Flamingo = <Flamingo>(newFighter);
-    flam.setBreath(packet.specialNumber, packet.specialBoolean);
-  }
+  newFighter.setSpecialStates(packet.specialNumber, packet.specialBoolean);
 
   return newFighter;
 }

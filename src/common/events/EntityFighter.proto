@@ -6,7 +6,7 @@ message EntityFighter {
     required Vector acceleration = 3;
     required int32 ownerId = 4;
     required int32 class = 5;
-    required bool firing = 6;
+    required bool attacking = 6;
     required Vector aim = 7;
     required float cooldown = 8;
     required float specialNumber = 9;
