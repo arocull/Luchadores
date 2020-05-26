@@ -11,6 +11,7 @@ const normalDown = new Vector(0, 0, -1);
 class Prop extends Entity {
   public Radius: number;
   public UsePhysics: boolean; // If false, it will not simulate physics itself, but other objects may collide with it
+  public BounceBack: number; // If something collides with this, how much of the entities velocity is returned
 
   constructor(
     pos: Vector,
@@ -25,6 +26,7 @@ class Prop extends Entity {
     else this.Radius = Math.sqrt(this.Width ** 2 + this.Depth ** 2); // Get maximum radius of box for approximation purposes
 
     this.UsePhysics = false;
+    this.BounceBack = 0.7;
   }
 
   // Checks to see if the given Vector is inside of the prop object
@@ -50,15 +52,17 @@ class Prop extends Entity {
 
 
   // Applies the given ray trace to all surfaces of the prop until a valid collision is discovered or none was found
-  public traceProp(ray: Ray): TraceResult {
+  public traceProp(ray: Ray, radiusBoost: number = 0): TraceResult {
     const result = new TraceResult();
+
+    const radius = this.Radius + radiusBoost;
 
     // Top surface collisision
     const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp);
     if (topTrace.collided) {
       switch (this.shape) {
         case ColliderType.Cylinder: // If it is a cylinder, make sure the hit position was inside the cylinder radius
-          if (Vector.Subtract(topTrace.Position, this.Position).lengthXY() <= this.Radius) return topTrace;
+          if (Vector.DistanceXY(topTrace.Position, this.Position) <= radius) return topTrace;
           break;
         default: // If it is a prism, make sure X and Y coordinates are inside the face
           if (
@@ -77,7 +81,7 @@ class Prop extends Entity {
     if (botTrace.collided) {
       switch (this.shape) {
         case ColliderType.Cylinder: // If it is a cylinder, make sure the hit position was inside the cylinder radius
-          if (Vector.Subtract(botTrace.Position, this.Position).lengthXY() <= this.Radius) return botTrace;
+          if (Vector.DistanceXY(botTrace.Position, this.Position) <= radius) return botTrace;
           break;
         default: // If it is a prism, make sure X and Y coordinates are inside the face
           if (
@@ -93,15 +97,7 @@ class Prop extends Entity {
 
     // If object is a cylinder, get surface normal that corresponds with ray direction
     if (this.shape === ColliderType.Cylinder) {
-      const norm = Vector.Multiply(Vector.UnitVectorXY(ray.direction), -1);
-      const planeCenter = Vector.Add(this.Position, Vector.Multiply(norm, this.Radius));
-
-      const cylinderTrace = ray.tracePlane(planeCenter, norm); // Ray trace this generated plane
-      // If the trace succeeded and landed at a point within the cylinder radius, then it should be set
-      if (cylinderTrace.collided && Vector.Subtract(cylinderTrace.Position, this.Position).lengthXY() <= this.Radius) {
-        return cylinderTrace;
-      }
-      return result; // Traces on cylinders end here
+      return ray.traceCylinder(this.Position, radius); // Traces on cylinders end here
     }
 
     // Box collisions not implemented yet
@@ -111,7 +107,7 @@ class Prop extends Entity {
 
   private getTopPlaneCenter(): Vector {
     const vec = Vector.Clone(this.Position);
-    vec.z += this.Height;
+    vec.z += this.Height * 0.99;
     return vec;
   }
   private getBottomPlaneCenter(): Vector {

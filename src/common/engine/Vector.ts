@@ -7,7 +7,7 @@ class Vector { // A structure that holds position data or direction and magnitud
 
   public z: number;
 
-  constructor(X: number, Y: number, Z: number) {
+  constructor(X: number = 0, Y: number = 0, Z: number = 0) {
     this.x = X;
     this.y = Y;
     this.z = Z;
@@ -22,7 +22,7 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
 
   // Limits length of this vector to a set field
-  public clamp(minLen: number, maxLen: number):Vector {
+  public clamp(minLen: number, maxLen: number = minLen):Vector {
     const len = this.length();
     const lenF = Math.min(Math.max(len, minLen), maxLen);
 

@@ -1,6 +1,7 @@
 // Includes Vector.js
 import Vector from './Vector';
 import Entity from './Entity';
+import Prop from './props/Prop';
 import { EntityType, FighterType } from './Enums';
 
 /* A standard fighter with basic properties shared by all characters
@@ -43,6 +44,7 @@ class Fighter extends Entity {
   public dismountRider: boolean;
   public passengerMass: number;
   public passengerMaxMomentum: number;
+  public onProp: Prop;
 
   protected ranged: boolean;
   protected AimDirection: Vector;
@@ -85,6 +87,7 @@ class Fighter extends Entity {
     this.dismountRider = false;
     this.passengerMass = 0;
     this.passengerMaxMomentum = 0;
+    this.onProp = null;
 
     this.ranged = true;
     this.AimDirection = new Vector(1, 0, 0);
@@ -169,7 +172,7 @@ class Fighter extends Entity {
 
   // Returns true if the fighter is falling or not
   public isFalling(): boolean {
-    return !(this.Position.z <= 0 || this.riding) || this.Velocity.z > 0;
+    return !(this.Position.z <= 0 || this.riding || this.onProp) || this.Velocity.z > 0;
   }
 
   // Sets aim direction of fighter

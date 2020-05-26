@@ -253,6 +253,9 @@ class Renderer {
 
         const pos = camera.PositionOffsetBasic(a.Position);
 
+        canvas.globalAlpha = 1;
+        canvas.lineWidth = 0.1 * zoom;
+
         canvas.fillStyle = '#000000';
         canvas.fillRect(
           (-pos.x - a.Width) * zoom + offsetX,
@@ -260,6 +263,30 @@ class Renderer {
           2 * a.Width * zoom,
           -a.Height * zoom,
         );
+        // Cylinder Base
+        canvas.strokeStyle = '#444444';
+        canvas.beginPath();
+        canvas.arc(
+          -pos.x * zoom + offsetX,
+          (pos.y + pos.z) * zoom + offsetY,
+          a.Radius * zoom,
+          0,
+          Math.PI * 2,
+        );
+        canvas.closePath();
+        canvas.stroke();
+        // Cylinder Top
+        canvas.strokeStyle = '#444444';
+        canvas.beginPath();
+        canvas.arc(
+          -pos.x * zoom + offsetX,
+          (pos.y + pos.z - a.Height) * zoom + offsetY,
+          a.Radius * zoom,
+          0,
+          Math.PI * 2,
+        );
+        canvas.closePath();
+        canvas.stroke();
       } else if (toDraw[i].type === EntityType.Projectile) {
         const a = <Projectile>toDraw[i];
 

@@ -1,4 +1,4 @@
-import { Vector } from './math';
+import { Vector, Ray, TraceResult } from './math';
 import Player from './Player';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
@@ -268,6 +268,7 @@ class World {
       obj.riding = null;
       obj.passengerMass = 0;
       obj.passengerMaxMomentum = 0;
+      obj.onProp = null;
     }
 
 
@@ -304,6 +305,8 @@ class World {
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
       a.dismountRider = false; // Reset dismount
+
+      const moveTrace = new Ray(a.lastPosition, a.Position);
 
       // Fighter collisions
       for (let j = i + 1; j < this.Fighters.length; j++) { // If the entity was already iterated through by main loop, should not need to do it again
@@ -357,32 +360,51 @@ class World {
 
 
       // Prop collisions
-      /* for (let j = 0; j < this.Props.length; j++) {
+      for (let j = 0; j < this.Props.length; j++) {
         const b = this.Props[i];
-        // Get point of fighter's circle closest to center of prop
-        const toCenter = Vector.Multiply(Vector.UnitVectorXY(Vector.Subtract(b.Position, a.Position)), a.Radius);
 
         const pos = Vector.Clone(a.Position); // Top center of fighter
 
+        const collisionRay = Ray.Clone(moveTrace);
         let collisionResult: TraceResult = null;
 
         // See if any of these given points are inside the prop--if so, we have a collision
         if (b.isPointInside(pos, a.Radius)) { // Bottom center of fighter
-          const collisionRay = new Ray(pos, Vector.Add(pos, toCenter));
-          collisionResult = b.traceProp(collisionRay);
+          collisionResult = b.traceProp(collisionRay, a.Radius);
         } else { // If collision failed, check top center of fighter
           pos.z += a.Height;
+          collisionRay.start.z += a.Height;
+          collisionRay.end.z += a.Height;
           if (b.isPointInside(pos, a.Radius)) {
-            const collisionRay = new Ray(pos, Vector.Add(pos, toCenter));
-            collisionResult = b.traceProp(collisionRay);
+            collisionResult = b.traceProp(collisionRay, a.Radius);
           }
         }
 
         if (collisionResult && collisionResult.collided) {
-          const dir = Vector.UnitVector(Vector.Subtract(b.Position, collisionResult.Position));
-          a.Position = Vector.Add(a.Position, dir);
+          // Vertical collisions are different in the fact the fighter is snapped ontop of or below
+          if (collisionResult.Normal.z > 0.9) {
+            a.Position.z = b.Position.z + b.Height;
+            a.Velocity.z = 0;
+            a.onProp = b;
+          } else if (collisionResult.Normal.z < -0.9) {
+            a.Position.z = b.Position.z - a.Height;
+            a.Velocity.z = 0;
+          } else { // Other collisions should snap position around the entity
+            const dist = (a.Radius + b.Radius) - Vector.DistanceXY(b.Position, a.Position);
+            a.Position = Vector.Add(
+              a.Position,
+              Vector.Multiply(collisionResult.Normal, dist),
+            );
+
+            const veloDot = Vector.DotProduct(collisionResult.Normal, Vector.UnitVectorXY(a.Velocity));
+            a.Velocity = Vector.Subtract(
+              a.Velocity,
+              Vector.Multiply(collisionResult.Normal, veloDot),
+            );
+          }
         }
-      } */
+        if (a.Position.z < 0) a.Position.z = 0;
+      }
     }
 
     // Bullet collisions

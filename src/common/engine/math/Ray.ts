@@ -12,19 +12,25 @@ class Ray {
   public length: number;
 
   constructor(public start: Vector, public end: Vector) {
-    const dir = Vector.Subtract(end, start);
+    this.calculate();
+  }
+
+  // Calculates direction and length properties of the ray (call incase Ray is manipulated)
+  public calculate() {
+    const dir = Vector.Subtract(this.end, this.start);
     this.direction = Vector.UnitVector(dir);
     this.length = dir.length();
   }
 
-  // Plane
-  public tracePlane(planeCenter: Vector, planeNormal: Vector): TraceResult {
+  // Trace a plane with given center and normal
+  // pass true for dualSided if we want to check collisions on both sides (may cause warping)
+  public tracePlane(planeCenter: Vector, planeNormal: Vector, dualSided: boolean = false): TraceResult {
     const result = new TraceResult();
 
     const denom = Vector.DotProduct(planeNormal, this.direction);
-    if (Math.abs(denom) > 0) {
+    if (denom < 0 || (dualSided && Math.abs(denom) > 0)) { // Math.abs(denom) if we want to check both sides
       const t = Vector.DotProduct(Vector.Subtract(planeCenter, this.start), planeNormal) / denom;
-      if (t >= 0) { // Trace hit the plane, find home position
+      if (t > 0) { // Trace hit the plane, find home position
         result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
         result.Normal = planeNormal;
         result.collided = true;
@@ -32,6 +38,34 @@ class Ray {
     }
 
     return result;
+  }
+
+  // Trace an infinite cylinder with given center and radius
+  // Special thanks to this guide https://www.cs.princeton.edu/courses/archive/spring14/cos426/lectures/12-ray.pdf
+  public traceCylinder(center: Vector, radius: number): TraceResult {
+    const result = new TraceResult();
+    const L = Vector.Subtract(center, this.start);
+    L.z = 0; // Level off Z component
+
+    const distC = Vector.DotProduct(L, this.direction);
+    if (distC < 0) return result; // Ray direction is not facing general direction of sphere
+
+    const diam2 = Vector.DotProduct(L, L) - distC ** 2;
+    if (diam2 > radius ** 2) return result; // Ray position near sphere is greater than sphere diameter (squared)
+
+    const distMid = Math.sqrt(radius ** 2 - diam2);
+    const t = distC - distMid; // Point closest to ray origin; to get point furthest from ray origin, distC + distMid
+
+    if (t < this.length) { // Make sure trace went as far as sphere
+      result.collided = true;
+      result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
+      result.Normal = Vector.UnitVectorXY(Vector.Subtract(result.Position, center)); // This is where it variates from a sphere (XY versus XYZ)
+    }
+    return result;
+  }
+
+  public static Clone(a: Ray): Ray {
+    return new Ray(Vector.Clone(a.start), Vector.Clone(a.end));
   }
 }
 
