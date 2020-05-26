@@ -49,6 +49,8 @@ test('bullet timeout test', () => {
 
   world.Bullets.push(bullet3);
 
+  expect(bullet3.getOwnerID()).toBe(-1);
+
   for (let i = 0; i < 31; i++) {
     world.TickPhysics(0.1);
     if (i === 14) expect(bullet3.getLifePercentage()).toBeCloseTo(0.5);

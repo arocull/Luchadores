@@ -3,9 +3,10 @@
 import Vector from '../common/engine/Vector';
 import { EntityType, ParticleType, ProjectileType, UIFrameType, FighterType, RenderQuality } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
-import { Fighter } from '../common/engine/fighters/index';
+import { Fighter } from '../common/engine/fighters';
 import Animator from './animation/Animator';
-import { Projectile } from '../common/engine/projectiles/index';
+import { Projectile } from '../common/engine/projectiles';
+import Prop from '../common/engine/props/Prop';
 import { Particle, PLightning, PBulletFire } from './particles/index';
 import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/index';
 import RenderSettings from './RenderSettings';
@@ -116,6 +117,7 @@ class Renderer {
     fighters: Fighter[],
     projectiles: Projectile[],
     particles: Particle[],
+    props: Prop[],
   ) {
     canvas.fillStyle = '#003001';
     canvas.fillRect(0, 0, camera.Width, camera.Height);
@@ -183,6 +185,9 @@ class Renderer {
     for (let i = 0; i < particles.length; i++) {
       if (camera.InFrame(particles[i].Position)) toDraw.push(particles[i]);
     }
+    for (let i = 0; i < props.length; i++) {
+      if (camera.InFrame(props[i].Position)) toDraw.push(props[i]);
+    }
 
     toDraw = toDraw.sort(DepthSort); // Do depth sorting
 
@@ -243,6 +248,18 @@ class Renderer {
             (pos.y + pos.z - a.Height * upscale - 0.175) * camera.Zoom + offsetY,
           );
         }
+      } else if (toDraw[i].type === EntityType.Prop) {
+        const a = <Prop>toDraw[i];
+
+        const pos = camera.PositionOffsetBasic(a.Position);
+
+        canvas.fillStyle = '#000000';
+        canvas.fillRect(
+          (-pos.x - a.Width) * zoom + offsetX,
+          (pos.y + pos.z) * zoom + offsetY,
+          2 * a.Width * zoom,
+          -a.Height * zoom,
+        );
       } else if (toDraw[i].type === EntityType.Projectile) {
         const a = <Projectile>toDraw[i];
 

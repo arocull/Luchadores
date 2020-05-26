@@ -511,7 +511,7 @@ function DoFrame(tick: number) {
     }
   }
 
-  Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles);
+  Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles, world.Props);
 
   if (Input.GUIMode) {
     Renderer.DrawUIFrame(canvas, cam, uiBackdrop);

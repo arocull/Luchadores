@@ -1,7 +1,8 @@
-import Vector from './Vector';
+import { Vector } from './math';
 import Player from './Player';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
+import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
@@ -27,6 +28,7 @@ class World {
 
   public Fighters: Fighter[];
   public Bullets: Projectile[];
+  public Props: Prop[];
   public Map: Map;
 
   public doReaping: boolean;
@@ -37,6 +39,7 @@ class World {
 
     this.Fighters = [];
     this.Bullets = [];
+    this.Props = [];
 
     this.doReaping = false;
     this.kills = [];
@@ -267,6 +270,7 @@ class World {
       obj.passengerMaxMomentum = 0;
     }
 
+
     // Apply rider position offsets
     for (let i = 0; i < this.Fighters.length; i++) {
       if (this.Fighters[i].rodeThisTick) {
@@ -284,6 +288,7 @@ class World {
       // Note: cannot debounce dismount variable here in case this fighter is being rode and they are trying to buck off rider
     }
 
+
     // Tick bullets
     for (let i = 0; i < this.Bullets.length; i++) {
       if (this.Bullets[i].finished) { // Remove despawning bullets
@@ -291,6 +296,7 @@ class World {
         i--;
       } else this.Bullets[i].Tick(DeltaTime); // Otherwise, tick bullet physics
     }
+
 
     // Compute collisions last after everything has moved (makes it slightly more "fair?")
     // Should we do raycasts from previous positions to make sure they do not warp through eachother and avoid collision?
@@ -348,6 +354,35 @@ class World {
           }
         }
       }
+
+
+      // Prop collisions
+      /* for (let j = 0; j < this.Props.length; j++) {
+        const b = this.Props[i];
+        // Get point of fighter's circle closest to center of prop
+        const toCenter = Vector.Multiply(Vector.UnitVectorXY(Vector.Subtract(b.Position, a.Position)), a.Radius);
+
+        const pos = Vector.Clone(a.Position); // Top center of fighter
+
+        let collisionResult: TraceResult = null;
+
+        // See if any of these given points are inside the prop--if so, we have a collision
+        if (b.isPointInside(pos, a.Radius)) { // Bottom center of fighter
+          const collisionRay = new Ray(pos, Vector.Add(pos, toCenter));
+          collisionResult = b.traceProp(collisionRay);
+        } else { // If collision failed, check top center of fighter
+          pos.z += a.Height;
+          if (b.isPointInside(pos, a.Radius)) {
+            const collisionRay = new Ray(pos, Vector.Add(pos, toCenter));
+            collisionResult = b.traceProp(collisionRay);
+          }
+        }
+
+        if (collisionResult && collisionResult.collided) {
+          const dir = Vector.UnitVector(Vector.Subtract(b.Position, collisionResult.Position));
+          a.Position = Vector.Add(a.Position, dir);
+        }
+      } */
     }
 
     // Bullet collisions
