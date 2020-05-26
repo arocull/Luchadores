@@ -18,6 +18,14 @@ Properties that need to be replicated from server to client:
 - Breath
 - Breathing
 
+Flamingo's traits:
+- Low health and mass
+- Lower maximum velocity
+- Tall and thin
+- Medium move acceleration
+- High jump velocity
+- Lots of air control
+
 */
 class Flamingo extends Fighter {
   private breath: number;
@@ -25,7 +33,7 @@ class Flamingo extends Fighter {
   private breathing: boolean;
 
   constructor(id: number, position: Vector) {
-    super(80, 80, 1300, 0.4, 2, 20, 35, FighterType.Flamingo, id, position);
+    super(80, 80, 1300, 0.4, 2, 20, 35, 0.7, FighterType.Flamingo, id, position);
 
     // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;

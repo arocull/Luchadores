@@ -17,6 +17,15 @@ Properties that need to be replicated from server to client:
 - Acceleration
 - Firing
 - Aim Direction
+- Bullet Index
+
+Deer's traits:
+- Medium health and mass
+- Medium max velocity
+- Short and wide
+- High move acceleration
+- Medium jump height
+- Slight air control
 
 */
 class Deer extends Fighter {
@@ -29,7 +38,7 @@ class Deer extends Fighter {
   private bulletDisparity: number; // Difference in gun nozzle positions
 
   constructor(id: number, position: Vector) {
-    super(100, 100, 2000, 0.45, 1.05, 17, 40, FighterType.Deer, id, position);
+    super(100, 100, 2000, 0.45, 1.05, 17, 40, 0.2, FighterType.Deer, id, position);
 
     this.bulletCooldownBase = 0.08;
     this.bulletCooldownTime = this.bulletCooldownBase;

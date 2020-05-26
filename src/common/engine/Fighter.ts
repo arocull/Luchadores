@@ -60,6 +60,7 @@ class Fighter extends Entity {
     public Height: number, // Collision and draw height
     private JumpVelocity: number, // The velocity or power this character jumps with
     protected MoveAcceleration: number, // Maximum acceleration one can reach from standard inputs
+    public AirControl: number, // How much of the fighter's move acceleration applies while in the air
     private character: FighterType, // What class this fighter is so we can differentiate between characters
     private ID: number, // Player/entity ID of this fighter so we can tell who's who
     position: Vector,
@@ -164,6 +165,11 @@ class Fighter extends Entity {
   // Called when the fighter has just landed after spending time in the air, can be overriden for special functionality
   public Land() {
     this.JustLanded = true;
+  }
+
+  // Returns true if the fighter is falling or not
+  public isFalling(): boolean {
+    return !(this.Position.z <= 0 || this.riding) || this.Velocity.z > 0;
   }
 
   // Sets aim direction of fighter
