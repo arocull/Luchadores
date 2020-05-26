@@ -151,14 +151,13 @@ class World {
       const mass = obj.Mass + obj.passengerMass; // Passengers increase mass for other calculations
       const maxSpeed = obj.MaxMomentum / obj.Mass; // Max speed still remains the same, we do not want passengers causing slowdown
 
-      // Manipulate move acceleration of the fighter depending on if they're in the air or not
+      // Store move acceleration for potential manipulations
       let moveAccel = Vector.Clone(obj.Acceleration);
-      if (obj.isFalling()) moveAccel = Vector.Multiply(moveAccel, obj.AirControl);
 
       // First, apply any potential accelerations due to physics, start with friction as base for optimization
       let accel = new Vector(0, 0, 0);
 
-      // Gravity
+      // Gravity - Ignores fighter riding because it relies on constant collisions
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
       // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
@@ -174,11 +173,12 @@ class World {
         accel.y /= mass;
       }
 
-      // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
-      if (obj.Position.z <= 0 || obj.riding) {
+      if (obj.isFalling()) { // Manipulate move acceleration of the fighter depending on if they're in the air or not
+        moveAccel = Vector.Multiply(moveAccel, obj.AirControl);
+      } else { // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
         const leveled = new Vector( // Get approximate X and Y velocity by end of frame
-          obj.Velocity.x + (obj.Acceleration.x + accel.x) * DeltaTime,
-          obj.Velocity.y + (obj.Acceleration.y + accel.y) * DeltaTime,
+          obj.Velocity.x + (moveAccel.x + accel.x) * DeltaTime,
+          obj.Velocity.y + (moveAccel.y + accel.y) * DeltaTime,
           0,
         );
         const len = leveled.lengthXY(); // Get magnitude of the leveled velocity
@@ -207,7 +207,7 @@ class World {
           accel = Vector.Add(
             accel,
             Vector.Multiply(
-              obj.Acceleration,
+              moveAccel,
               (force - 1), // No boost when at full kinetic friction, but 2x boost when full static
             ),
           );
