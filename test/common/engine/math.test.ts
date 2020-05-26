@@ -75,6 +75,53 @@ test('plane trace miss test', () => {
   expect(result.collided).toBe(false); // Trace shouldn't ever hit plane
 });
 
+test('plane trace surface normal test', () => {
+  const trace: Ray = new Ray(new Vector(0, 0, 0), new Vector(10, 0, 0));
+
+  const planePosition = new Vector(5, 0, 0);
+  const planeNormal = new Vector(1, 0, 0); // Normal is facing away from ray, meaning it shouldn't collide with it
+
+  // Check to see if the given ray intersects with the plane
+  const result1: TraceResult = trace.tracePlane(planePosition, planeNormal, false);
+  const result2: TraceResult = trace.tracePlane(planePosition, planeNormal, true);
+
+  expect(result1.collided).toBe(false); // Trace should not count as a hit as hit was not in direction of surface
+  expect(result2.collided).toBe(true); // Dual-sided trace should cound as it ignores which direction normal is facing
+});
+
+test('cylinder trace tests', () => {
+  const trace1: Ray = new Ray(new Vector(0, 0, 0), new Vector(10, 0, 0));
+  const trace2: Ray = new Ray(new Vector(0, 0, 0), new Vector(-10, 0, 0));
+  const trace3: Ray = new Ray(new Vector(0, 0, 0), new Vector(5, 10, 0));
+  const trace4: Ray = new Ray(new Vector(0, 0, 0), new Vector(3, 0, 0));
+
+  // Approximate direction vector
+
+
+  const pos = new Vector(5, 0, 0);
+  const radius = 1;
+
+  // Check to see if the given ray intersects with the plane
+  const result1: TraceResult = trace1.traceCylinder(pos, radius);
+  const result2: TraceResult = trace2.traceCylinder(pos, radius);
+  const result3: TraceResult = trace3.traceCylinder(pos, radius);
+  const result4: TraceResult = trace4.traceCylinder(pos, radius);
+
+  expect(result1.collided).toBe(true); // Should hit cylinder directly
+  expect(result2.collided).toBe(false); // Should fail dot product test
+  expect(result3.collided).toBe(false); // Ray position near cylinder should fail diameter test
+  expect(result4.collided).toBe(false); // Trace was too short to hit cylinder (fell short by ~1 unit)
+
+  expect(result1.Normal.x).toBeCloseTo(-1); // Hits section of cylinder facing directly left
+  expect(result1.Normal.y).toBeCloseTo(0);
+  expect(result1.Normal.z).toBeCloseTo(0);
+
+  // Should intersect dead-center on cylinder due to positioning
+  expect(result1.Position.x).toBeCloseTo(pos.x - radius); // Cylinder has an element of depth
+  expect(result2.Position.y).toBeCloseTo(pos.y);
+  expect(result3.Position.z).toBeCloseTo(pos.z);
+});
+
 test('ray clone test', () => {
   const a = new Ray(new Vector(0, 0, 0), new Vector(10, 0, 0));
   const b = Ray.Clone(a);
