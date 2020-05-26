@@ -66,31 +66,60 @@ class Flamingo extends Fighter {
     if (this.AimDirection.x < 0) this.Flipped = true;
     else if (this.AimDirection.x > 0) this.Flipped = false;
 
-    const fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
-    // Inherit velocity from bottom of stack as well
-    const stackBottom = this.getBottomOfStack();
-    if (stackBottom) {
-      fireVelo.x += stackBottom.Velocity.x;
-      fireVelo.y += stackBottom.Velocity.y;
-    }
-    fireVelo.z = 0;
-
-    // Get position to fire from
     const pos = Vector.Clone(this.Position);
-    pos.z += this.Height * 0.5;
-    if (this.Flipped === true) pos.x -= this.Radius * 1.2;
-    else pos.x += this.Radius * 1.2;
+    let fireVelo = new Vector(0, 0, 0);
 
-    // Recoil and sprite-flipping
-    this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(this.AimDirection, 0.1));
+    // Get randomized bullet direction
+    let dir = new Vector(0, 0, 0);
 
-    // Get randomized direction
-    const dir = Vector.UnitVectorFromXYZ(
-      this.AimDirection.x + (Random.getFloat() - 0.5) / 3,
-      this.AimDirection.y + (Random.getFloat() - 0.5) / 3,
-      0,
-    );
-    dir.z = -1;
+    // Produce jump boost flames
+    if (this.Position.z > 0 && !this.riding) {
+      fireVelo.z = -3;
+
+      dir = Vector.UnitVectorFromXYZ(
+        (Random.getFloat() - 0.5),
+        (Random.getFloat() - 0.5),
+        -4,
+      );
+
+      // Fire should shoot straight down, we'll leave it positioned at the base of Flamingo
+
+      // Apply a strong recoil downward
+      this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(dir, 2.15));
+    } else { // Otherwise, act as normal
+      fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
+
+      // Inherit velocity from bottom of stack as well
+      const stackBottom = this.getBottomOfStack();
+      if (stackBottom) {
+        fireVelo.x += stackBottom.Velocity.x;
+        fireVelo.y += stackBottom.Velocity.y;
+      }
+      fireVelo.z = 0;
+
+      // Only inherit velocity that is close to the direction Flamingo wants to fire (use dot product)
+      fireVelo = Vector.Multiply(fireVelo, Math.max(Vector.DotProduct(Vector.UnitVectorXY(fireVelo), this.AimDirection), 0));
+
+      // Get position to fire from
+      pos.z += this.Height * 0.5;
+      if (this.Flipped === true) pos.x -= this.Radius * 1.2;
+      else pos.x += this.Radius * 1.2;
+
+      // Direction of bullet
+      dir = Vector.UnitVectorFromXYZ(
+        this.AimDirection.x + (Random.getFloat() - 0.5) / 3,
+        this.AimDirection.y + (Random.getFloat() - 0.5) / 3,
+        0,
+      );
+      dir.z = -1;
+
+      // Apply recoil
+      if (stackBottom) { // Flamingo can use fire to help accelerate character they're stacked ontop of
+        stackBottom.Velocity = Vector.Subtract(stackBottom.Velocity, Vector.Multiply(dir, 0.15));
+      } else {
+        this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(dir, 0.15));
+      }
+    }
 
     const proj = new BFire(pos, dir, this);
     proj.Velocity = Vector.Add(proj.Velocity, fireVelo);
