@@ -34,6 +34,7 @@ class Ray {
         result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
         result.Normal = planeNormal;
         result.collided = true;
+        result.distance = Vector.Distance(this.start, result.Position);
       }
     }
 
@@ -60,6 +61,7 @@ class Ray {
       result.collided = true;
       result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
       result.Normal = Vector.UnitVectorXY(Vector.Subtract(result.Position, center)); // This is where it variates from a sphere (XY versus XYZ)
+      result.distance = Vector.Distance(this.start, result.Position);
     }
     return result;
   }

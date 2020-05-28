@@ -78,6 +78,7 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
 
   // Gets the dot product between two vectors
+  // Use normalized vectors for scalar value between -1 and 1
   static DotProduct(a: Vector, b: Vector): number {
     return a.x * b.x + a.y * b.y + a.z * b.z;
   }

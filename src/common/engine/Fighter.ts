@@ -1,8 +1,10 @@
 // Includes Vector.js
 import Vector from './Vector';
-import Entity from './Entity';
 import Prop from './props/Prop';
-import { EntityType, FighterType } from './Enums';
+import { EntityType, FighterType, ColliderType } from './Enums';
+
+// Static Configurations
+const KILL_HEALTH_RETURN = 0.25; // Percentage of max health that is restored upon earning a kill
 
 /* A standard fighter with basic properties shared by all characters
 
@@ -20,9 +22,7 @@ Any ranged classes should also replicate:
 ...as well as any other special properties each class has that must be replicated
  - specified in class files
 */
-class Fighter extends Entity {
-  public static KILL_HEALTH_RETURN: number = 0.25; // Percentage of max health that is restored upon earning a kill
-
+class Fighter extends Prop {
   public MaxHP: number;
 
   public Kills: number;
@@ -67,7 +67,9 @@ class Fighter extends Entity {
     private ID: number, // Player/entity ID of this fighter so we can tell who's who
     position: Vector,
   ) {
-    super(EntityType.Fighter, position, new Vector(0, 0, 0), new Vector(0, 0, 0));
+    // super(EntityType.Fighter, position, new Vector(0, 0, 0), new Vector(0, 0, 0));
+    super(position, ColliderType.Cylinder, Radius, Height, Radius);
+    this.type = EntityType.Fighter;
 
     this.MaxHP = HP;
 
@@ -87,7 +89,6 @@ class Fighter extends Entity {
     this.dismountRider = false;
     this.passengerMass = 0;
     this.passengerMaxMomentum = 0;
-    this.onProp = null;
 
     this.ranged = true;
     this.AimDirection = new Vector(1, 0, 0);
@@ -111,7 +112,7 @@ class Fighter extends Entity {
     this.Kills++;
 
     // Restore some HP upon earning a kill
-    this.HP = Math.min(this.HP + Fighter.KILL_HEALTH_RETURN * this.MaxHP, this.MaxHP);
+    this.HP = Math.min(this.HP + KILL_HEALTH_RETURN * this.MaxHP, this.MaxHP);
   }
 
 
@@ -172,7 +173,7 @@ class Fighter extends Entity {
 
   // Returns true if the fighter is falling or not
   public isFalling(): boolean {
-    return !(this.Position.z <= 0 || this.riding || this.onProp) || this.Velocity.z > 0;
+    return !(this.Position.z <= 0 || this.riding || this.onSurface) || this.Velocity.z > 0;
   }
 
   // Sets aim direction of fighter

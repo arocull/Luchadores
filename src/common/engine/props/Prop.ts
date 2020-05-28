@@ -10,8 +10,10 @@ const normalDown = new Vector(0, 0, -1);
 // TODO: Should we have the Fighter class extend this??? I made sure property names are the same as Fighter's incase we decide to
 class Prop extends Entity {
   public Radius: number;
-  public UsePhysics: boolean; // If false, it will not simulate physics itself, but other objects may collide with it
+  // public UsePhysics: boolean; // If false, it will not simulate physics itself, but other objects may collide with it
   public BounceBack: number; // If something collides with this, how much of the entities velocity is returned
+
+  public onSurface: boolean; // If this object is resting ontop of another object
 
   constructor(
     pos: Vector,
@@ -25,8 +27,10 @@ class Prop extends Entity {
     if (shape === ColliderType.Cylinder) this.Radius = Width;
     else this.Radius = Math.sqrt(this.Width ** 2 + this.Depth ** 2); // Get maximum radius of box for approximation purposes
 
-    this.UsePhysics = false;
-    this.BounceBack = 0.7;
+    // this.UsePhysics = false;
+    this.BounceBack = 1;
+
+    this.onSurface = false;
   }
 
   // Checks to see if the given Vector is inside of the prop object
@@ -103,6 +107,33 @@ class Prop extends Entity {
     // Box collisions not implemented yet
 
     return result;
+  }
+
+  // Position this prop based on a trace result and colliding prop
+  public CollideWithProp(collision: TraceResult, b: Prop) {
+    if (collision && collision.collided) {
+      // Vertical collisions are different in the fact the fighter is snapped ontop of or below
+      if (collision.Normal.z > 0.9) {
+        this.Position.z = b.Position.z + b.Height;
+        this.Velocity.z = 0;
+        this.onSurface = true;
+      } else if (collision.Normal.z < -0.9) {
+        this.Position.z = b.Position.z - this.Height;
+        this.Velocity.z = 0;
+      } else { // Other collisions should snap position around the entity
+        const dist = (this.Radius + b.Radius) - Vector.DistanceXY(b.Position, this.Position);
+        this.Position = Vector.Add(
+          this.Position,
+          Vector.Multiply(collision.Normal, dist),
+        );
+
+        const veloDot = Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity));
+        this.Velocity = Vector.Subtract(
+          this.Velocity,
+          Vector.Multiply(collision.Normal, veloDot),
+        );
+      }
+    }
   }
 
   private getTopPlaneCenter(): Vector {
