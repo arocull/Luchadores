@@ -36,6 +36,7 @@ class Fighter extends Prop {
   public JustHitPosition: Vector;
   public JustHitMomentum: number;
   public JustLanded: boolean;
+  public lastCollision: Fighter;
 
   public lastPosition: Vector;
   public newPosition: Vector;
@@ -83,6 +84,7 @@ class Fighter extends Prop {
 
     this.JustHitPosition = new Vector(0, 0, 0);
     this.JustHitMomentum = 0;
+    this.lastCollision = null;
 
     this.riding = null;
     this.rodeThisTick = null;
@@ -120,6 +122,7 @@ class Fighter extends Prop {
   public CollideWithFighter(hit: Fighter, momentum: number) {
     this.JustHitPosition = Vector.Average(this.Position, hit.Position);
     this.JustHitMomentum = momentum;
+    this.lastCollision = hit;
   }
 
 

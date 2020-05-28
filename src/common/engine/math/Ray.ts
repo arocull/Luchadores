@@ -30,7 +30,7 @@ class Ray {
     const denom = Vector.DotProduct(planeNormal, this.direction);
     if (denom < 0 || (dualSided && Math.abs(denom) > 0)) { // Math.abs(denom) if we want to check both sides
       const t = Vector.DotProduct(Vector.Subtract(planeCenter, this.start), planeNormal) / denom;
-      if (t > 0) { // Trace hit the plane, find home position
+      if (t >= 0) { // Trace hit the plane, find home position
         result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
         result.Normal = planeNormal;
         result.collided = true;
@@ -57,7 +57,7 @@ class Ray {
     const distMid = Math.sqrt(radius ** 2 - diam2);
     const t = distC - distMid; // Point closest to ray origin; to get point furthest from ray origin, distC + distMid
 
-    if (t < this.length) { // Make sure trace went as far as sphere
+    if (t <= this.length) { // Make sure trace went as far as sphere
       result.collided = true;
       result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
       result.Normal = Vector.UnitVectorXY(Vector.Subtract(result.Position, center)); // This is where it variates from a sphere (XY versus XYZ)
@@ -65,6 +65,18 @@ class Ray {
     }
     return result;
   }
+
+  // Returns the distance of a point to this ray
+  // https://answers.unity.com/questions/62644/distance-between-a-ray-and-a-point.html
+  public pointDistance(point: Vector): number {
+    return Vector.Cross(this.direction, Vector.Subtract(point, this.start)).length();
+  }
+  public pointDistanceXY(point: Vector): number {
+    const cross = Vector.Subtract(point, this.start);
+    cross.z = 0;
+    return Vector.Cross(Vector.UnitVectorXY(this.direction), cross).length();
+  }
+
 
   public static Clone(a: Ray): Ray {
     return new Ray(Vector.Clone(a.start), Vector.Clone(a.end));

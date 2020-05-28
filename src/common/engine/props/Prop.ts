@@ -63,6 +63,7 @@ class Prop extends Entity {
 
     // Top surface collisision
     const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp);
+    topTrace.topFaceCollision = true;
     if (topTrace.collided) {
       switch (this.shape) {
         case ColliderType.Cylinder: // If it is a cylinder, make sure the hit position was inside the cylinder radius
@@ -101,7 +102,12 @@ class Prop extends Entity {
 
     // If object is a cylinder, get surface normal that corresponds with ray direction
     if (this.shape === ColliderType.Cylinder) {
-      return ray.traceCylinder(this.Position, radius); // Traces on cylinders end here
+      const trace = ray.traceCylinder(this.Position, radius); // Traces on cylinders end here
+      // Trace should land somewhere within cylinder
+      if (trace.Position.z <= this.Position.z + this.Height && trace.Position.z >= this.Position.z) {
+        return trace;
+      }
+      return result;
     }
 
     // Box collisions not implemented yet
@@ -110,27 +116,33 @@ class Prop extends Entity {
   }
 
   // Position this prop based on a trace result and colliding prop
-  public CollideWithProp(collision: TraceResult, b: Prop) {
-    if (collision && collision.collided) {
-      // Vertical collisions are different in the fact the fighter is snapped ontop of or below
-      if (collision.Normal.z > 0.9) {
-        this.Position.z = b.Position.z + b.Height;
-        this.Velocity.z = 0;
-        this.onSurface = true;
-      } else if (collision.Normal.z < -0.9) {
-        this.Position.z = b.Position.z - this.Height;
-        this.Velocity.z = 0;
-      } else { // Other collisions should snap position around the entity
-        const dist = (this.Radius + b.Radius) - Vector.DistanceXY(b.Position, this.Position);
-        this.Position = Vector.Add(
-          this.Position,
-          Vector.Multiply(collision.Normal, dist),
-        );
+  public CollideWithProp(collision: TraceResult, b: Prop, doVelocityChange: boolean = true) {
+    if (!(collision && collision.collided && b)) return;
 
-        const veloDot = Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity));
+    // Vertical collisions are different in the fact the fighter is snapped ontop of or below
+    if (collision.topFaceCollision) {
+      this.Position.z = b.Position.z + b.Height;
+      this.Velocity.z = 0;
+      this.onSurface = true;
+    } else if (collision.Normal.z < -0.9) {
+      this.Position.z = b.Position.z - this.Height;
+      this.Velocity.z = 0;
+    } else { // Other collisions should snap position around the entity
+      this.Position = Vector.Add(
+        this.Position,
+        Vector.Multiply(
+          collision.Normal,
+          (this.Radius + b.Radius) - Vector.DistanceXY(b.Position, this.Position),
+        ),
+      );
+
+      if (doVelocityChange) {
         this.Velocity = Vector.Subtract(
           this.Velocity,
-          Vector.Multiply(collision.Normal, veloDot),
+          Vector.Multiply(
+            collision.Normal,
+            Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity)),
+          ),
         );
       }
     }
@@ -138,11 +150,13 @@ class Prop extends Entity {
 
   private getTopPlaneCenter(): Vector {
     const vec = Vector.Clone(this.Position);
-    vec.z += this.Height * 0.99;
+    vec.z += this.Height;
     return vec;
   }
   private getBottomPlaneCenter(): Vector {
-    return this.Position;
+    const vec = Vector.Clone(this.Position);
+    vec.z -= 0.001; // Prevents props from clipping under eachother while on the same plane
+    return vec;
   }
 }
 

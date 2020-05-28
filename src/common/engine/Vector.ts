@@ -82,6 +82,15 @@ class Vector { // A structure that holds position data or direction and magnitud
   static DotProduct(a: Vector, b: Vector): number {
     return a.x * b.x + a.y * b.y + a.z * b.z;
   }
+  // For use in ray calculations
+  // Taken from here https://www.mathsisfun.com/algebra/vectors-cross-product.html
+  static Cross(a: Vector, b: Vector): Vector {
+    return new Vector(
+      a.y * b.z - a.z * b.y,
+      a.z * b.x - a.x * b.z,
+      a.x * b.y - a.y * b.x,
+    );
+  }
 
   static Distance(a: Vector, b:Vector):number {
     return Math.sqrt(((a.x - b.x) ** 2) + ((a.y - b.y) ** 2) + ((a.z - b.z) ** 2));

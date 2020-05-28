@@ -122,6 +122,32 @@ test('cylinder trace tests', () => {
   expect(result3.Position.z).toBeCloseTo(pos.z);
 });
 
+test('ray point distance test', () => {
+  const a = new Ray(new Vector(0, 0, 0), new Vector(10, 0, 0));
+  const b = new Ray(new Vector(5, 0, 0), new Vector(10, 0, 0));
+  const c = new Ray(new Vector(0, 0, 0), new Vector(10, 10, 10));
+  const d = new Ray(new Vector(20, -10, 1), new Vector(20, 10, 2));
+
+  const point1 = new Vector(7, 1, 0);
+  const point2 = new Vector(7, 1, 2);
+  const point3 = new Vector(5, 5, 5);
+  const point4 = new Vector(5, 5, 6);
+  const point5 = new Vector(10, 0, 0.5);
+
+  expect(a.pointDistance(point1)).toBeCloseTo(1);
+  expect(b.pointDistance(point1)).toBeCloseTo(1);
+
+  expect(a.pointDistance(point2)).toBeGreaterThan(1);
+  expect(b.pointDistance(point2)).toBeGreaterThan(1);
+  expect(a.pointDistanceXY(point2)).toBeCloseTo(1);
+  expect(b.pointDistanceXY(point2)).toBeCloseTo(1);
+
+  expect(c.pointDistance(point3)).toBeCloseTo(0);
+  expect(c.pointDistance(point4)).toBeLessThan(1);
+
+  expect(d.pointDistanceXY(point5)).toBeCloseTo(10);
+});
+
 test('ray clone test', () => {
   const a = new Ray(new Vector(0, 0, 0), new Vector(10, 0, 0));
   const b = Ray.Clone(a);
