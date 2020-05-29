@@ -60,9 +60,12 @@ function CollideFighters(a: Fighter, b: Fighter, info: TraceResult) {
   }
 
   // Position fighter a around fighter b accordingly (note velocity change already occurred)
-  if (b.riding !== a) { // Don't let the rider push the fighter around though
+  if (b.riding !== a && b.rodeThisTick !== a) { // Don't let the rider push the fighter around though
     a.CollideWithProp(info, b, false);
   }
+
+  a.lastCollision = b;
+  b.lastCollision = a;
 }
 /* eslint-enable no-param-reassign */
 
@@ -220,8 +223,24 @@ class World {
       // Gravity - Ignores fighter riding because it relies on constant collisions
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
-      // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
-      if (!obj.riding) {
+      // Ridership stuff
+      obj.lastCollision = null;
+      if (obj.riding) {
+        if ((obj.dismountRider || (obj.riding.dismountRider && obj.riding.Velocity.lengthXY() > 5))) { // Dismount if requested
+          if (obj.riding.dismountRider) obj.Jump(true); // Force a jump
+          obj.lastCollision = obj.riding;
+          obj.Position.z += 0.2; // Add slight bit of offset to avoid clipping into steed
+
+          const veloLeveled = Vector.Clone(obj.riding.Velocity);
+          veloLeveled.z = 0;
+          obj.Velocity = Vector.Add( // Inherit riding velocity (not momentum)
+            obj.Velocity,
+            veloLeveled,
+          );
+        } else {
+          obj.rodeThisTick = obj.riding;
+        }
+      } else { // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
         if (obj.Position.x < 0) accel.x += this.Map.wallStrength * Math.abs(obj.Position.x);
         else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.wallStrength * (obj.Position.x - this.Map.Width);
 
@@ -242,11 +261,6 @@ class World {
           0,
         );
         const len = leveled.lengthXY(); // Get magnitude of the leveled velocity
-
-        // For reference:
-        // Sheep's max velocity is 40 units per second
-        // Deer's max velocity is 20 units per second
-        // Flamingo's max velocity is 16.25 units per second
 
         // We want more friction at low velocities and less friction at high velocitites so slowdown seems more realistic
         // 'Static' friction would in this case be three times as strong as kinetic friction
@@ -274,13 +288,6 @@ class World {
         }
       }
 
-      // If this character is riding another fighter, they should inherit its acceleration and max momentum as well
-      // Should allow for smooth movement while ontop of them
-      // Could potentially lead to a bug where one gains lots of momentum by landing ontop of someone while at terminal velocity?
-      if (obj.riding) {
-        obj.rodeThisTick = obj.riding;
-      }
-
 
       // Add physics-based acceleration and player input acceleration, and then calculate position change
       accel = Vector.Add(moveAccel, accel);
@@ -297,10 +304,10 @@ class World {
         deltaX.z = z;
       }
 
-      obj.lastPosition = obj.Position;
+      obj.lastPosition = obj.Position; // Used in raycasting and riding position offsets
       obj.Position = Vector.Add(obj.Position, deltaX);
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
-      obj.newPosition = obj.Position;
+      obj.newPosition = obj.Position; // Used in riding position offsets, ignores below position changes
 
       // Terminal velocity (don't clamp vertical component)
       if (obj.Velocity.lengthXY() > maxSpeed) {
@@ -325,27 +332,7 @@ class World {
       obj.riding = null;
       obj.passengerMass = 0;
       obj.passengerMaxMomentum = 0;
-      obj.onProp = null;
-      obj.lastCollision = null;
-    }
-
-
-    // Apply prospective rider position offsets and add physics masses
-    for (let i = 0; i < this.Fighters.length; i++) {
-      if (this.Fighters[i].rodeThisTick) {
-        const a = this.Fighters[i];
-        a.Position = Vector.Add(a.Position, a.getTotalStackPositionChange());
-        a.newPosition = a.Position;
-
-        if (a.dismountRider || a.rodeThisTick.dismountRider) { // Dismount if requested
-          a.Velocity = Vector.Add(a.Velocity, a.rodeThisTick.Velocity);
-          a.rodeThisTick = null;
-        } else { // Otherwise, tally up their mass for future stuff
-          a.getBottomOfStackPhysics().passengerMass += a.Mass + a.passengerMass;
-          a.getBottomOfStackPhysics().passengerMaxMomentum += a.MaxMomentum + a.passengerMaxMomentum;
-        }
-      }
-      // Note: cannot debounce dismount variable here in case this fighter is being rode and they are trying to buck off rider
+      obj.onProp = null; // Don't claim they're on a prop until they collide again
     }
 
 
@@ -360,21 +347,39 @@ class World {
 
     // Sort list of fighters so collisions are calculated from top down for ridership puprposes
     this.Fighters.sort((a: Fighter, b: Fighter) => {
-      if (a.Position.z > b.Position.z) return -1;
-      if (a.Position.z < b.Position.z) return 1;
+      if (a.lastPosition.z > b.lastPosition.z) return -1;
+      if (a.lastPosition.z < b.lastPosition.z) return 1;
       return 0;
     });
+
+    // Calculate mass boosts and such before applying physics
+    for (let i = 0; i < this.Fighters.length; i++) {
+      if (this.Fighters[i].rodeThisTick) { // Tally up their mass for future stuff if no dismount
+        const a = this.Fighters[i];
+        a.getBottomOfStackPhysics().passengerMass += a.Mass + a.passengerMass;
+        a.getBottomOfStackPhysics().passengerMaxMomentum += a.MaxMomentum + a.passengerMaxMomentum;
+      }
+    }
 
     // Compute collisions using raytraces
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
-      a.dismountRider = false;
 
-      // Don't bother calculating collisions of fighter when no movement occured
+      let plannedPos = a.newPosition;
+
+      // Apply prospective rider position offsets and add physics masses
+      if (a.rodeThisTick) {
+        plannedPos = Vector.Add(plannedPos, a.getTotalStackPositionChange());
+        a.lastPosition.z += 0.2; // Add a little position boost to prevent riders from falling off steeds at high velocities or velo changes
+        // plannedPos.z = a.rodeThisTick.newPosition.z + a.rodeThisTick.Height * 0.95;
+        a.Position = plannedPos;
+      }
+
+      // Don't bother calculating collisions of fighter when no movement nor ridership occured
       // eslint-disable-next-line no-continue
-      if (Vector.Distance(a.newPosition, a.lastPosition) < 0.001) continue;
+      // if (!a.isFalling() && !a.rodeThisTick && Vector.Distance(a.Position, a.lastPosition) < 0.001) continue;
 
-      const moveTrace = new Ray(a.lastPosition, a.newPosition);
+      const moveTrace = new Ray(a.lastPosition, plannedPos);
       const collisions: TraceResult[] = []; // Get a list of collisions and trigger the one that is closest
 
       // Fighter collisions
@@ -382,8 +387,10 @@ class World {
         const b = this.Fighters[j];
 
         // Don't bother attempting to collide with self or someone they just collided with
-        // eslint-disable-next-line no-continue
-        if (j === i || (a.lastCollision === this.Fighters[j]) || (b.rodeThisTick === a)) continue;
+        if (
+          j === i || (a.lastCollision === this.Fighters[j] || this.Fighters[j].lastCollision === a)
+          // eslint-disable-next-line no-continue
+        ) continue;
 
         // if (Vector.DistanceXY(a.Position, b.Position) < a.Radius + b.Radius) {
         const result = CollisionTrace(a, b, Ray.Clone(moveTrace));
@@ -422,21 +429,15 @@ class World {
         } else { // If collision was with a prop
           a.CollideWithProp(coll, <Prop>coll.hitInfo, true);
         }
-
-        if (a.Position.z < 0) a.Position.z = 0;
-        a.lastPosition = Vector.Clone(a.newPosition); // Change last position for position updates with ridership
-        a.newPosition = Vector.Clone(a.Position); // Update position
+        // a.lastPosition = Vector.Clone(a.Position); // Change last position for position updates with ridership
       }
     }
 
-
-    // Adjust rider position offsets
-    /* for (let i = 0; i < this.Fighters.length; i++) {
-      if (this.Fighters[i].rodeThisTick) {
-        const a = this.Fighters[i];
-        a.Position = Vector.Add(a.Position, a.getTotalStackPositionChange());
-      }
-    } */
+    // Dismount debounce
+    for (let i = 0; i < this.Fighters.length; i++) {
+      this.Fighters[i].dismountRider = false;
+      this.Fighters[i].rodeThisTick = null;
+    }
 
 
     // Bullet collisions

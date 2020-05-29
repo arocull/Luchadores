@@ -157,8 +157,8 @@ class Fighter extends Prop {
 
 
   // Jump if this character is currently on the ground
-  public Jump() {
-    if (this.Position.z <= 0 || this.JustLanded) {
+  public Jump(force: boolean = false) {
+    if (this.Position.z <= 0 || this.JustLanded || force) {
       this.Velocity.z += this.JumpVelocity;
       this.dismountRider = true;
     }

@@ -33,8 +33,8 @@ class Ray {
       if (t >= 0) { // Trace hit the plane, find home position
         result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
         result.Normal = planeNormal;
-        result.collided = true;
         result.distance = Vector.Distance(this.start, result.Position);
+        if (result.distance <= this.length) result.collided = true; // Make sure ray was long enough to hit
       }
     }
 

@@ -120,15 +120,15 @@ class Prop extends Entity {
     if (!(collision && collision.collided && b)) return;
 
     // Vertical collisions are different in the fact the fighter is snapped ontop of or below
-    if (collision.topFaceCollision) {
+    if (collision.topFaceCollision) { // Top face collisions are marked in collision results for use in riding
       this.Position.z = b.Position.z + b.Height;
       this.Velocity.z = 0;
       this.onSurface = true;
-    } else if (collision.Normal.z < -0.9) {
+    } else if (collision.Normal.z < -0.9) { // Bottom face collision, force fighter below object
       this.Position.z = b.Position.z - this.Height;
       this.Velocity.z = 0;
     } else { // Other collisions should snap position around the entity
-      this.Position = Vector.Add(
+      this.Position = Vector.Add( // Positions object away from surface
         this.Position,
         Vector.Multiply(
           collision.Normal,
@@ -136,12 +136,12 @@ class Prop extends Entity {
         ),
       );
 
-      if (doVelocityChange) {
+      if (doVelocityChange) { // Nullifies velocity that goes directly against the object's surface normal
         this.Velocity = Vector.Subtract(
           this.Velocity,
           Vector.Multiply(
             collision.Normal,
-            Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity)),
+            Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity)), // Amount of relation between vectors
           ),
         );
       }
