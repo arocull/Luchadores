@@ -35,6 +35,11 @@ class Vector { // A structure that holds position data or direction and magnitud
 
     return this;
   }
+  // Levels the z component of the given vector
+  public level(): Vector {
+    this.z = 0;
+    return this;
+  }
 
   public equals(compareTo: Vector): boolean {
     return (this.x === compareTo.x && this.y === compareTo.y && this.z === compareTo.z);

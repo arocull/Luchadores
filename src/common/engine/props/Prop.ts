@@ -124,6 +124,7 @@ class Prop extends Entity {
       this.Position.z = b.Position.z + b.Height;
       this.Velocity.z = 0;
       this.onSurface = true;
+      this.Land();
     } else if (collision.Normal.z < -0.9) { // Bottom face collision, force fighter below object
       this.Position.z = b.Position.z - this.Height;
       this.Velocity.z = 0;
@@ -158,6 +159,9 @@ class Prop extends Entity {
     vec.z -= 0.001; // Prevents props from clipping under eachother while on the same plane
     return vec;
   }
+
+
+  public Land() {}
 }
 
 export { Prop as default };

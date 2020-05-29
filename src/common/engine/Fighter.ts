@@ -45,7 +45,6 @@ class Fighter extends Prop {
   public dismountRider: boolean;
   public passengerMass: number;
   public passengerMaxMomentum: number;
-  public onProp: Prop;
 
   protected ranged: boolean;
   protected AimDirection: Vector;
