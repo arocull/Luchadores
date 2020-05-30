@@ -85,7 +85,7 @@ test('fighter riding test', () => {
   // expect(b.Position.x).toBeGreaterThan(a.Position.x);
   expect(b.riding).toBeFalsy();
 
-  // Stacks no longer maintain order when disassembeled, maybe they could be reprogrammed for methods like this to work again
+  // Stacks make attempts to maintain order when dissassembled, but are not as accurate as before
   // expect(c.Position.x).toBeCloseTo(b.Position.x);
-  // expect(c.riding).toBeTruthy();
+  expect(c.riding).toBeTruthy();
 });

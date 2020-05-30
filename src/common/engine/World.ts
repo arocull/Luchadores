@@ -30,6 +30,14 @@ function CollisionTrace(a: Prop, b: Prop, ray: Ray): TraceResult {
 
   return null; // Basic point tests failed, return null
 }
+// Simple collision test and trace for bullets
+function CollisionTraceBullet(a: Prop, ray: Ray): TraceResult {
+  if (ray.pointDistanceXY(a.Position) < a.Radius) {
+    return a.traceProp(ray);
+  }
+
+  return null; // Return null if simple point distance test failed
+}
 
 // Collides two fighters, makes a ride b and does momentum transfers
 // If the collision is a repeat, momentum is not transferred, but positioning and ridership is still calculated
@@ -62,7 +70,7 @@ function CollideFighters(a: Fighter, b: Fighter, info: TraceResult) {
     a.riding = b;
     a.CollideWithProp(info, b, false);
   // Position fighter a around fighter b accordingly (note velocity change already occurred)
-  } else if (b.riding !== a && b.rodeThisTick !== a) { // Don't let the rider push the fighter around though
+  } else if (b.rodeThisTick !== a && b.rodeThisTick !== a) { // Don't let the rider push the fighter around though
     a.CollideWithProp(info, b, false);
   }
 }
@@ -333,6 +341,7 @@ class World {
       obj.passengerMass = 0;
       obj.passengerMaxMomentum = 0;
       obj.onSurface = false; // Don't claim they're on a prop until they collide again
+      obj.dismountRider = false;
     }
 
 
@@ -352,9 +361,10 @@ class World {
       return 0;
     });
 
+
     // Calculate mass boosts and such before applying physics
     for (let i = 0; i < this.Fighters.length; i++) {
-      if (this.Fighters[i].rodeThisTick) { // Tally up their mass for future stuff if no dismount
+      if (this.Fighters[i].rodeThisTick) { // Tally up their mass for future collisions
         const a = this.Fighters[i];
         a.Position = Vector.Add(a.Position, a.getTotalStackPositionChange()); // .level()
 
@@ -370,11 +380,11 @@ class World {
       const rayStart = Vector.Clone(a.lastPosition);
       if (a.rodeThisTick) {
         rayStart.z += 0.2; // Add slight bit of z-boost to help raycasts hit the below target
-        // Add z-boost based off of steed's height if steed's steed forces a dismount
-        // if (a.rodeThisTick.rodeThisTick && a.rodeThisTick.rodeThisTick.dismountRider) rayStart.z += a.rodeThisTick.Height;
       }
       const moveTrace = new Ray(rayStart, a.Position);
-      const collisions: TraceResult[] = []; // Get a list of collisions and trigger the one that is closest
+
+      let closest = 10000; // How many units away closest collision is
+      let closestResult: TraceResult = null; // Closest TraceResult, hitInfo is set to prop it collided with
 
       // Fighter collisions
       for (let j = 0; j < this.Fighters.length; j++) {
@@ -384,8 +394,11 @@ class World {
         if (!(j === i || a.lastCollision === b || b.lastCollision === a || b.Position.z > a.Position.z)) {
           const result = CollisionTrace(a, b, Ray.Clone(moveTrace));
           if (result && result.collided) {
-            result.hitInfo = b;
-            collisions.push(result);
+            if (result.distance < closest) {
+              closest = result.distance;
+              result.hitInfo = b;
+              closestResult = result;
+            }
           }
         }
       }
@@ -395,37 +408,25 @@ class World {
         const b = this.Props[i];
         const result = CollisionTrace(a, b, Ray.Clone(moveTrace));
         if (result && result.collided) {
-          result.hitInfo = b;
-          collisions.push(result);
+          if (result.distance < closest) {
+            closest = result.distance;
+            result.hitInfo = b;
+            closestResult = result;
+          }
         }
       }
 
 
-      if (collisions.length > 0) {
-        if (collisions.length > 1) { // Sort collisions to see which one hit first
-          collisions.sort((r1: TraceResult, r2: TraceResult) => {
-            if (r1.distance < r2.distance) return -1; // Push collisions that are closer towards the top
-            if (r2.distance < r1.distance) return 1;
-            return 0;
-          });
-        }
-
-        const coll: TraceResult = collisions[0];
-
+      if (closestResult) {
         // Collide the two fighters
-        const b = <Fighter>coll.hitInfo;
+        const b = <Fighter>closestResult.hitInfo;
         if (b) { // If the collision was with another fighter
-          CollideFighters(a, b, coll);
+          CollideFighters(a, b, closestResult);
         } else { // If collision was with a prop
-          a.CollideWithProp(coll, <Prop>coll.hitInfo, true);
+          a.CollideWithProp(closestResult, <Prop>closestResult.hitInfo, true);
         }
         // a.lastPosition = Vector.Clone(a.Position); // Change last position for position updates with ridership
       }
-    }
-
-    // Dismount debounce
-    for (let i = 0; i < this.Fighters.length; i++) {
-      this.Fighters[i].dismountRider = false;
     }
 
 
@@ -433,25 +434,26 @@ class World {
     for (let j = 0; j < this.Bullets.length; j++) {
       const b = this.Bullets[j];
 
-      const start = Vector.Subtract(b.Position, b.DeltaPosition);
-      const len = b.DeltaPosition.length();
-      const dir = Vector.UnitVector(b.DeltaPosition);
+      const ray = new Ray(Vector.Subtract(b.Position, b.DeltaPosition), b.Position);
+
+      let closest = 10000; // How many units away the closest collision is
+      let closestHit: TraceResult = null; // Fighter hit by this result
 
       // Normally we would shoot a ray at a cylinder, but that's kind of difficult
       // So instead, we will test 3 point along the bullet trajectory to check if has collided with the fighter or not
       for (let i = 0; i < this.Fighters.length; i++) {
-        const a = this.Fighters[i];
-        for (let q = 0; q < 3; q++) {
-          const pos = Vector.Add(start, Vector.Multiply(dir, q * (len / 3)));
-          if (
-            Vector.DistanceXY(a.Position, pos) <= a.Radius
-            && pos.z >= a.Position.z
-            && pos.z <= a.Position.z + a.Height
-          ) {
-            b.Hit(a);
-            break;
+        const result: TraceResult = CollisionTraceBullet(this.Fighters[i], ray);
+        if (result && result.collided && this.Fighters[i].getOwnerID() !== b.getOwnerID()) { // If collision is valid and not owner
+          if (result.distance < closest) { // Make sure it's closer
+            closest = result.distance;
+            result.hitInfo = this.Fighters[i];
+            closestHit = result; // Save hit, not trace result (position does not need to be specific)
           }
         }
+      }
+
+      if (closestHit) { // Do closest hit
+        b.Hit(closestHit.hitInfo);
       }
     }
   }
