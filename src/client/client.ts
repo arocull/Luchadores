@@ -281,18 +281,6 @@ function parseMouse(input: PlayerInput) {
   }
 }
 
-// TODO: TEMPORARY HACK WHILE FIGURING OUT INPUT LOAD ON SERVER
-const inputThrottled = _.throttle(() => {
-  // Send input capture up to server
-  MessageBus.publish(topics.ClientNetworkToServer, {
-    type: TypeEnum.PlayerInputState,
-    jump: Input.Jump,
-    mouseDown: Input.MouseDown,
-    mouseDirection: Input.MouseDirection,
-    moveDirection: Input.MoveDirection,
-  });
-}, 100);
-
 // Hacks to poll and update sampling from player input module.
 // Should be refactored into something better.
 function ScrapeInput() {
@@ -310,7 +298,13 @@ function ScrapeInput() {
   Input.MouseDirection.z = 0;
 
   // Send input capture up to server
-  inputThrottled();
+  MessageBus.publish(topics.ClientNetworkToServer, {
+    type: TypeEnum.PlayerInputState,
+    jump: Input.Jump,
+    mouseDown: Input.MouseDown,
+    mouseDirection: Input.MouseDirection,
+    moveDirection: Input.MoveDirection,
+  });
 }
 
 // UI Management
