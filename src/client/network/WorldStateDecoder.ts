@@ -70,7 +70,7 @@ function generateProjectile(world: World, packet: IEntityProjectile): Projectile
 
 // Decode world-state--hand it a WorldState event and then a world instance to apply the changes to
 /* eslint-disable no-param-reassign */
-function decodeWorldState(state: IWorldState, world: World) {
+function decodeWorldState(state: IWorldState, world: World, firstState: boolean = false) {
   Random.setSeed(state.randomSeed);
   Random.setIndex(state.randomIndex);
 
@@ -79,6 +79,11 @@ function decodeWorldState(state: IWorldState, world: World) {
   world.Map.Friction = state.mapFriction;
   // Map ID would be used to set map texture, but we only have one right now, so leave it as-is
   world.Map.wallStrength = state.mapWallStrength;
+
+  if (firstState) {
+    world.Map.loadTexture(state.mapId);
+    world.Props = world.Map.getProps(state.mapId, true);
+  }
 
   for (let i = 0; i < state.fighters.length; i++) {
     updateFighter(world, state.fighters[i] as IEntityFighter);

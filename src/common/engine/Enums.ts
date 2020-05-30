@@ -35,6 +35,11 @@ enum ColliderType {
   Prism = 1,
 }
 
+enum MapPreset {
+  Sandy = 0,
+  Grassy = 1,
+}
+
 enum UIFrameType {
   Basic = 0,
   Text = 1,
@@ -65,6 +70,7 @@ export {
   ProjectileType,
   ParticleType,
   ColliderType,
+  MapPreset,
   UIFrameType,
   RenderQuality,
   fighterTypeToString,

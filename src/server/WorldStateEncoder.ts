@@ -45,7 +45,7 @@ function encodeWorldState(world: World): IWorldState {
     mapWidth: world.Map.Width,
     mapHeight: world.Map.Height,
     mapFriction: world.Map.Friction,
-    mapId: 0,
+    mapId: world.Map.mapID,
     mapWallStrength: world.Map.wallStrength,
     timestamp: Timer.now(),
     fighters: [],

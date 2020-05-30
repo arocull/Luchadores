@@ -1,7 +1,7 @@
 // Client only -- Renders stuff to the screen
 /* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
-import { EntityType, ParticleType, ProjectileType, UIFrameType, FighterType, RenderQuality } from '../common/engine/Enums';
+import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters';
 import Animator from './animation/Animator';
@@ -119,7 +119,10 @@ class Renderer {
     particles: Particle[],
     props: Prop[],
   ) {
-    canvas.fillStyle = '#003001';
+    switch (map.mapID) {
+      case MapPreset.Grassy: canvas.fillStyle = '#0d542f'; break;
+      default: canvas.fillStyle = '#e3a324'; break;
+    }
     canvas.fillRect(0, 0, camera.Width, camera.Height);
 
     // Username font settings
@@ -135,15 +138,17 @@ class Renderer {
     const mapHeight = map.Height * zoom;
 
     const topLeft = camera.PositionOffset(new Vector(0, 0, 0));
-    canvas.drawImage( // Still draws entire map texture, but was extremely hard to try and it do it the other way
-      map.Texture,
-      0, 0,
-      3076, 3076,
-      topLeft.x - mapWidth / 4,
-      topLeft.y - mapHeight * (5 / 4),
-      mapWidth * 1.5,
-      mapHeight * 1.5,
-    );
+    if (map.Texture) {
+      canvas.drawImage( // Still draws entire map texture, but was extremely hard to try and it do it the other way
+        map.Texture,
+        0, 0,
+        3076, 3076,
+        topLeft.x - mapWidth / 4,
+        topLeft.y - mapHeight * (5 / 4),
+        mapWidth * 1.5,
+        mapHeight * 1.5,
+      );
+    }
 
     // Draw arena floor and boundaries
     canvas.strokeStyle = '#ff0000';
@@ -250,43 +255,17 @@ class Renderer {
         }
       } else if (toDraw[i].type === EntityType.Prop) {
         const a = <Prop>toDraw[i];
-
-        const pos = camera.PositionOffsetBasic(a.Position);
-
-        canvas.globalAlpha = 1;
-        canvas.lineWidth = 0.1 * zoom;
-
-        canvas.fillStyle = '#000000';
-        canvas.fillRect(
-          (-pos.x - a.Width) * zoom + offsetX,
-          (pos.y + pos.z) * zoom + offsetY,
-          2 * a.Width * zoom,
-          -a.Height * zoom,
-        );
-        // Cylinder Base
-        canvas.strokeStyle = '#444444';
-        canvas.beginPath();
-        canvas.arc(
-          -pos.x * zoom + offsetX,
-          (pos.y + pos.z) * zoom + offsetY,
-          a.Radius * zoom,
-          0,
-          Math.PI * 2,
-        );
-        canvas.closePath();
-        canvas.stroke();
-        // Cylinder Top
-        canvas.strokeStyle = '#444444';
-        canvas.beginPath();
-        canvas.arc(
-          -pos.x * zoom + offsetX,
-          (pos.y + pos.z - a.Height) * zoom + offsetY,
-          a.Radius * zoom,
-          0,
-          Math.PI * 2,
-        );
-        canvas.closePath();
-        canvas.stroke();
+        if (a.texture) {
+          const pos = camera.PositionOffsetBasic(a.Position);
+          canvas.globalAlpha = 1;
+          canvas.drawImage(
+            a.texture,
+            (-pos.x - a.Radius * a.textureUpscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
+            (pos.y + pos.z) * zoom + offsetY,
+            2 * a.Radius * a.textureUpscale * zoom, // 2 * Radius originally used in place of a.Height
+            -a.Height * a.textureUpscale * zoom,
+          );
+        }
       } else if (toDraw[i].type === EntityType.Projectile) {
         const a = <Projectile>toDraw[i];
 

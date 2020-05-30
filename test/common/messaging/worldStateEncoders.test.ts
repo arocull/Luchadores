@@ -10,7 +10,7 @@ import { FighterType, ProjectileType } from '../../../src/common/engine/Enums';
 
 test('world state encode / decode', () => {
   const start = new World();
-  start.Map = new Map(100, 50, 0.5, '', 10);
+  start.Map = new Map(100, 50, 0.5, 10);
   start.Fighters.push(new Sheep(1, new Vector(25, 25, 10)));
   start.Fighters.push(new Flamingo(2, new Vector(30, 25, 0)));
   start.Bullets.push(new BBullet(new Vector(0, 0, 0), new Vector(1, 0, 0), start.Fighters[0]));

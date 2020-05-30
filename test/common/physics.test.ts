@@ -5,7 +5,7 @@ import World from '../../src/common/engine/World';
 
 test('physics collision test', () => {
   const world = new World();
-  world.Map = new Map(200, 200, 0, '');
+  world.Map = new Map(200, 200, 0);
   const a = new Sheep(1, new Vector(100, 99, 0));
   const b = new Sheep(2, new Vector(100, 101, 0));
   world.Fighters.push(a, b);
@@ -24,7 +24,7 @@ test('physics collision test', () => {
 
 test('physics friction and gravity test', () => {
   const world = new World();
-  world.Map = new Map(200, 200, 0.5, '');
+  world.Map = new Map(200, 200, 0.5);
   const c = new Sheep(3, new Vector(75, 100, 0));
   const d = new Sheep(4, new Vector(125, 50, 0));
   world.Fighters.push(c, d);
@@ -42,7 +42,7 @@ test('physics friction and gravity test', () => {
 
 test('physics terminal velocity test', () => {
   const world = new World();
-  world.Map = new Map(500, 1, 0, '');
+  world.Map = new Map(500, 1, 0);
   const e = new Sheep(5, new Vector(0, 0, 0));
   world.Fighters.push(e);
   e.Velocity = new Vector(5000, 0, 0);

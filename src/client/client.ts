@@ -374,9 +374,10 @@ MessageBus.subscribe('UI_SettingsClose', () => {
 
 
 // State Updates
-let stateUpdatePending = false;
-let stateUpdateLastPacketTime = 0;
-let stateUpdate: IWorldState = null;
+let stateUpdatePending = false; // Is there a WorldState update that is pending
+let stateUpdateLastPacketTime = 0; // Time the world state packet was received
+let stateUpdate: IWorldState = null; // WorldState event
+let stateUpdateFirst = true; // Is this the first WorldState the client is receiving (applied map prop loading)?
 function UpdatePlayerState(msg: IPlayerState) {
   const mismatch = msg.characterID !== player.getCharacterID();
 
@@ -412,8 +413,9 @@ function DoFrame(tick: number) {
       world.Fighters[i].UpdatesMissed++;
     }
 
-    decodeWorldState(stateUpdate, world);
+    decodeWorldState(stateUpdate, world, stateUpdateFirst);
     appliedWorldState = true;
+    stateUpdateFirst = false;
 
     for (let i = 0; i < world.Fighters.length; i++) {
       // Prune fighters who have not been included in the world state 5 consecutive times
@@ -622,6 +624,7 @@ const preloader = new AssetPreloader([
   'Sprites/Sheep.png',
   'Sprites/Deer.png',
   'Sprites/Flamingo.png',
+  'Sprites/Barrel.png',
 ]);
 
 /* eslint-disable no-console */

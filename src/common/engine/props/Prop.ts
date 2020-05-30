@@ -15,11 +15,14 @@ class Prop extends Entity {
 
   public onSurface: boolean; // If this object is resting ontop of another object
 
+  public texture: HTMLImageElement;
+  public textureUpscale: number;
+
   constructor(
     pos: Vector,
-    public shape: ColliderType = ColliderType.Prism, // Is this a box or a cylinder? Defaults to box.
+    public shape: ColliderType = ColliderType.Cylinder, // Is this a box or a cylinder? Defaults to box.
     public Width: number = 0.5, // Default width (radius defaults to this)
-    public Height: number = 0.5, // How tall the object is
+    public Height: number = 1, // How tall the object is
     public Depth: number = Width, // Depth defaults to width
   ) {
     super(EntityType.Prop, pos, new Vector(0, 0, 0), new Vector(0, 0, 0));
@@ -31,6 +34,9 @@ class Prop extends Entity {
     this.BounceBack = 1;
 
     this.onSurface = false;
+
+    this.texture = null;
+    this.textureUpscale = 1;
   }
 
   // Checks to see if the given Vector is inside of the prop object
@@ -104,7 +110,7 @@ class Prop extends Entity {
     if (this.shape === ColliderType.Cylinder) {
       const trace = ray.traceCylinder(this.Position, radius); // Traces on cylinders end here
       // Trace should land somewhere within cylinder
-      if (trace.Position.z <= this.Position.z + this.Height && trace.Position.z >= this.Position.z) {
+      if (trace.Position.z < this.Position.z + this.Height && trace.Position.z >= this.Position.z) {
         return trace;
       }
       return result;
@@ -162,6 +168,13 @@ class Prop extends Entity {
 
 
   public Land() {}
+
+
+  public SetTexture(src: string, upscale: number = 1) {
+    this.texture = new Image();
+    this.texture.src = src;
+    this.textureUpscale = upscale;
+  }
 }
 
 export { Prop as default };

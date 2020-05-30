@@ -1,12 +1,13 @@
 import { Vector, Ray, TraceResult } from './math';
 import Player from './Player';
+import Entity from './Entity';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
-import { FighterType } from './Enums';
+import { FighterType, MapPreset, EntityType } from './Enums';
 import { Sheep, Deer, Flamingo } from './fighters';
 import { TypeEnum } from '../events';
 
@@ -101,12 +102,16 @@ class World {
   public doReaping: boolean;
   private kills: IPlayerDied[];
 
-  constructor() {
-    this.Map = new Map(40, 40, 23, 'Maps/Grass.jpg', 10000);
+  constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false) {
+    this.Map = new Map(40, 40, 23, 10000, mapPreset);
 
     this.Fighters = [];
     this.Bullets = [];
-    this.Props = [];
+    if (loadProps) {
+      this.Props = this.Map.getProps(mapPreset, false);
+    } else {
+      this.Props = []; // Props not loaded by default
+    }
 
     this.doReaping = false;
     this.kills = [];
@@ -403,29 +408,18 @@ class World {
         }
       }
 
-      // Prop collisions
+      // Prop collisions (always collide with props)
       for (let j = 0; j < this.Props.length; j++) {
-        const b = this.Props[i];
+        const b = this.Props[j];
         const result = CollisionTrace(a, b, Ray.Clone(moveTrace));
         if (result && result.collided) {
-          if (result.distance < closest) {
-            closest = result.distance;
-            result.hitInfo = b;
-            closestResult = result;
-          }
+          a.CollideWithProp(result, b, true);
         }
       }
 
-
-      if (closestResult) {
-        // Collide the two fighters
-        const b = <Fighter>closestResult.hitInfo;
-        if (b) { // If the collision was with another fighter
-          CollideFighters(a, b, closestResult);
-        } else { // If collision was with a prop
-          a.CollideWithProp(closestResult, <Prop>closestResult.hitInfo, true);
-        }
-        // a.lastPosition = Vector.Clone(a.Position); // Change last position for position updates with ridership
+      // Collide with nearest fighter
+      if (closestResult && closestResult.hitInfo) {
+        CollideFighters(a, <Fighter>closestResult.hitInfo, closestResult);
       }
     }
 
@@ -452,8 +446,27 @@ class World {
         }
       }
 
+      for (let i = 0; i < this.Props.length; i++) {
+        const result: TraceResult = CollisionTraceBullet(this.Props[i], ray);
+        if (result && result.collided) { // If collision is valid and not owner
+          if (result.distance < closest) { // Make sure it's closer
+            closest = result.distance;
+            result.hitInfo = this.Props[i];
+            closestHit = result; // Save hit, not trace result (position does not need to be specific)
+          }
+        }
+      }
+
       if (closestHit) { // Do closest hit
-        b.Hit(closestHit.hitInfo);
+        switch ((<Entity>closestHit.hitInfo).type) {
+          case EntityType.Fighter: b.Hit(<Fighter>closestHit.hitInfo); break;
+          default:
+            if (closestHit.topFaceCollision) { // Bounce if it's the top of an object
+              b.Bounce(closestHit.Position.z);
+            } else { // Otherwise destroy projectile
+              b.finished = true;
+            }
+        }
       }
     }
   }
