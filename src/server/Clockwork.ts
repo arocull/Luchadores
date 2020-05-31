@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import Player from '../common/engine/Player';
 import { Timer } from '../common/engine/time/Time';
 import { MessageBus, Topics } from '../common/messaging/bus';
@@ -47,38 +46,14 @@ class Clockwork {
 
     if (this.running) {
       if (delta > 0) {
-        const actionArray = Object.values(this.actions);
+        // Apply each action into the world state.
+        Object.values(this.actions).forEach((act) => {
+          this.world.applyAction(act.player, act.input);
+        });
         this.actions = {}; // Reset the list of actions for next tick
 
-        const sortedActions = _.sortBy(actionArray, (act) => act.timestamp);
-        let tickTimeRemaining = this.tickRate;
-
-        // We're going to line the actions in the order they fired, apply each
-        // to the world state, and tick the physics by the amount of time
-        // between each action.
-        let lastTime = 0;
-        _.each(sortedActions, (act) => {
-          // Apply the action onto the world state.
-          this.world.applyAction(act.player, act.input);
-
-          if (lastTime) {
-            // Tick the world by the difference in time between the actions.
-            const thisTickTimeMillis = act.timestamp - lastTime;
-            tickTimeRemaining -= thisTickTimeMillis;
-            if (thisTickTimeMillis > 0) {
-              this.world.tick(thisTickTimeMillis / 1000);
-            }
-          }
-
-          lastTime = act.timestamp;
-        });
-
-        // Get remainder time
-        const remainder = Math.max(0, tickTimeRemaining);
-        if (remainder > 0) {
-          this.world.tick(remainder / 1000); // Decimal seconds
-        }
-        // Logger.debug('Ticked %o actions at %o with remainder %o', actionArray.length, Timer.now(), remainder);
+        // Then tick the world by the tick rate for this tick
+        this.world.tick(this.tickRate / 1000);
 
         // Finally, update world state for all clients
         this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
