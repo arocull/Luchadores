@@ -38,7 +38,7 @@ class Clockwork {
 
     this.actions = {};
     this.subscribers = new SubscriberContainer();
-    this.tickRate = 1000 / 20; // Number of milliseconds per tick (tick rate = 20 per second)
+    this.tickRate = 1000 / 66; // Number of milliseconds per tick (tick rate = 66 per second)
   }
 
   tick(delta: number) {
