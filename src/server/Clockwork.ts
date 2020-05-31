@@ -1,5 +1,4 @@
 import _ from 'lodash';
-import Denque from 'denque';
 import Player from '../common/engine/Player';
 import { Timer } from '../common/engine/time/Time';
 import { MessageBus, Topics } from '../common/messaging/bus';
@@ -30,7 +29,7 @@ class Clockwork {
   private world: World;
   private running: boolean = false;
   private tickRate: number;
-  private actions: Denque<Action>;
+  private actions: Record<string, Action>;
   private loop: NodeJS.Timeout;
   private subscribers: SubscriberContainer;
 
@@ -38,7 +37,7 @@ class Clockwork {
     this.world = new World();
     this.world.doReaping = true;
 
-    this.actions = new Denque<Action>();
+    this.actions = {};
     this.subscribers = new SubscriberContainer();
     this.tickRate = 1000 / 20; // Number of milliseconds per tick (tick rate = 20 per second)
   }
@@ -48,8 +47,8 @@ class Clockwork {
 
     if (this.running) {
       if (delta > 0) {
-        const actionArray = this.actions.toArray();
-        this.actions.clear(); // Reset the list of actions for next tick
+        const actionArray = Object.values(this.actions);
+        this.actions = {}; // Reset the list of actions for next tick
 
         const sortedActions = _.sortBy(actionArray, (act) => act.timestamp);
         let tickTimeRemaining = this.tickRate;
@@ -288,7 +287,7 @@ class Clockwork {
   }
 
   pushAction(action: Action) {
-    this.actions.push(action);
+    this.actions[action.player.getCharacterID()] = action;
   }
 }
 
