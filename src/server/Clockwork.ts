@@ -20,7 +20,6 @@ import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
 interface Action {
   player: Player;
   input: IPlayerInputState;
-  timestamp: number;
 }
 
 class Clockwork {
@@ -164,7 +163,6 @@ class Clockwork {
 
     const action: Action = {
       player: plr,
-      timestamp: Timer.now(),
       input: message,
     };
 
