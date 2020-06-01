@@ -26,11 +26,14 @@ interface Action {
 class Clockwork {
   private connections: Player[] = [];
   private world: World;
+  private actions: Record<string, Action>;
+  private subscribers: SubscriberContainer;
+
   private running: boolean = false;
   private tickRate: number;
-  private actions: Record<string, Action>;
-  private loop: NodeJS.Timeout;
-  private subscribers: SubscriberContainer;
+  private publishRate: number;
+  private tickTimeout: NodeJS.Timeout;
+  private lastPublish: number = 0;
 
   constructor() {
     this.world = new World();
@@ -38,12 +41,11 @@ class Clockwork {
 
     this.actions = {};
     this.subscribers = new SubscriberContainer();
-    this.tickRate = 1000 / 66; // Number of milliseconds per tick (tick rate = 66 per second)
+    this.tickRate = Math.floor(1000 / 66); // Number of milliseconds per tick (tick rate = 66 per second)
+    this.publishRate = Math.floor(1000 / 20); // Number of milliseconds per world state publish
   }
 
-  tick(delta: number) {
-    this.loop = null;
-
+  private tick(delta: number) {
     if (this.running) {
       if (delta > 0) {
         // Apply each action into the world state.
@@ -55,29 +57,32 @@ class Clockwork {
         // Then tick the world by the tick rate for this tick
         this.world.tick(this.tickRate / 1000);
 
-        // Finally, update world state for all clients
-        this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
+        // Is it time to publish another world state?
+        const now = Timer.now();
+        if ((now - this.lastPublish) >= this.publishRate) {
+          this.lastPublish = now;
+          this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
 
-        const kills = this.world.reapKills();
-        this.broadcastList(kills); // Tells players what fighters died and who to award kills to
-        for (let i = 0; i < kills.length; i++) { // Count each kill and death toward respective counts
-          Logger.debug('Character IDs %j was killed by %j', kills[i].characterId, kills[i].killerId);
-          for (let j = 0; j < this.connections.length; j++) {
-            if (this.connections[j].getCharacterID() === kills[i].killerId) { // Earn kill
-              this.connections[j].earnKill();
-              this.connections[j].getCharacter().EarnKill();
-            } else if (this.connections[j].getCharacterID() === kills[i].characterId) { // Earn death
-              this.connections[j].earnDeath();
-            }
-          }
+          const kills = this.world.reapKills();
+          this.broadcastList(kills); // Tells players what fighters died and who to award kills to
+          kills.forEach((kill) => {
+            Logger.debug('Character IDs %j was killed by %j', kill.characterId, kill.killerId);
+            this.connections.forEach((connection) => { // Count each kill and death toward respective counts
+              if (connection.getCharacterID() === kill.killerId) { // Earn kill
+                connection.earnKill();
+                connection.getCharacter().EarnKill();
+              } else if (connection.getCharacterID() === kill.characterId) { // Earn death
+                connection.earnDeath();
+              }
+            });
+          });
+          this.updatePlayerStates(); // Update player states (tell players how much HP they have)
         }
-
-        this.updatePlayerStates(); // Update player states (tell players how much HP they have)
       }
 
       // Kick off the interval.
       // Keep the local context by using an arrow function.
-      this.loop = setTimeout(() => this.tick(this.tickRate), this.tickRate);
+      this.tickTimeout = setTimeout(() => this.tick(this.tickRate), this.tickRate);
     }
   }
 
@@ -257,7 +262,7 @@ class Clockwork {
 
       this.subscribers.detachAll();
 
-      clearTimeout(this.loop);
+      clearTimeout(this.tickTimeout);
     }
   }
 
