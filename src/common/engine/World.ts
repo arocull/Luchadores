@@ -1,13 +1,82 @@
-import Vector from './Vector';
+import { Vector, Ray, TraceResult } from './math';
 import Player from './Player';
+import Entity from './Entity';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
+import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
-import { FighterType } from './Enums';
+import { FighterType, MapPreset, EntityType } from './Enums';
 import { Sheep, Deer, Flamingo } from './fighters';
 import { TypeEnum } from '../events';
+
+
+// Internal Functions //
+/* eslint-disable no-param-reassign */
+
+// Traces does a collision trace upon prop B using the movement ray of prop A
+function CollisionTrace(a: Prop, b: Prop, ray: Ray): TraceResult {
+  // See if the point is anywhere close enough to the ray for an intersection
+  if (ray.pointDistanceXY(b.Position) < a.Radius + b.Radius) { // Bottom center of fighter
+    if (b.Position.z > a.Position.z) { // B is above A, meaning we need to trace the top of the objects
+      const pos = Vector.Clone(a.Position);
+      pos.z += a.Height;
+      ray.start.z += a.Height;
+      ray.end.z += a.Height;
+      return b.traceProp(ray, a.Radius);
+    }
+    return b.traceProp(ray, a.Radius); // Bottom trace
+  }
+
+  return null; // Basic point tests failed, return null
+}
+// Simple collision test and trace for bullets
+function CollisionTraceBullet(a: Prop, ray: Ray): TraceResult {
+  if (ray.pointDistanceXY(a.Position) < a.Radius) {
+    return a.traceProp(ray);
+  }
+
+  return null; // Return null if simple point distance test failed
+}
+
+// Collides two fighters, makes a ride b and does momentum transfers
+// If the collision is a repeat, momentum is not transferred, but positioning and ridership is still calculated
+function CollideFighters(a: Fighter, b: Fighter, info: TraceResult) {
+  if (!(a.rodeThisTick === b || b.rodeThisTick === a)) { // If they are not riding each other, treat it like a standard collision
+    const massA = a.Mass + a.passengerMass;
+    const massB = b.Mass + b.passengerMass;
+    let moment1 = a.Velocity.length() * massA; // Momentum of fighter A
+    let moment2 = b.Velocity.length() * massB; // Momentum of fighter B
+
+    // Apply ridership momentum additions
+    if (a.rodeThisTick) moment1 += a.rodeThisTick.Velocity.length() * massA;
+    if (b.rodeThisTick) moment2 += b.rodeThisTick.Velocity.length() * massB;
+
+    a.CollideWithFighter(b, moment1); // Trigger collision events
+    b.CollideWithFighter(a, moment2);
+
+    // Momentum Transfer--should we swap momentums or sum them (essentially, what collision do we want)
+    const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / massA);
+    b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / massB);
+    a.Velocity = aVelo;
+
+    a.lastCollision = b;
+    b.lastCollision = a;
+  }
+
+  // Slight bounceback on air collisions used to prevent characters from getting stuck in eachother
+  if (info.topFaceCollision) { // A landed on B
+    a.JustLanded = true; // Allows jump
+    a.riding = b;
+    a.CollideWithProp(info, b, false);
+  // Position fighter a around fighter b accordingly (note velocity change already occurred)
+  } else if (b.rodeThisTick !== a && b.rodeThisTick !== a) { // Don't let the rider push the fighter around though
+    a.CollideWithProp(info, b, false);
+  }
+}
+/* eslint-enable no-param-reassign */
+
 
 // World Class - Manages bullets and fighters
 /* General flow of things:
@@ -27,16 +96,22 @@ class World {
 
   public Fighters: Fighter[];
   public Bullets: Projectile[];
+  public Props: Prop[];
   public Map: Map;
 
   public doReaping: boolean;
   private kills: IPlayerDied[];
 
-  constructor() {
-    this.Map = new Map(40, 40, 23, 'Maps/Grass.jpg', 10000);
+  constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false) {
+    this.Map = new Map(40, 40, 23, 10000, mapPreset);
 
     this.Fighters = [];
     this.Bullets = [];
+    if (loadProps) {
+      this.Props = this.Map.getProps(mapPreset, false);
+    } else {
+      this.Props = []; // Props not loaded by default
+    }
 
     this.doReaping = false;
     this.kills = [];
@@ -151,18 +226,34 @@ class World {
       const mass = obj.Mass + obj.passengerMass; // Passengers increase mass for other calculations
       const maxSpeed = obj.MaxMomentum / obj.Mass; // Max speed still remains the same, we do not want passengers causing slowdown
 
-      // Manipulate move acceleration of the fighter depending on if they're in the air or not
+      // Store move acceleration for potential manipulations
       let moveAccel = Vector.Clone(obj.Acceleration);
-      if (obj.isFalling()) moveAccel = Vector.Multiply(moveAccel, obj.AirControl);
 
       // First, apply any potential accelerations due to physics, start with friction as base for optimization
       let accel = new Vector(0, 0, 0);
 
-      // Gravity
+      // Gravity - Ignores fighter riding because it relies on constant collisions
       if (obj.Position.z > 0 || obj.Velocity.z > 0) accel.z += -50;
 
-      // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
-      if (!obj.riding) {
+      // Ridership stuff
+      obj.rodeThisTick = null;
+      obj.lastCollision = null;
+      if (obj.riding) {
+        if ((obj.dismountRider || (obj.riding.dismountRider && obj.riding.Velocity.lengthXY() > 5))) { // Dismount if requested
+          if (obj.riding.dismountRider) obj.Jump(true); // Force a jump
+          obj.lastCollision = obj.riding;
+          obj.Position.z += 0.2; // Add slight bit of offset to avoid clipping into steed
+
+          const veloLeveled = Vector.Clone(obj.riding.Velocity);
+          veloLeveled.z = 0;
+          obj.Velocity = Vector.Add( // Inherit riding velocity (not momentum)
+            obj.Velocity,
+            veloLeveled,
+          );
+        } else {
+          obj.rodeThisTick = obj.riding;
+        }
+      } else { // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
         if (obj.Position.x < 0) accel.x += this.Map.wallStrength * Math.abs(obj.Position.x);
         else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.wallStrength * (obj.Position.x - this.Map.Width);
 
@@ -174,19 +265,15 @@ class World {
         accel.y /= mass;
       }
 
-      // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
-      if (obj.Position.z <= 0 || obj.riding) {
+      if (obj.isFalling()) { // Manipulate move acceleration of the fighter depending on if they're in the air or not
+        moveAccel = Vector.Multiply(moveAccel, obj.AirControl);
+      } else { // Note friction is Fn(or mass * gravity) * coefficient of friction, then force is divided by mass for accel
         const leveled = new Vector( // Get approximate X and Y velocity by end of frame
-          obj.Velocity.x + (obj.Acceleration.x + accel.x) * DeltaTime,
-          obj.Velocity.y + (obj.Acceleration.y + accel.y) * DeltaTime,
+          obj.Velocity.x + (moveAccel.x + accel.x) * DeltaTime,
+          obj.Velocity.y + (moveAccel.y + accel.y) * DeltaTime,
           0,
         );
         const len = leveled.lengthXY(); // Get magnitude of the leveled velocity
-
-        // For reference:
-        // Sheep's max velocity is 40 units per second
-        // Deer's max velocity is 20 units per second
-        // Flamingo's max velocity is 16.25 units per second
 
         // We want more friction at low velocities and less friction at high velocitites so slowdown seems more realistic
         // 'Static' friction would in this case be three times as strong as kinetic friction
@@ -207,18 +294,11 @@ class World {
           accel = Vector.Add(
             accel,
             Vector.Multiply(
-              obj.Acceleration,
+              moveAccel,
               (force - 1), // No boost when at full kinetic friction, but 2x boost when full static
             ),
           );
         }
-      }
-
-      // If this character is riding another fighter, they should inherit its acceleration and max momentum as well
-      // Should allow for smooth movement while ontop of them
-      // Could potentially lead to a bug where one gains lots of momentum by landing ontop of someone while at terminal velocity?
-      if (obj.riding) {
-        obj.rodeThisTick = obj.riding;
       }
 
 
@@ -237,10 +317,10 @@ class World {
         deltaX.z = z;
       }
 
-      obj.lastPosition = obj.Position;
+      obj.lastPosition = obj.Position; // Used in raycasting and riding position offsets
       obj.Position = Vector.Add(obj.Position, deltaX);
       obj.Velocity = Vector.Add(obj.Velocity, Vector.Multiply(accel, DeltaTime));
-      obj.newPosition = obj.Position;
+      obj.newPosition = obj.Position; // Used in riding position offsets, ignores below position changes
 
       // Terminal velocity (don't clamp vertical component)
       if (obj.Velocity.lengthXY() > maxSpeed) {
@@ -265,24 +345,10 @@ class World {
       obj.riding = null;
       obj.passengerMass = 0;
       obj.passengerMaxMomentum = 0;
+      obj.onSurface = false; // Don't claim they're on a prop until they collide again
+      obj.dismountRider = false;
     }
 
-    // Apply rider position offsets
-    for (let i = 0; i < this.Fighters.length; i++) {
-      if (this.Fighters[i].rodeThisTick) {
-        const a = this.Fighters[i];
-        a.Position = Vector.Add(a.Position, a.getTotalStackPositionChange());
-
-        if (a.dismountRider || a.rodeThisTick.dismountRider) { // Dismount if requested
-          a.Velocity = Vector.Add(a.Velocity, a.rodeThisTick.Velocity);
-          a.rodeThisTick = null;
-        } else { // Otherwise, tally up their mass for future stuff
-          a.getBottomOfStackPhysics().passengerMass += a.Mass + a.passengerMass;
-          a.getBottomOfStackPhysics().passengerMaxMomentum += a.MaxMomentum + a.passengerMaxMomentum;
-        }
-      }
-      // Note: cannot debounce dismount variable here in case this fighter is being rode and they are trying to buck off rider
-    }
 
     // Tick bullets
     for (let i = 0; i < this.Bullets.length; i++) {
@@ -292,86 +358,114 @@ class World {
       } else this.Bullets[i].Tick(DeltaTime); // Otherwise, tick bullet physics
     }
 
-    // Compute collisions last after everything has moved (makes it slightly more "fair?")
-    // Should we do raycasts from previous positions to make sure they do not warp through eachother and avoid collision?
-    //      - Note: This is only an issue if DeltaTime and Velocity are too great
+
+    // Sort list of fighters so collisions are calculated from bottom up for ridership puprposes
+    this.Fighters.sort((a: Fighter, b: Fighter) => {
+      if (a.lastPosition.z > b.lastPosition.z) return 1;
+      if (a.lastPosition.z < b.lastPosition.z) return -1;
+      return 0;
+    });
+
+
+    // Calculate mass boosts and such before applying physics
+    for (let i = 0; i < this.Fighters.length; i++) {
+      if (this.Fighters[i].rodeThisTick) { // Tally up their mass for future collisions
+        const a = this.Fighters[i];
+        a.Position = Vector.Add(a.Position, a.getTotalStackPositionChange()); // .level()
+
+        a.getBottomOfStackPhysics().passengerMass += a.Mass + a.passengerMass;
+        a.getBottomOfStackPhysics().passengerMaxMomentum += a.MaxMomentum + a.passengerMaxMomentum;
+      }
+    }
+
+    // Compute collisions using raytraces
     for (let i = 0; i < this.Fighters.length; i++) {
       const a = this.Fighters[i];
-      a.dismountRider = false; // Reset dismount
+
+      const rayStart = Vector.Clone(a.lastPosition);
+      if (a.rodeThisTick) {
+        rayStart.z += 0.2; // Add slight bit of z-boost to help raycasts hit the below target
+      }
+      const moveTrace = new Ray(rayStart, a.Position);
+
+      let closest = 10000; // How many units away closest collision is
+      let closestResult: TraceResult = null; // Closest TraceResult, hitInfo is set to prop it collided with
 
       // Fighter collisions
-      for (let j = i + 1; j < this.Fighters.length; j++) { // If the entity was already iterated through by main loop, should not need to do it again
+      for (let j = 0; j < this.Fighters.length; j++) {
         const b = this.Fighters[j];
-        const separation = Vector.DistanceXY(a.Position, b.Position);
-        const rad = a.Radius + b.Radius;
-        if (
-          separation <= rad // First check if they're inside each other
-          && ( // Then check to make sure collision heights are within each other
-            (a.Position.z <= b.Position.z + b.Height && a.Position.z >= b.Position.z)
-            || (b.Position.z <= a.Position.z + a.Height && b.Position.z >= a.Position.z)
-          )
-        ) { // If they are within collision range...
-          if (!(a.rodeThisTick === b || b.rodeThisTick === a)) { // If they are not riding each other, treat it like a standard collision
-            const massA = a.Mass + a.passengerMass;
-            const massB = b.Mass + b.passengerMass;
-            let moment1 = a.Velocity.length() * massA; // Momentum of fighter A
-            let moment2 = b.Velocity.length() * massB; // Momentum of fighter B
 
-            // Apply ridership momentum additions
-            if (a.rodeThisTick) moment1 += a.rodeThisTick.Velocity.length() * massA;
-            if (b.rodeThisTick) moment2 += b.rodeThisTick.Velocity.length() * massB;
-
-            a.CollideWithFighter(b, moment1); // Trigger collision events
-            b.CollideWithFighter(a, moment2);
-
-            // Momentum Transfer--should we swap momentums or sum them (essentially, what collision do we want)
-            const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / massA);
-            b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / massB);
-            a.Velocity = aVelo;
-          }
-
-          // Slight bounceback on air collisions used to prevent characters from getting stuck in eachother
-          if (a.Position.z > b.Position.z + b.Height / 2) { // A landed on B
-            a.Position.z = b.Position.z + b.Height;
-            a.Velocity.z = 0;
-            a.JustLanded = true; // Allows jump
-            a.riding = b;
-          } else if (b.Position.z > a.Position.z + a.Height / 2) { // B landed on A
-            b.Position.z = a.Position.z + a.Height;
-            b.Velocity.z = 0;
-            b.JustLanded = true; // Allows jumping
-            b.riding = a;
-          } else { // Otherwise just force them apart
-            const separate = Vector.UnitVectorXY(Vector.Subtract(b.Position, a.Position));
-            a.Position = Vector.Subtract(a.Position, Vector.Multiply(separate, (rad - separation) / 2));
-            b.Position = Vector.Add(b.Position, Vector.Multiply(separate, (rad - separation) / 2));
+        // Don't bother attempting to collide with self or someone they just collided with
+        if (!(j === i || a.lastCollision === b || b.lastCollision === a || b.Position.z > a.Position.z)) {
+          const result = CollisionTrace(a, b, Ray.Clone(moveTrace));
+          if (result && result.collided) {
+            if (result.distance < closest) {
+              closest = result.distance;
+              result.hitInfo = b;
+              closestResult = result;
+            }
           }
         }
       }
+
+      // Prop collisions (always collide with props)
+      for (let j = 0; j < this.Props.length; j++) {
+        const b = this.Props[j];
+        const result = CollisionTrace(a, b, Ray.Clone(moveTrace));
+        if (result && result.collided) {
+          a.CollideWithProp(result, b, true);
+        }
+      }
+
+      // Collide with nearest fighter
+      if (closestResult && closestResult.hitInfo) {
+        CollideFighters(a, <Fighter>closestResult.hitInfo, closestResult);
+      }
     }
+
 
     // Bullet collisions
     for (let j = 0; j < this.Bullets.length; j++) {
       const b = this.Bullets[j];
 
-      const start = Vector.Subtract(b.Position, b.DeltaPosition);
-      const len = b.DeltaPosition.length();
-      const dir = Vector.UnitVector(b.DeltaPosition);
+      const ray = new Ray(Vector.Subtract(b.Position, b.DeltaPosition), b.Position);
+
+      let closest = 10000; // How many units away the closest collision is
+      let closestHit: TraceResult = null; // Fighter hit by this result
 
       // Normally we would shoot a ray at a cylinder, but that's kind of difficult
       // So instead, we will test 3 point along the bullet trajectory to check if has collided with the fighter or not
       for (let i = 0; i < this.Fighters.length; i++) {
-        const a = this.Fighters[i];
-        for (let q = 0; q < 3; q++) {
-          const pos = Vector.Add(start, Vector.Multiply(dir, q * (len / 3)));
-          if (
-            Vector.DistanceXY(a.Position, pos) <= a.Radius
-            && pos.z >= a.Position.z
-            && pos.z <= a.Position.z + a.Height
-          ) {
-            b.Hit(a);
-            break;
+        const result: TraceResult = CollisionTraceBullet(this.Fighters[i], ray);
+        if (result && result.collided && this.Fighters[i].getOwnerID() !== b.getOwnerID()) { // If collision is valid and not owner
+          if (result.distance < closest) { // Make sure it's closer
+            closest = result.distance;
+            result.hitInfo = this.Fighters[i];
+            closestHit = result; // Save hit, not trace result (position does not need to be specific)
           }
+        }
+      }
+
+      for (let i = 0; i < this.Props.length; i++) {
+        const result: TraceResult = CollisionTraceBullet(this.Props[i], ray);
+        if (result && result.collided) { // If collision is valid and not owner
+          if (result.distance < closest) { // Make sure it's closer
+            closest = result.distance;
+            result.hitInfo = this.Props[i];
+            closestHit = result; // Save hit, not trace result (position does not need to be specific)
+          }
+        }
+      }
+
+      if (closestHit) { // Do closest hit
+        switch ((<Entity>closestHit.hitInfo).type) {
+          case EntityType.Fighter: b.Hit(<Fighter>closestHit.hitInfo); break;
+          default:
+            if (closestHit.topFaceCollision) { // Bounce if it's the top of an object
+              b.Bounce(closestHit.Position.z);
+            } else { // Otherwise destroy projectile
+              b.finished = true;
+            }
         }
       }
     }

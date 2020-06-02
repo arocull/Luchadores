@@ -7,7 +7,7 @@ class Vector { // A structure that holds position data or direction and magnitud
 
   public z: number;
 
-  constructor(X: number, Y: number, Z: number) {
+  constructor(X: number = 0, Y: number = 0, Z: number = 0) {
     this.x = X;
     this.y = Y;
     this.z = Z;
@@ -22,7 +22,7 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
 
   // Limits length of this vector to a set field
-  public clamp(minLen: number, maxLen: number):Vector {
+  public clamp(minLen: number, maxLen: number = minLen):Vector {
     const len = this.length();
     const lenF = Math.min(Math.max(len, minLen), maxLen);
 
@@ -33,6 +33,11 @@ class Vector { // A structure that holds position data or direction and magnitud
       this.z = unit.z * lenF;
     }
 
+    return this;
+  }
+  // Levels the z component of the given vector
+  public level(): Vector {
+    this.z = 0;
     return this;
   }
 
@@ -78,8 +83,18 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
 
   // Gets the dot product between two vectors
+  // Use normalized vectors for scalar value between -1 and 1
   static DotProduct(a: Vector, b: Vector): number {
     return a.x * b.x + a.y * b.y + a.z * b.z;
+  }
+  // For use in ray calculations
+  // Taken from here https://www.mathsisfun.com/algebra/vectors-cross-product.html
+  static Cross(a: Vector, b: Vector): Vector {
+    return new Vector(
+      a.y * b.z - a.z * b.y,
+      a.z * b.x - a.x * b.z,
+      a.x * b.y - a.y * b.x,
+    );
   }
 
   static Distance(a: Vector, b:Vector):number {

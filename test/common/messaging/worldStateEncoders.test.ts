@@ -10,7 +10,7 @@ import { FighterType, ProjectileType } from '../../../src/common/engine/Enums';
 
 test('world state encode / decode', () => {
   const start = new World();
-  start.Map = new Map(100, 50, 0.5, '', 10);
+  start.Map = new Map(100, 50, 0.5, 10);
   start.Fighters.push(new Sheep(1, new Vector(25, 25, 10)));
   start.Fighters.push(new Flamingo(2, new Vector(30, 25, 0)));
   start.Bullets.push(new BBullet(new Vector(0, 0, 0), new Vector(1, 0, 0), start.Fighters[0]));
@@ -40,12 +40,24 @@ test('world state encode / decode', () => {
   expect(end.Fighters.length).toBe(2);
   expect(end.Bullets.length).toBe(1);
 
-  expect(end.Fighters[0].getCharacter()).toBe(FighterType.Sheep);
-  expect(end.Fighters[0].Velocity.z).toBeLessThan(0);
+  let indexF1 = -1;
+  let indexF2 = -1;
+  for (let i = 0; i < end.Fighters.length; i++) {
+    if (end.Fighters[i].getOwnerID() === 1) {
+      indexF1 = i;
+    } else if (end.Fighters[i].getOwnerID() === 2) {
+      indexF2 = i;
+    }
+  }
 
-  expect(end.Fighters[1].getCharacter()).toBe(FighterType.Flamingo);
-  expect(end.Fighters[1].Position.equals(new Vector(30, 25, 0))).toBe(true);
+  expect(indexF1).toBeGreaterThanOrEqual(0); // Fighter should exist in the array
+  expect(end.Fighters[indexF1].getCharacter()).toBe(FighterType.Sheep);
+  expect(end.Fighters[indexF2].Velocity.z).toBeCloseTo(0);
+
+  expect(indexF2).toBeGreaterThanOrEqual(0); // Fighter should exist in the array
+  expect(end.Fighters[indexF2].getCharacter()).toBe(FighterType.Flamingo);
+  expect(end.Fighters[indexF2].Position.equals(new Vector(30, 25, 0))).toBe(true);
 
   expect(end.Bullets[0].projectileType).toBe(ProjectileType.Bullet);
-  expect(end.Bullets[0].Owner).toBe(end.Fighters[0]);
+  expect(end.Bullets[0].Owner).toBe(end.Fighters[indexF1]);
 });

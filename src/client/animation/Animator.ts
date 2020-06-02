@@ -138,7 +138,7 @@ class Animator {
 
     // If they are moving, set the state to that
     if (this.owner.Velocity.lengthXY() > 2 || (this.lastState === 2 && this.owner.Velocity.lengthXY() > 1)) state = AnimationState.Moving;
-    else if (this.owner.Position.z > 0.05 && !this.owner.riding) state = AnimationState.Falling; // otherwise if they are in the air, display falling animation
+    else if (this.owner.isFalling()) state = AnimationState.Falling; // otherwise if they are in the air, display falling animation
 
     if (state === AnimationState.Idle && this.inUniqueIdle) state = AnimationState.IdleUnique; // If they are in a unique idle, then set idle to that
     else this.inUniqueIdle = false; // If unique idle was interrupted, stop it

@@ -73,7 +73,7 @@ class Flamingo extends Fighter {
     let dir = new Vector(0, 0, 0);
 
     // Produce jump boost flames
-    if (this.Position.z > 0 && !this.riding) {
+    if (this.isFalling()) {
       fireVelo.z = -3;
 
       dir = Vector.UnitVectorFromXYZ(

@@ -16,6 +16,7 @@ import {
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
+import { MapPreset } from '../common/engine/Enums';
 
 interface Action {
   player: Player;
@@ -35,7 +36,7 @@ class Clockwork {
   private lastPublish: number = 0;
 
   constructor() {
-    this.world = new World();
+    this.world = new World(MapPreset.Sandy, true);
     this.world.doReaping = true;
 
     this.actions = {};

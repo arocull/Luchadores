@@ -7,7 +7,7 @@ import World from '../../../src/common/engine/World';
 
 test('bullet damage test', () => {
   const world = new World();
-  world.Map = new Map(20, 20, 0, '');
+  world.Map = new Map(20, 20, 0);
 
   const sheep = new Sheep(1, new Vector(0, 10, 0));
   const sheep2 = new Sheep(2, new Vector(0, 20, 0));
@@ -28,7 +28,7 @@ test('bullet damage test', () => {
 
 test('bullet miss owner test', () => {
   const world = new World();
-  world.Map = new Map(20, 20, 0, '');
+  world.Map = new Map(20, 20, 0);
   const sheep2 = new Sheep(2, new Vector(0, 20, 0));
   const bullet2 = new BBullet(new Vector(10, 20, 0), new Vector(-1, 0, 0), sheep2);
 
@@ -44,10 +44,12 @@ test('bullet miss owner test', () => {
 
 test('bullet timeout test', () => {
   const world = new World();
-  world.Map = new Map(20, 20, 0, '');
+  world.Map = new Map(20, 20, 0);
   const bullet3 = new BBullet(new Vector(0, 0, 0), new Vector(1, 0, 0), null);
 
   world.Bullets.push(bullet3);
+
+  expect(bullet3.getOwnerID()).toBe(-1);
 
   for (let i = 0; i < 31; i++) {
     world.TickPhysics(0.1);
@@ -60,7 +62,7 @@ test('bullet timeout test', () => {
 test('bullet jump-dodge test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World();
-  world.Map = new Map(20, 20, 10, '');
+  world.Map = new Map(20, 20, 10);
 
   const deer = new Deer(1, new Vector(5, 0, 0));
   deer.aim(new Vector(1, 0, 0));
@@ -96,7 +98,7 @@ test('bullet jump-dodge test', () => {
 test('bullet shock latency test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World();
-  world.Map = new Map(10, 10, 0, '');
+  world.Map = new Map(10, 10, 0);
   const flam = new Flamingo(1, new Vector(5, 5, 0));
   world.Fighters.push(flam);
 

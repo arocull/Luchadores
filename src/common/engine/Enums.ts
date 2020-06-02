@@ -2,6 +2,7 @@ enum EntityType {
   Fighter = 0,
   Projectile = 1,
   Particle = 2,
+  Prop = 3,
 }
 
 enum FighterType {
@@ -27,6 +28,16 @@ enum ParticleType {
   Lightning = 5,
   BulletFire = 6,
   BulletShell =7,
+}
+
+enum ColliderType {
+  Cylinder = 0,
+  Prism = 1,
+}
+
+enum MapPreset {
+  Sandy = 0,
+  Grassy = 1,
 }
 
 enum UIFrameType {
@@ -58,6 +69,8 @@ export {
   FighterType,
   ProjectileType,
   ParticleType,
+  ColliderType,
+  MapPreset,
   UIFrameType,
   RenderQuality,
   fighterTypeToString,
