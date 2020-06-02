@@ -67,7 +67,6 @@ class Fighter extends Prop {
     private ID: number, // Player/entity ID of this fighter so we can tell who's who
     position: Vector,
   ) {
-    // super(EntityType.Fighter, position, new Vector(0, 0, 0), new Vector(0, 0, 0));
     super(position, ColliderType.Cylinder, Radius, Height, Radius);
     this.type = EntityType.Fighter;
 

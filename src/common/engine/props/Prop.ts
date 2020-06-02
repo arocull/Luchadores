@@ -4,13 +4,15 @@ import { Vector, Ray, TraceResult } from '../math';
 
 const normalUp = new Vector(0, 0, 1);
 const normalDown = new Vector(0, 0, -1);
+const normalRight = new Vector(1, 0, 0);
+const normalLeft = new Vector(-1, 0, 0);
+const normalForward = new Vector(0, 1, 0);
+const normalBackward = new Vector(0, -1, 0);
 
 
 // Prop - Basic primitive collision box with potential to simulate physics
-// TODO: Should we have the Fighter class extend this??? I made sure property names are the same as Fighter's incase we decide to
 class Prop extends Entity {
   public Radius: number;
-  // public UsePhysics: boolean; // If false, it will not simulate physics itself, but other objects may collide with it
   public BounceBack: number; // If something collides with this, how much of the entities velocity is returned
 
   public onSurface: boolean; // If this object is resting ontop of another object
@@ -30,7 +32,6 @@ class Prop extends Entity {
     if (shape === ColliderType.Cylinder) this.Radius = Width;
     else this.Radius = Math.sqrt(this.Width ** 2 + this.Depth ** 2); // Get maximum radius of box for approximation purposes
 
-    // this.UsePhysics = false;
     this.BounceBack = 1;
 
     this.onSurface = false;
@@ -50,10 +51,10 @@ class Prop extends Entity {
         );
       default:
         return (
-          point.x >= this.Position.x
-          && point.x <= this.Position.x + this.Width
-          && point.y >= this.Position.y
-          && point.y <= this.Position.y + this.Depth
+          point.x >= this.Position.x - radiusBoost
+          && point.x <= this.Position.x + this.Width + radiusBoost
+          && point.y >= this.Position.y - radiusBoost
+          && point.y <= this.Position.y + this.Depth + radiusBoost
           && point.z >= this.Position.z
           && point.z <= this.Position.z + this.Height
         );
@@ -63,62 +64,104 @@ class Prop extends Entity {
 
   // Applies the given ray trace to all surfaces of the prop until a valid collision is discovered or none was found
   public traceProp(ray: Ray, radiusBoost: number = 0): TraceResult {
-    const result = new TraceResult();
-
+    switch (this.shape) {
+      case ColliderType.Cylinder: return this.traceCylinder(ray, radiusBoost);
+      default: return this.traceBox(ray, radiusBoost);
+    }
+  }
+  // To call, use traceProp; Ray traces a cylinder
+  private traceCylinder(ray: Ray, radiusBoost: number = 0): TraceResult {
     const radius = this.Radius + radiusBoost;
 
     // Top surface collisision
     const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp);
-    topTrace.topFaceCollision = true;
-    if (topTrace.collided) {
-      switch (this.shape) {
-        case ColliderType.Cylinder: // If it is a cylinder, make sure the hit position was inside the cylinder radius
-          if (Vector.DistanceXY(topTrace.Position, this.Position) <= radius) return topTrace;
-          break;
-        default: // If it is a prism, make sure X and Y coordinates are inside the face
-          if (
-            topTrace.Position.x >= this.Position.x
-            && topTrace.Position.x <= this.Position.x + this.Width
-            && topTrace.Position.y >= this.Position.z
-            && topTrace.Position.y <= this.Position.y + this.Width
-          ) {
-            return topTrace;
-          }
-      }
+    // If it is a cylinder, make sure the hit position was inside the cylinder radius
+    if (topTrace.collided && Vector.DistanceXY(topTrace.Position, this.Position) <= radius) {
+      topTrace.topFaceCollision = true;
+      return topTrace;
     }
 
     // Buttom surface collision
     const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown);
-    if (botTrace.collided) {
-      switch (this.shape) {
-        case ColliderType.Cylinder: // If it is a cylinder, make sure the hit position was inside the cylinder radius
-          if (Vector.DistanceXY(botTrace.Position, this.Position) <= radius) return botTrace;
-          break;
-        default: // If it is a prism, make sure X and Y coordinates are inside the face
-          if (
-            botTrace.Position.x >= this.Position.x
-            && botTrace.Position.x <= this.Position.x + this.Width
-            && botTrace.Position.y >= this.Position.z
-            && botTrace.Position.y <= this.Position.y + this.Width
-          ) {
-            return botTrace;
-          }
-      }
+    // If it is a cylinder, make sure the hit position was inside the cylinder radius
+    if (botTrace.collided && Vector.DistanceXY(botTrace.Position, this.Position) <= radius) {
+      return botTrace;
     }
 
     // If object is a cylinder, get surface normal that corresponds with ray direction
-    if (this.shape === ColliderType.Cylinder) {
-      const trace = ray.traceCylinder(this.Position, radius); // Traces on cylinders end here
-      // Trace should land somewhere within cylinder
-      if (trace.Position.z < this.Position.z + this.Height && trace.Position.z >= this.Position.z) {
-        return trace;
-      }
-      return result;
+    const trace = ray.traceCylinder(this.Position, radius); // Traces on cylinders end here
+    // Trace should land somewhere within cylinder, top exclusive to avoid colliding whilst on top of multiple, flush surfaces
+    if (trace.Position.z < this.Position.z + this.Height && trace.Position.z >= this.Position.z) {
+      return trace;
+    }
+    return new TraceResult(); // Returns if all other tests failed
+  }
+  // To call, use traceProp; Ray traces a box / rectangular prism
+  private traceBox(ray: Ray, radiusBoost: number = 0): TraceResult {
+    const minX = this.Position.x - radiusBoost;
+    const maxX = this.Position.x + this.Width + radiusBoost;
+    const minY = this.Position.y - radiusBoost;
+    const maxY = this.Position.y + this.Depth + radiusBoost;
+    const minZ = this.Position.z;
+    const maxZ = this.Position.z + this.Height;
+
+    const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp);
+    if (topTrace.collided // Aligned on Z axis, test X and Y
+      && topTrace.Position.x >= minX
+      && topTrace.Position.x <= maxX
+      && topTrace.Position.y >= minY
+      && topTrace.Position.y <= maxY
+    ) {
+      topTrace.topFaceCollision = true; // Top surface collisision
+      return topTrace;
+    }
+    const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown);
+    if (botTrace.collided // Aligned on Z axis, test X and Y
+      && botTrace.Position.x >= minX
+      && botTrace.Position.x <= maxX
+      && botTrace.Position.y >= minY
+      && botTrace.Position.y <= maxY
+    ) {
+      return botTrace;
+    }
+    const rightTrace = ray.tracePlane(this.getRightPlaneCenter(), normalRight);
+    if (rightTrace.collided // We're tracing the X axis, so it should always be aligned on the X position; test Y and Z
+      && rightTrace.Position.y >= minY
+      && rightTrace.Position.y <= maxY
+      && rightTrace.Position.z >= minZ
+      && rightTrace.Position.z <= maxZ
+    ) {
+      return rightTrace;
+    }
+    const leftTrace = ray.tracePlane(this.getLeftPlaneCenter(), normalLeft);
+    if (leftTrace.collided // We're tracing the X axis, so it should always be aligned on the X position; test Y and Z
+      && leftTrace.Position.y >= minY
+      && leftTrace.Position.y <= maxY
+      && leftTrace.Position.z >= minZ
+      && leftTrace.Position.z <= maxZ
+    ) {
+      return leftTrace;
+    }
+    const forwardTrace = ray.tracePlane(this.getForwardPlaneCenter(), normalForward);
+    if (forwardTrace.collided // We're tracing the Y axis, so it should always be aligned on the Y position; test X and Z
+      && forwardTrace.Position.x >= minX
+      && forwardTrace.Position.x <= maxX
+      && forwardTrace.Position.z >= minZ
+      && forwardTrace.Position.z <= maxZ
+    ) {
+      return forwardTrace;
+    }
+    const backwardTrace = ray.tracePlane(this.getBackwardPlaneCenter(), normalBackward);
+    if (backwardTrace.collided // We're tracing the Y axis, so it should always be aligned on the Y position; test X and Z
+      && backwardTrace.Position.x >= minX
+      && backwardTrace.Position.x <= maxX
+      && backwardTrace.Position.z >= minZ
+      && backwardTrace.Position.z <= maxZ
+    ) {
+      return backwardTrace;
     }
 
-    // Box collisions not implemented yet
-
-    return result;
+    return new TraceResult(); // Return empty trace result if failed
   }
 
   // Position this prop based on a trace result and colliding prop
@@ -148,22 +191,31 @@ class Prop extends Entity {
           this.Velocity,
           Vector.Multiply(
             collision.Normal,
-            Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity)), // Amount of relation between vectors
+            // Amount of relation between vectors multiplied by length of vector
+            Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity)) * this.Velocity.lengthXY(),
           ),
         );
       }
     }
   }
 
-  private getTopPlaneCenter(): Vector {
-    const vec = Vector.Clone(this.Position);
-    vec.z += this.Height;
-    return vec;
+  private getTopPlaneCenter(): Vector { // Up vertically
+    return new Vector(0, 0, this.Position.z + this.Height);
   }
-  private getBottomPlaneCenter(): Vector {
-    const vec = Vector.Clone(this.Position);
-    vec.z -= 0.001; // Prevents props from clipping under eachother while on the same plane
-    return vec;
+  private getBottomPlaneCenter(): Vector { // Down vertically
+    return new Vector(0, 0, this.Position.z - 0.001); // Decrement prevents props from clipping under eachother while on the same plane
+  }
+  private getRightPlaneCenter(): Vector { // Holding D
+    return new Vector(this.Position.x + this.Width / 2, 0, 0); // Depth and altitude do not matter on an infinite plane
+  }
+  private getLeftPlaneCenter(): Vector { // Holding A
+    return new Vector(this.Position.x - this.Width / 2, 0, 0); // Depth and altitude do not matter on an infinite plane
+  }
+  private getForwardPlaneCenter(): Vector { // Holding W
+    return new Vector(0, this.Position.y + this.Depth / 2, 0); // Depth and altitude do not matter on an infinite plane
+  }
+  private getBackwardPlaneCenter(): Vector { // Holding S
+    return new Vector(0, this.Position.z - this.Depth / 2, 0); // Depth and altitude do not matter on an infinite plane
   }
 
 
