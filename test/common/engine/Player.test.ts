@@ -4,7 +4,7 @@ describe('Player', () => {
   it('should have no ping at initialization', () => {
     const conn = new Player('asdf');
     conn.setUsername('asdf');
-    expect(conn.getPing()).toEqual(undefined);
+    expect(conn.getPing()).toBeNull();
   });
 
   it('should push pings to the queue', () => {
