@@ -4,7 +4,7 @@ import { Sheep, Deer, Flamingo } from '../../../src/common/engine/fighters/index
 import Map from '../../../src/common/engine/Map';
 import World from '../../../src/common/engine/World';
 
-test('fighter sheep collision test', () => {
+test('fighter collision test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World();
   world.Map.Width = 500;
@@ -88,4 +88,133 @@ test('fighter riding test', () => {
   // Stacks make attempts to maintain order when dissassembled, but are not as accurate as before
   // expect(c.Position.x).toBeCloseTo(b.Position.x);
   // expect(c.riding).toBeTruthy();
+});
+
+test('flamingo jetpack test', () => {
+  Random.setSeed(1); // Set the random seed so it is always the same for this unit test
+  const world = new World();
+  const flam = new Flamingo(1, new Vector(20, 20, 0));
+  world.Fighters.push(flam);
+
+  let maxHeightA = 0;
+  let maxHeightB = 0;
+
+  flam.Jump();
+  for (let i = 0; i < 25; i++) {
+    world.tick(0.03);
+    maxHeightA = Math.max(flam.Position.z, maxHeightA); // Sample max height
+    if (flam.Position.z < maxHeightA) break; // Stop when they start descending
+  }
+
+  // Reset physics
+  flam.Position.z = 0;
+  flam.Velocity.z = 0;
+  world.tick(1); // Reset jump cooldown
+
+  flam.Firing = true; // Should be breathing while this happens
+  flam.Jump();
+  for (let i = 0; i < 50; i++) {
+    world.tick(0.03);
+    maxHeightB = Math.max(flam.Position.z, maxHeightB); // Sample max height
+    if (flam.Position.z < maxHeightB) break; // Stop when they start descending
+  }
+
+  expect(maxHeightA).toBeGreaterThan(0);
+  expect(maxHeightB).toBeGreaterThan(maxHeightA); // Flamingo should have used jump boost to gain extra height
+});
+
+// Kill effect tests
+test('sheep kill-effect test', () => {
+  Random.setSeed(1); // Set the random seed so it is always the same for this unit test
+  const world = new World();
+  world.Map = new Map(500, 50, 23, 0);
+  const sheep1 = new Sheep(1, new Vector(1, 20, 0));
+  const sheep2 = new Sheep(2, new Vector(1, 40, 0));
+  world.Fighters.push(sheep1, sheep2);
+
+  // Race sheep
+  sheep1.Move(new Vector(1, 0, 0));
+  sheep2.Move(new Vector(1, 0, 0));
+
+  sheep2.TakeDamage(100, sheep1);
+  expect(sheep2.HP).toBe(100); // 200 HP - 100 HP
+  sheep2.EarnKill(); // Apply kill effect after move direction has already been set to test updating
+  expect(sheep2.HP).toBe(150); // 100 HP + 25% of max HP (200 * 0.25)
+
+  world.tick(0.1);
+  expect(sheep2.Velocity.x).toBeGreaterThan(sheep1.Velocity.x); // Sheep 2 should accelerate faster
+
+  for (let i = 0; i < 40; i++) { // 2 seconds, combined with 0.1 seconds before
+    world.tick(0.05);
+  }
+
+  // Sheep 2's speed boost allowed them to accelerate to max speed faster
+  expect(sheep2.Position.x).toBeGreaterThan(sheep1.Position.x);
+});
+
+test('deer kill-effect test', () => {
+  Random.setSeed(1); // Set the random seed so it is always the same for this unit test
+  const world = new World();
+  world.Map = new Map(500, 50, 23, 0);
+  const deer1 = new Deer(1, new Vector(1, 20, 0));
+  const deer2 = new Deer(2, new Vector(1, 40, 3));
+  const sheep = new Sheep(3, new Vector(1, 40, 0));
+  world.Fighters.push(deer1, deer2, sheep);
+
+  // Race sheep
+  deer1.aim(new Vector(-1, 0, 0));
+  deer2.aim(new Vector(-1, 0, 0));
+
+  // Let deer land on sheep for ridership purposes
+  for (let i = 0; i < 10; i++) {
+    world.tick(0.05);
+  }
+  expect(deer2.riding).toBe(sheep);
+
+  deer1.Firing = true;
+  deer2.Firing = true;
+
+  for (let i = 0; i < 10; i++) {
+    world.tick(0.05);
+  }
+  expect(deer1.Position.x).toBeCloseTo(1);
+  expect(sheep.Position.x).toBeCloseTo(1);
+  expect(deer2.Position.x).toBeCloseTo(sheep.Position.x);
+
+  // Enable kill effects
+  deer1.EarnKill();
+  deer2.EarnKill();
+
+  for (let i = 0; i < 40; i++) {
+    world.tick(0.05);
+  }
+
+  // Test recoil
+  expect(deer1.Position.x).toBeGreaterThan(1);
+  expect(sheep.Position.x).toBeGreaterThan(1);
+  expect(deer2.Position.x).toBeGreaterThan(1);
+
+  expect(deer1.Velocity.x).toBeGreaterThan(0);
+  expect(deer2.Velocity.x).toBeCloseTo(0);
+  expect(sheep.Velocity.x).toBeGreaterThan(0);
+});
+
+test('flamingo kill-effect test', () => {
+  Random.setSeed(1); // Set the random seed so it is always the same for this unit test
+  const world = new World();
+  world.Map = new Map(500, 50, 23, 0);
+  const flam = new Flamingo(1, new Vector(1, 20, 0));
+  world.Fighters.push(flam);
+
+  flam.aim(new Vector(-1, 0, 0));
+  flam.Firing = true;
+
+  for (let i = 0; i < 25; i++) {
+    world.tick(0.1);
+  }
+  expect(flam.getSpecialNumber()).toBeLessThan(50); // Flamingo running low on breath
+
+  flam.EarnKill();
+
+  expect(flam.getSpecialNumber()).toBe(50); // Earning a kill refills breath meter
 });

@@ -1,4 +1,4 @@
-import Vector from '../../src/common/engine/Vector';
+import Vector from '../../../src/common/engine/Vector';
 
 test('vector arithematic test', () => {
   const vect1 = new Vector(0, 0, 0);
@@ -78,6 +78,9 @@ test('vector angles testing', () => {
   expect(res1).toBeCloseTo(Math.PI / 2, 3);
   expect(res2).toBeCloseTo(Math.PI, 3);
   expect(res3).toBeCloseTo(Math.PI / 2, 3);
+
+  const angle = Vector.ConstrainAngle(Math.PI * 7);
+  expect(angle).toBe(Math.PI); // Constrain large angle between 0 and 2*pi
 });
 
 test('vector dot product testing', () => {
@@ -94,4 +97,12 @@ test('vector dot product testing', () => {
 
   expect(Vector.DotProduct(vect1, vect4)).toBeCloseTo(vect4.x);
   expect(Vector.DotProduct(vect1, vect5)).toBeCloseTo(vect5.x);
+});
+
+test('vector level testing', () => {
+  const vect1 = new Vector(5, 7, 3);
+  const vect2 = Vector.Clone(vect1).level(); // Same vector but leveled
+
+  expect(vect2.length()).toBe(vect1.lengthXY()); // Should have same XY length
+  expect(Vector.UnitVector(vect2).equals(Vector.UnitVectorXY(vect1))).toBe(true); // XY unit vectors should be the same
 });

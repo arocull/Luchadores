@@ -37,20 +37,20 @@ class Map {
     }
   }
 
-  public getProps(mapID: number, loadTextures: boolean = false): Prop[] {
+  public getProps(mapID: MapPreset = this.mapID, loadTextures: boolean = false): Prop[] {
     if (mapID === MapPreset.Sandy) {
       const props = [
-        new Prop(new Vector(10, 30, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(10.4, 30.5, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(11.3, 30.4, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(22, 34, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(11, 10, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(10.2, 10.3, 0), ColliderType.Cylinder, 0.4, 1),
+        new Prop(new Vector(10, 30, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(10.4, 30.5, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(11.3, 30.4, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(22, 34, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(11, 10, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(10.2, 10.3, 0), ColliderType.Prism, 0.4, 1),
         // Barrel Stack
-        new Prop(new Vector(34.7, 15.3, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(35.3, 15.3, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(35, 14.7, 0), ColliderType.Cylinder, 0.4, 1),
-        new Prop(new Vector(35, 14.9, 1), ColliderType.Cylinder, 0.35, 1),
+        new Prop(new Vector(34.7, 15.3, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(35.3, 15.3, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(35, 14.7, 0), ColliderType.Prism, 0.4, 1),
+        new Prop(new Vector(35, 14.9, 1), ColliderType.Prism, 0.35, 1),
       ];
       if (loadTextures) {
         for (let i = 0; i < props.length; i++) {

@@ -102,13 +102,14 @@ class World {
   public doReaping: boolean;
   private kills: IPlayerDied[];
 
-  constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false) {
+  constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
+    if (loadTextures) this.Map.loadTexture();
 
     this.Fighters = [];
     this.Bullets = [];
     if (loadProps) {
-      this.Props = this.Map.getProps(mapPreset, false);
+      this.Props = this.Map.getProps(mapPreset, loadTextures);
     } else {
       this.Props = []; // Props not loaded by default
     }
