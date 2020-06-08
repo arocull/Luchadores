@@ -39,6 +39,7 @@ class Deer extends Fighter {
 
   constructor(id: number, position: Vector) {
     super(100, 100, 2000, 0.45, 1.05, 17, 40, 0.2, FighterType.Deer, id, position);
+    // 100 kg, top speed of 20 units per second
 
     this.bulletCooldownBase = 0.08;
     this.bulletCooldownTime = this.bulletCooldownBase;

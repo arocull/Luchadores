@@ -33,7 +33,8 @@ class Flamingo extends Fighter {
   private breathing: boolean;
 
   constructor(id: number, position: Vector) {
-    super(80, 80, 1300, 0.4, 2, 20, 35, 0.7, FighterType.Flamingo, id, position);
+    super(80, 50, 875, 0.4, 2, 20, 35, 0.7, FighterType.Flamingo, id, position);
+    // 50 kilograms, top speed of 17.5 units per second
 
     // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;
