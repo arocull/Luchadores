@@ -36,6 +36,7 @@ class Fighter extends Prop {
   public JustHitPosition: Vector;
   public JustHitMomentum: number;
   public JustLanded: boolean;
+  private jumpTimer: number;
   public lastCollision: Fighter;
 
   public lastPosition: Vector;
@@ -97,6 +98,7 @@ class Fighter extends Prop {
     this.BulletShock = 0;
 
     this.boostTimer = 0;
+    this.jumpTimer = 0;
   }
 
 
@@ -156,9 +158,10 @@ class Fighter extends Prop {
 
   // Jump if this character is currently on the ground
   public Jump(force: boolean = false) {
-    if (this.Position.z <= 0 || this.JustLanded || force) {
+    if (((this.Position.z <= 0 || this.JustLanded || this.onSurface) && this.jumpTimer <= 0) || force) {
       this.Velocity.z += this.JumpVelocity;
       this.dismountRider = true;
+      this.jumpTimer = 0.2;
     }
   }
 
@@ -192,6 +195,8 @@ class Fighter extends Prop {
     this.rodeThisTick = null;
     this.JustHitMomentum = 0;
     this.BulletShock = 0;
+
+    if (!this.isFalling()) this.jumpTimer -= DeltaTime;
 
     if (this.BulletCooldown <= 0) this.BulletCooldown = 0; // Zeros cooldown
     else this.BulletCooldown -= DeltaTime; // Otherwise, tick cooldown (if it gets below zero and player is still firing, stream stays continous)
