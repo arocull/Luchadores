@@ -286,7 +286,10 @@ class World {
           Vector.Multiply(
             Vector.UnitVector(leveled),
             force * this.Map.Friction,
-          ).clamp(0, len / DeltaTime), // Limit it so it does not push the player backwards while standing still (still acceleration though)
+          ).clamp( // Limit it so it does not push the player backwards while standing still (still acceleration though)
+            0,
+            len / Math.max(DeltaTime, 0.001), // Ensure DT > 0 so we do not run into any divide by zero errors and corrupt the system
+          ),
         );
 
         // However, we don't want players getting stuck in place, so give them a slight acceleration boost when at low velocities

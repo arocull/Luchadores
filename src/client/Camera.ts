@@ -54,7 +54,7 @@ class Camera {
       let moveSpeed = this.Focus.Velocity.lengthXY(); // Get velocity of player
       if (this.Focus.riding) moveSpeed += this.Focus.riding.Velocity.lengthXY(); // Don't forget to tack in velocity of who they're riding!
       focusSpeed = Math.max(Math.min(moveSpeed, 50), 0) / 100;
-      if (this.Focus.isRanged()) zoomBoost = 0.9;
+      if (this.Focus.isRanged()) zoomBoost = 0.85;
 
       // If camera shake is enabled, do it
       if (this.Shake > 0 && RenderSettings.EnableCameraShake) {
@@ -66,8 +66,8 @@ class Camera {
       } else if (!RenderSettings.EnableCameraShake) this.Shake = 0;
     }
 
-    // Use constant aspect ratio
-    this.baseZoom = Math.min(this.Width / this.MaxDrawWidth, this.Height / this.MaxDrawHeight) * zoomBoost;
+    // Use constant aspect ratio, set a minimum value in case of zero
+    this.baseZoom = Math.max(Math.min(this.Width / this.MaxDrawWidth, this.Height / this.MaxDrawHeight), 0.001) * zoomBoost;
     const alpha = DeltaTime * 3; // Lerp speed
 
     // Smoothly lerp visual zoom to reduce motion
