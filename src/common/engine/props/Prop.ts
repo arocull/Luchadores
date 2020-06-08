@@ -15,7 +15,7 @@ class Prop extends Entity {
   public Radius: number;
   public BounceBack: number; // If something collides with this, how much of the entities velocity is returned
 
-  public onSurface: boolean; // If this object is resting ontop of another object
+  public onSurface: boolean; // If this object is resting on top of another object
 
   public texture: HTMLImageElement;
   public textureUpscale: number;
@@ -73,7 +73,7 @@ class Prop extends Entity {
   private traceCylinder(ray: Ray, radiusBoost: number = 0): TraceResult {
     const radius = this.Radius + radiusBoost;
 
-    // Top surface collisision
+    // Top surface collision
     const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp);
     // If it is a cylinder, make sure the hit position was inside the cylinder radius
     if (topTrace.collided && Vector.DistanceXY(topTrace.Position, this.Position) <= radius) {
@@ -81,7 +81,7 @@ class Prop extends Entity {
       return topTrace;
     }
 
-    // Buttom surface collision
+    // Bottom surface collision
     const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown);
     // If it is a cylinder, make sure the hit position was inside the cylinder radius
     if (botTrace.collided && Vector.DistanceXY(botTrace.Position, this.Position) <= radius) {
@@ -112,7 +112,7 @@ class Prop extends Entity {
       && topTrace.Position.y >= minY
       && topTrace.Position.y <= maxY
     ) {
-      topTrace.topFaceCollision = true; // Top surface collisision
+      topTrace.topFaceCollision = true; // Top surface collision
       return topTrace;
     }
     const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown);
@@ -124,12 +124,17 @@ class Prop extends Entity {
     ) {
       return botTrace;
     }
+
+    // Boost length of ray just by fighter's radius (fighter may collide with surface without position being in it)
+    // eslint-disable-next-line no-param-reassign
+    ray.length += radiusBoost;
+
     const rightTrace = ray.tracePlane(this.getRightPlaneCenter(), normalRight);
     if (rightTrace.collided // We're tracing the X axis, so it should always be aligned on the X position; test Y and Z
       && rightTrace.Position.y >= minY
       && rightTrace.Position.y <= maxY
       && rightTrace.Position.z >= minZ
-      && rightTrace.Position.z <= maxZ
+      && rightTrace.Position.z < maxZ // Exclusive of top plane to avoid collisions while on top of flush surfaces
     ) {
       return rightTrace;
     }
@@ -138,7 +143,7 @@ class Prop extends Entity {
       && leftTrace.Position.y >= minY
       && leftTrace.Position.y <= maxY
       && leftTrace.Position.z >= minZ
-      && leftTrace.Position.z <= maxZ
+      && leftTrace.Position.z < maxZ
     ) {
       return leftTrace;
     }
@@ -147,7 +152,7 @@ class Prop extends Entity {
       && forwardTrace.Position.x >= minX
       && forwardTrace.Position.x <= maxX
       && forwardTrace.Position.z >= minZ
-      && forwardTrace.Position.z <= maxZ
+      && forwardTrace.Position.z < maxZ
     ) {
       return forwardTrace;
     }
@@ -156,7 +161,7 @@ class Prop extends Entity {
       && backwardTrace.Position.x >= minX
       && backwardTrace.Position.x <= maxX
       && backwardTrace.Position.z >= minZ
-      && backwardTrace.Position.z <= maxZ
+      && backwardTrace.Position.z < maxZ
     ) {
       return backwardTrace;
     }
@@ -168,7 +173,7 @@ class Prop extends Entity {
   public CollideWithProp(collision: TraceResult, b: Prop, doVelocityChange: boolean = true) {
     if (!(collision && collision.collided && b)) return;
 
-    // Vertical collisions are different in the fact the fighter is snapped ontop of or below
+    // Vertical collisions are different in the fact the fighter is snapped on top of or below
     if (collision.topFaceCollision) { // Top face collisions are marked in collision results for use in riding
       this.Position.z = b.Position.z + b.Height;
       this.Velocity.z = 0;
@@ -178,13 +183,23 @@ class Prop extends Entity {
       this.Position.z = b.Position.z - this.Height;
       this.Velocity.z = 0;
     } else { // Other collisions should snap position around the entity
-      this.Position = Vector.Add( // Positions object away from surface
-        this.Position,
-        Vector.Multiply(
-          collision.Normal,
-          (this.Radius + b.Radius) - Vector.DistanceXY(b.Position, this.Position),
-        ),
-      );
+      switch (b.shape) {
+        case ColliderType.Cylinder:
+          this.Position = Vector.Add( // Positions object away from surface
+            this.Position,
+            Vector.Multiply(
+              collision.Normal,
+              (this.Radius + b.Radius) - Vector.DistanceXY(b.Position, this.Position),
+            ),
+          );
+          break;
+        default:
+          if (Math.abs(collision.Normal.y) >= 0.5) { // Depth based collision
+            this.Position.y = b.Position.y + (this.Radius + b.Depth / 2) * collision.Normal.y;
+          } else {
+            this.Position.x = b.Position.x + (this.Radius + b.Width / 2) * collision.Normal.x;
+          }
+      }
 
       if (doVelocityChange) { // Nullifies velocity that goes directly against the object's surface normal
         this.Velocity = Vector.Subtract(
@@ -203,7 +218,7 @@ class Prop extends Entity {
     return new Vector(0, 0, this.Position.z + this.Height);
   }
   private getBottomPlaneCenter(): Vector { // Down vertically
-    return new Vector(0, 0, this.Position.z - 0.001); // Decrement prevents props from clipping under eachother while on the same plane
+    return new Vector(0, 0, this.Position.z - 0.001); // Decrement prevents props from clipping under each other while on the same plane
   }
   private getRightPlaneCenter(): Vector { // Holding D
     return new Vector(this.Position.x + this.Width / 2, 0, 0); // Depth and altitude do not matter on an infinite plane
@@ -215,7 +230,7 @@ class Prop extends Entity {
     return new Vector(0, this.Position.y + this.Depth / 2, 0); // Depth and altitude do not matter on an infinite plane
   }
   private getBackwardPlaneCenter(): Vector { // Holding S
-    return new Vector(0, this.Position.z - this.Depth / 2, 0); // Depth and altitude do not matter on an infinite plane
+    return new Vector(0, this.Position.y - this.Depth / 2, 0); // Depth and altitude do not matter on an infinite plane
   }
 
 

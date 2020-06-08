@@ -37,7 +37,7 @@ class Map {
     }
   }
 
-  public getProps(mapID: number, loadTextures: boolean = false): Prop[] {
+  public getProps(mapID: MapPreset = this.mapID, loadTextures: boolean = false): Prop[] {
     if (mapID === MapPreset.Sandy) {
       const props = [
         new Prop(new Vector(10, 30, 0), ColliderType.Cylinder, 0.4, 1),

@@ -43,6 +43,9 @@ class Sheep extends Fighter {
 
     this.MoveAcceleration = this.baseMoveAccel * 3; // Allows the sheep to quickly get back to speed after a kill
     this.boostTimer += 3; // We add to the speed boost time, so they can continue to have a high accel after a multi-kill
+
+    // Immediately apply move acceleration
+    this.Acceleration = Vector.Multiply(Vector.UnitVectorXY(this.Acceleration), this.MoveAcceleration);
   }
 
   protected boostEnded() {

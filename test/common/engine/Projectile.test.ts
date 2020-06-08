@@ -40,6 +40,9 @@ test('bullet miss owner test', () => {
   }
 
   expect(sheep2.HP).toBe(sheep2.MaxHP); // Bullet passing over owner
+
+  bullet2.Hit(sheep2);
+  expect(sheep2.HP).toBe(sheep2.MaxHP); // Bullet refuses to damage owner
 });
 
 test('bullet timeout test', () => {

@@ -1,9 +1,9 @@
-import { Vector } from '../../src/common/engine/math';
-import Prop from '../../src/common/engine/props/Prop';
-import { Sheep } from '../../src/common/engine/fighters';
-import Map from '../../src/common/engine/Map';
-import World from '../../src/common/engine/World';
-import { ColliderType } from '../../src/common/engine/Enums';
+import { Vector } from '../../../src/common/engine/math';
+import Prop from '../../../src/common/engine/props/Prop';
+import { Sheep, Flamingo } from '../../../src/common/engine/fighters';
+import Map from '../../../src/common/engine/Map';
+import World from '../../../src/common/engine/World';
+import { ColliderType } from '../../../src/common/engine/Enums';
 
 test('physics collision test', () => {
   const world = new World();
@@ -57,16 +57,28 @@ test('physics terminal velocity test', () => {
   expect(e.Position.x).toBeCloseTo(e.MaxMomentum / e.Mass);
 });
 
-test('physics prop collision', () => {
+test('physics prop collision tests', () => {
   const world = new World();
   world.Map = new Map(500, 500, 0, 0);
+
   const sheep = new Sheep(1, new Vector(0, 0.1, 0)); // Slight depth offset to test deforming
   const cylinder = new Prop(new Vector(20, 0, 0), ColliderType.Cylinder, 0.5, 5);
 
-  world.Fighters = [sheep];
-  world.Props = [cylinder];
+  const sheep2 = new Sheep(2, new Vector(0, 20.1, 0)); // Slight depth offset
+  const flam = new Flamingo(3, new Vector(20, 20, 8)); // he who stands on boxes
+  const box = new Prop(new Vector(20, 20, 0), ColliderType.Prism, 0.5, 5); // Box for other collision testing
+
+  const sheep3 = new Sheep(4, new Vector(100, 30, 0)); // Top of sheep should hit box
+  const box2 = new Prop(new Vector(100, 20, 0.5), 0.5, 2);
+
+  world.Fighters = [sheep, sheep2, sheep3, flam];
+  world.Props = [cylinder, box, box2];
 
   sheep.Move(new Vector(1, 0, 0));
+  sheep2.Move(new Vector(1, 0, 0));
+  sheep3.Move(new Vector(0, -1, 0));
+
+  expect(flam.onSurface).toBe(false);
 
   for (let i = 0; i < 20; i++) {
     world.TickPhysics(0.1);
@@ -74,4 +86,9 @@ test('physics prop collision', () => {
 
   expect(sheep.Position.x).toBeGreaterThan(cylinder.Position.x); // Sheep eventually passed cylinder
   expect(sheep.Position.y).toBeGreaterThan(0.1); // Sheep was pushed deeper into frame by the cylinder
+
+  expect(sheep2.Position.x).toBeCloseTo(box.Position.x - box.Width / 2 - sheep2.Radius); // Sheep does not deform around box
+  expect(flam.onSurface).toBe(true); // Flamingo is on stable surface
+
+  expect(sheep3.Position.y).toBeCloseTo(box2.Position.y + box2.Depth / 2 + sheep3.Radius); // Sheep does not clip through floating box
 });
