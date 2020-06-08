@@ -65,17 +65,23 @@ class Clockwork {
 
           const kills = this.world.reapKills();
           this.broadcastList(kills); // Tells players what fighters died and who to award kills to
-          kills.forEach((kill) => {
+
+          kills.forEach((kill) => { // First, tally kills
             Logger.debug('Character IDs %j was killed by %j', kill.characterId, kill.killerId);
-            this.connections.forEach((connection) => { // Count each kill and death toward respective counts
-              if (connection.getCharacterID() === kill.killerId) { // Earn kill
-                connection.earnKill();
-                connection.getCharacter().EarnKill();
-              } else if (connection.getCharacterID() === kill.characterId) { // Earn death
-                connection.earnDeath();
-              }
-            });
+            const killer = this.getPlayerWithcharacterID(kill.killerId);
+            if (killer) {
+              killer.earnKill();
+              if (killer.getCharacter()) killer.getCharacter().EarnKill();
+            }
           });
+          kills.forEach((kill) => { // Then tally deaths and clear characters
+            const died = this.getPlayerWithcharacterID(kill.characterId);
+            if (died) {
+              died.earnDeath();
+              died.removeCharacter();
+            }
+          });
+
           this.updatePlayerStates(); // Update player states (tell players how much HP they have)
         }
       }
@@ -145,6 +151,13 @@ class Clockwork {
     if (available.length === 0) return -1; // No character ID was available
 
     return available[0]; // Return first unused number
+  }
+
+  public getPlayerWithcharacterID(id: number): Player {
+    for (let i = 0; i < this.connections.length; i++) {
+      if (this.connections[i].getCharacterID() === id) return this.connections[i];
+    }
+    return null;
   }
 
   // Player Interaction Hooks

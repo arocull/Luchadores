@@ -40,6 +40,7 @@ world.Map.loadTexture();
 Random.randomSeed();
 
 const playerConnects: Player[] = [player];
+let fighterPruneList: Fighter[] = []; // List of fighters that have died, processed and cleared at beginning of every frame
 
 // TODO: HAX - get topics to use from web socket
 const topics = {
@@ -154,8 +155,8 @@ function OnDeath(died: number, killer: number) {
       if (world.Fighters[i].Animator) world.Fighters[i].Animator.destruct(); // Removes event listeners on animator
       PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * RenderSettings.ParticleAmount); // Burst into confetti!
       diedName = world.Fighters[i].DisplayName; // Get name of character who died
-      world.Fighters.splice(i, 1); // Remove from list
-      i--;
+
+      fighterPruneList.push(world.Fighters[i]); // Mark them for pruning (allows kill counting before removal)
     } else if (world.Fighters[i].getOwnerID() === killer) {
       world.Fighters[i].EarnKill();
       killFighter = world.Fighters[i];
@@ -172,15 +173,23 @@ function OnDeath(died: number, killer: number) {
 
   if (died === player.getCharacterID()) { // Set camera focus to your killer as a killcam until you respawn
     character = null;
+    player.removeCharacter();
     uiHealthbar.healthPercentage = 0;
     uiHealthbar.collapse();
     if (killFighter) {
       cam.SetFocus(killFighter);
       uiKillCam.text = `Killed by ${killFighter.DisplayName}`;
     }
+  } else { // Remove other character
+    for (let j = 0; j < playerConnects.length; j++) {
+      if (died === playerConnects[j].getCharacterID()) {
+        playerConnects[j].removeCharacter();
+        break;
+      }
+    }
   }
 
-  if (killFighter) {
+  if (killFighter) { // Show specific death message
     uiDeathNotifs.push(new UIDeathNotification(
       diedName,
       killFighter.DisplayName,
@@ -188,7 +197,7 @@ function OnDeath(died: number, killer: number) {
       died === player.getCharacterID(),
       killer === player.getCharacterID(),
     ));
-  } else {
+  } else { // Show generic death message
     uiDeathNotifs.push(new UIDeathNotification(
       diedName,
       null,
@@ -218,7 +227,7 @@ const Input = {
   // FOR REPLICATION (this should be sent to the server for sure)
   MouseDown: false, // Is the player holding their mouse down?
   MouseDirection: new Vector(1, 0, 0), // Where are they aiming?
-  Jump: false, // Are they strying to jump?
+  Jump: false, // Are they trying to jump?
   MoveDirection: new Vector(0, 0, 0), // Where are they trying to move?
 };
 
@@ -404,6 +413,17 @@ function DoFrame(tick: number) {
   // Capture inputs (updates `Input` global)
   ScrapeInput();
 
+  // Prune fighters that have died
+  if (fighterPruneList.length > 0) {
+    for (let i = 0; i < fighterPruneList.length; i++) {
+      const ind = world.Fighters.indexOf(fighterPruneList[i]);
+      if (ind > -1) {
+        world.Fighters.splice(ind, 1);
+      }
+    }
+    fighterPruneList = [];
+  }
+
   Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen || Input.SettingsMenuOpen);
 
   if (stateUpdatePending && stateUpdate) {
@@ -489,11 +509,13 @@ function DoFrame(tick: number) {
   if (character) {
     cam.Shake += character.BulletShock;
     respawnTimer = 3;
-  } else if (!Input.GUIMode) {
+  } else if (respawnTimer > 0 && !Input.UsernameSelectOpen && !Input.ClassSelectOpen) {
     respawnTimer -= DeltaTime;
 
     if (respawnTimer <= 0) { // If their respawn timer reached 0, pull up class elect again
+      Input.SettingsMenuOpen = false;
       Input.ClassSelectOpen = true;
+      respawnTimer = 0;
     }
   }
 
