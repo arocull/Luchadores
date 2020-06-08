@@ -15,7 +15,7 @@ class Prop extends Entity {
   public Radius: number;
   public BounceBack: number; // If something collides with this, how much of the entities velocity is returned
 
-  public onSurface: boolean; // If this object is resting ontop of another object
+  public onSurface: boolean; // If this object is resting on top of another object
 
   public texture: HTMLImageElement;
   public textureUpscale: number;
@@ -73,7 +73,7 @@ class Prop extends Entity {
   private traceCylinder(ray: Ray, radiusBoost: number = 0): TraceResult {
     const radius = this.Radius + radiusBoost;
 
-    // Top surface collisision
+    // Top surface collision
     const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp);
     // If it is a cylinder, make sure the hit position was inside the cylinder radius
     if (topTrace.collided && Vector.DistanceXY(topTrace.Position, this.Position) <= radius) {
@@ -81,7 +81,7 @@ class Prop extends Entity {
       return topTrace;
     }
 
-    // Buttom surface collision
+    // Bottom surface collision
     const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown);
     // If it is a cylinder, make sure the hit position was inside the cylinder radius
     if (botTrace.collided && Vector.DistanceXY(botTrace.Position, this.Position) <= radius) {
@@ -112,7 +112,7 @@ class Prop extends Entity {
       && topTrace.Position.y >= minY
       && topTrace.Position.y <= maxY
     ) {
-      topTrace.topFaceCollision = true; // Top surface collisision
+      topTrace.topFaceCollision = true; // Top surface collision
       return topTrace;
     }
     const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown);
@@ -134,7 +134,7 @@ class Prop extends Entity {
       && rightTrace.Position.y >= minY
       && rightTrace.Position.y <= maxY
       && rightTrace.Position.z >= minZ
-      && rightTrace.Position.z < maxZ // Eclusive of top plane to avoid collisions while on top of flush surfaces
+      && rightTrace.Position.z < maxZ // Exclusive of top plane to avoid collisions while on top of flush surfaces
     ) {
       return rightTrace;
     }
@@ -173,7 +173,7 @@ class Prop extends Entity {
   public CollideWithProp(collision: TraceResult, b: Prop, doVelocityChange: boolean = true) {
     if (!(collision && collision.collided && b)) return;
 
-    // Vertical collisions are different in the fact the fighter is snapped ontop of or below
+    // Vertical collisions are different in the fact the fighter is snapped on top of or below
     if (collision.topFaceCollision) { // Top face collisions are marked in collision results for use in riding
       this.Position.z = b.Position.z + b.Height;
       this.Velocity.z = 0;
@@ -218,7 +218,7 @@ class Prop extends Entity {
     return new Vector(0, 0, this.Position.z + this.Height);
   }
   private getBottomPlaneCenter(): Vector { // Down vertically
-    return new Vector(0, 0, this.Position.z - 0.001); // Decrement prevents props from clipping under eachother while on the same plane
+    return new Vector(0, 0, this.Position.z - 0.001); // Decrement prevents props from clipping under each other while on the same plane
   }
   private getRightPlaneCenter(): Vector { // Holding D
     return new Vector(this.Position.x + this.Width / 2, 0, 0); // Depth and altitude do not matter on an infinite plane
