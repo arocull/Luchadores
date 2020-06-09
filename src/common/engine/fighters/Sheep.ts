@@ -24,7 +24,8 @@ class Sheep extends Fighter {
   private baseMoveAccel: number;
 
   constructor(id: number, position: Vector) {
-    super(200, 200, 8000, 0.6, 1.2, 8, 30, 0, FighterType.Sheep, id, position);
+    super(200, 200, 7000, 0.6, 1.2, 8, 30, 0, FighterType.Sheep, id, position);
+    // 200 kg, top speed of 35 units per second
 
     this.ranged = false;
     this.baseMoveAccel = this.MoveAcceleration;
