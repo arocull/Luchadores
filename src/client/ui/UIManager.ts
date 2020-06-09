@@ -96,6 +96,15 @@ class UIManager {
             this.usernameSelect.typeCharacter(key);
           }
       }
+    } else if (this.classSelectOpen) {
+      const num = parseInt(key, 10);
+      switch (key) {
+        case 'Enter': this.classSelect.confirmSelect(); break;
+        default:
+          if (!Number.isNaN(num) && Number.isFinite(num)) {
+            this.classSelect.quickSelect(num);
+          }
+      }
     }
   }
   // Checks to see if mouse is hovering over the given UI frame, and clicks it if mouse is newly down

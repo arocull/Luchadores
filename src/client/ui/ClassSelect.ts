@@ -14,7 +14,7 @@ class UIClassSelect {
   private confirmButton: UITextBox;
   private confirmButtonInList: boolean = false;
 
-  constructor(rows: number, columns: number, displayedLuchadors: number) {
+  constructor(rows: number, columns: number, private displayedLuchadors: number) {
     this.frames = [];
     this.selected = FighterType.Sheep;
 
@@ -32,8 +32,8 @@ class UIClassSelect {
     const gapY = (1 - scale * rows) / rows;
 
     let luchador: number = 0;
-    for (let x = 0; x < columns && luchador < displayedLuchadors; x++) {
-      for (let y = 0; y < rows && luchador < displayedLuchadors; y++) {
+    for (let y = 0; y < rows && luchador < displayedLuchadors; y++) {
+      for (let x = 0; x < columns && luchador < displayedLuchadors; x++) {
         const portrait = new UILuchadorPortrait(
           (gapX / 2) + (gapX + scale) * x,
           (gapY / 2) + (gapY + scale) * y,
@@ -134,6 +134,18 @@ class UIClassSelect {
     });
 
     MessageBus.publish('UI_ClickLuchador', FighterType.Sheep); // Use sheep defaults
+  }
+
+  // Selects corresponding fighter - clamps number between 0 and number of displayed luchadores
+  public quickSelect(fighter: FighterType) {
+    MessageBus.publish('UI_ClickLuchador', Math.max(Math.min(fighter - 1, this.displayedLuchadors - 1), FighterType.Sheep));
+  }
+  // Clicks confirm button if possible
+  public confirmSelect() {
+    if (this.confirmButtonInList) {
+      this.confirmButton.onHover(true); // Show hover effect
+      this.confirmButton.onClick(); // Click button for same functionality
+    }
   }
 
   public addConfirmButton() {
