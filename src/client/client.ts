@@ -162,7 +162,7 @@ function OnDeath(died: number, killer: number) {
   if (died === player.getCharacterID()) { // Set camera focus to your killer as a killcam until you respawn
     character = null;
     if (killFighter) {
-      cam.SetFocus(killFighter);
+      cam.LerpToFocus(killFighter);
       uiManager.PlayerDied(`Killed by ${killFighter.DisplayName}`);
     } else {
       uiManager.PlayerDied();
@@ -327,10 +327,7 @@ function UpdatePlayerState(msg: IPlayerState) {
     // TODO: Queue fighter for deletion (setting health to zero does not kill on client)--requires updated death management branch
   }
 
-  if (character) {
-    character.HP = msg.health;
-    spawningCharacter = false; // Character has spawned, act as normal
-  }
+  if (character) character.HP = msg.health;
 }
 
 let LastFrame = 0;
@@ -374,6 +371,9 @@ function DoFrame(tick: number) {
     character.aim(Input.MouseDirection);
     character.Firing = Input.MouseDown;
 
+    if (spawningCharacter) cam.LerpToFocus(character); // If this is the first frame character is available, lerp the camera position
+    spawningCharacter = false; // Character has spawned, act as normal
+
     cam.SetFocus(character);
   }
 
@@ -389,7 +389,7 @@ function DoFrame(tick: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
     const a = world.Fighters[i];
     if (a) {
-      if (a.getOwnerID() === player.getCharacterID()) character = a;
+      if (a.getOwnerID() === player.getCharacterID()) character = a; // Set new character
 
       // Tick animators, prune and generate new ones based off of need
       if (!a.Animator) a.Animator = MakeAnimator(a);
