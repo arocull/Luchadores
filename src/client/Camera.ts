@@ -1,10 +1,9 @@
-import Vector from '../common/engine/Vector';
+import { Vector, PiOverTwo } from '../common/engine/math';
 import Fighter from '../common/engine/Fighter';
 import RenderSettings from './RenderSettings';
 
 const ClipBound = -0.2; // Only stop drawing the object if it is X * Zoom out of frame
 const ClipBoundPlusOne = 1 - ClipBound;
-const PIOverTwo = Math.PI / 2;
 
 class Camera {
   private Focus: Fighter;
@@ -81,7 +80,7 @@ class Camera {
         this.FocusPosition = Vector.Lerp(
           this.lerpFocusPosition,
           new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0),
-          Math.sin(PIOverTwo * (this.lerpTime / this.lerpTimeMax)),
+          Math.sin(PiOverTwo * (this.lerpTime / this.lerpTimeMax)),
         );
       } else { // Focus camera on center of character
         this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0);
