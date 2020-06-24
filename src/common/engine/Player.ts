@@ -2,8 +2,9 @@ import Fighter from './Fighter';
 
 class Player {
   private username: string;
-  private kills: number;
-  private deaths: number;
+  private kills: number; // Number of kills player has made
+  private deaths: number; // Number of times player has died
+  private maxStreak: number; // Largest kill streak this player has had
 
   public accountedFor: boolean; // Client-side only, was this player accounted for?
 
@@ -19,6 +20,7 @@ class Player {
     this.username = 'Player';
     this.kills = 0;
     this.deaths = 0;
+    this.maxStreak = 0;
 
     this.accountedFor = false;
 
@@ -72,6 +74,11 @@ class Player {
     this.character = newCharacter;
     this.character.DisplayName = this.username;
   }
+  // Remove player's character (fighter died)
+  removeCharacter() {
+    if (this.character) this.maxStreak = Math.max(this.character.Kills, this.maxStreak);
+    this.character = null;
+  }
 
   getCharacterID() {
     return this.characterID;
@@ -82,6 +89,7 @@ class Player {
 
   earnKill() {
     this.kills++;
+    if (this.character) this.maxStreak = Math.max(this.character.Kills, this.maxStreak);
   }
   setKills(newKills: number) {
     this.kills = newKills;
