@@ -229,7 +229,7 @@ function parseKeys(input: PlayerInput) {
   else Input.MoveDirection.y = 0;
 
   Input.Jump = (input.Keys[' '] === true);
-  uiManager.playerListOpen = (input.Keys.y === true);
+  uiManager.togglePlayerList(input.Keys.y === true);
 }
 
 function parseMouse(input: PlayerInput) {
@@ -294,15 +294,15 @@ MessageBus.subscribe('PickUsername', (name: string) => {
     username: name,
   });
 
-  uiManager.usernameSelectOpen = false;
-  uiManager.classSelectOpen = true;
+  uiManager.closeUsernameSelect();
+  uiManager.openClassSelect();
 
   uiPlayerList.push(new UIPlayerInfo(player, true)); // Add self to the player list now that they are connected
 });
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
   respawnTimer = 3;
   spawningCharacter = true;
-  uiManager.classSelectOpen = false;
+  uiManager.closeClassSelect();
 
   MessageBus.publish(topics.ClientNetworkToServer, {
     type: TypeEnum.PlayerSpawned,
@@ -427,7 +427,7 @@ function DoFrame(tick: number) {
   if (character) {
     cam.Shake += character.BulletShock;
     respawnTimer = 3;
-  } else if (!(uiManager.classSelectOpen || uiManager.usernameSelectOpen)) { // Do not tick if player is selecting username or character
+  } else if (!(uiManager.isClassSelectOpen() || uiManager.isUsernameSelectOpen())) { // Do not tick if player is selecting username or character
     respawnTimer -= DeltaTime;
 
     if (respawnTimer <= 0) { // If their respawn timer reached 0, pull up class elect again
@@ -450,7 +450,7 @@ function DoFrame(tick: number) {
   // Then draw UI
   uiManager.Tick(DeltaTime, canvas, cam, character, clientConnected, spawningCharacter, Input);
 
-  if (uiManager.playerListOpen && !uiManager.InGUIMode()) {
+  if (uiManager.isPlayerListOpen() && !uiManager.InGUIMode()) {
     Renderer.DrawPlayerList(canvas, cam, 'Player List');
     for (let i = 0; i < uiPlayerList.length; i++) {
       uiPlayerList[i].update();

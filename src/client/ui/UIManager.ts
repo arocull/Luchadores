@@ -10,10 +10,10 @@ import { FighterType } from '../../common/engine/Enums';
 class UIManager {
   private backdrop: UIFrame;
 
-  public classSelectOpen: boolean;
-  public usernameSelectOpen: boolean;
-  public settingsMenuOpen: boolean;
-  public playerListOpen: boolean;
+  private classSelectOpen: boolean;
+  private usernameSelectOpen: boolean;
+  private settingsMenuOpen: boolean;
+  private playerListOpen: boolean;
 
   private classSelect: UIClassSelect;
   private usernameSelect: UIUsernameSelect;
@@ -128,10 +128,16 @@ class UIManager {
   }
 
   // Open and close functions for different menus (in case we want to add transitions later)
+  public openUsernameSelect() {
+    this.usernameSelectOpen = true;
+  }
+  public closeUsernameSelect() {
+    this.usernameSelectOpen = false;
+  }
   public openClassSelect() {
     this.classSelectOpen = true;
   }
-  public closeClassSelecT() {
+  public closeClassSelect() {
     this.classSelectOpen = false;
   }
   public openSettingsMenu() {
@@ -140,11 +146,19 @@ class UIManager {
   public closeSettingsMenu() {
     this.settingsMenuOpen = false;
   }
+  public togglePlayerList(toggle: boolean) {
+    this.playerListOpen = toggle;
+  }
 
   // Returns true if there is should be a GUI background present
   public InGUIMode(): boolean {
     return this.classSelectOpen || this.usernameSelectOpen || this.settingsMenuOpen;
   }
+  // Other getters
+  public isUsernameSelectOpen(): boolean { return this.usernameSelectOpen; }
+  public isClassSelectOpen(): boolean { return this.classSelectOpen; }
+  public isSettingsMenuOpen(): boolean { return this.settingsMenuOpen; }
+  public isPlayerListOpen(): boolean { return this.playerListOpen; }
 
   public Tick(
     DeltaTime: number,
@@ -174,6 +188,8 @@ class UIManager {
       this.specialBarInUse = false;
     }
 
+    // Healthbars - Draw if character is present, spawning, or their healthbar is still collapsing
+    // Do not want healthbar to show when dead (unless healthbar is toppling), but do want to show even while waiting on spawn
     if (character || this.healthbar.collapsing || this.specialbar.collapsing || spawning) {
       this.healthbar.tick(DeltaTime);
       Renderer.DrawUIFrame(canvas, cam, this.healthbar.base);
@@ -192,7 +208,7 @@ class UIManager {
 
     // Interact with and Draw Menus //
     if (this.classSelectOpen) {
-      if (connectionStatus) this.classSelect.addConfirmButton();
+      if (connectionStatus) this.classSelect.addConfirmButton(); // Only allow luchadors to be selected if the connection is stable
       for (let i = 0; i < this.classSelect.frames.length; i++) {
         this.DoFrameInteraction(InputState, cam, this.classSelect.frames[i]);
         Renderer.DrawUIFrame(canvas, cam, this.classSelect.frames[i]);
@@ -205,8 +221,9 @@ class UIManager {
         this.DoFrameInteraction(InputState, cam, this.usernameSelect.frames[i]);
       }
 
+      // Adjust flashing cursor to be at the end of the line of text
       this.usernameSelect.setCursorPosition(Renderer.GetTextWidth(canvas, cam, this.usernameSelect.getTextBox()));
-      this.usernameSelect.tick(DeltaTime);
+      this.usernameSelect.tick(DeltaTime); // Tick effects like selection color
 
       for (let i = 0; i < this.usernameSelect.frames.length; i++) {
         Renderer.DrawUIFrame(canvas, cam, this.usernameSelect.frames[i]);
@@ -217,7 +234,7 @@ class UIManager {
       for (let i = 0; i < this.settingsMenu.frames.length; i++) {
         this.DoFrameInteraction(InputState, cam, this.settingsMenu.frames[i]);
       }
-      this.settingsMenu.Tick(DeltaTime);
+      this.settingsMenu.Tick(DeltaTime); // Tick effects like selection color
       for (let i = 0; i < this.settingsMenu.frames.length; i++) {
         Renderer.DrawUIFrame(canvas, cam, this.settingsMenu.frames[i]);
       }
@@ -230,11 +247,12 @@ class UIManager {
     }
 
     // Killcam - only draw if no character is present, character is not spawning, and select screens are not open
+    // Basically only draw if player is confirmed dead and is not in frames between selecting Luchador and being spawned by server
     if (!character && !(this.classSelectOpen || this.usernameSelectOpen) && !spawning) {
       Renderer.DrawUIFrame(canvas, cam, this.killcam);
     }
 
-    // Connection Status
+    // Connection Status - Only draw if connection is unstable
     if (!connectionStatus) Renderer.DrawUIFrame(canvas, cam, this.connectionText);
   }
 }
