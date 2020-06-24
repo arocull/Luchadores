@@ -40,7 +40,6 @@ world.Map.loadTexture();
 Random.randomSeed();
 
 const playerConnects: Player[] = [player];
-let fighterPruneList: Fighter[] = []; // List of fighters that have died, processed and cleared at beginning of every frame
 
 // TODO: HAX - get topics to use from web socket
 const topics = {
@@ -151,19 +150,19 @@ function OnDeath(died: number, killer: number) {
   let killFighter: Fighter = null;
 
   for (let i = 0; i < world.Fighters.length; i++) {
-    if (world.Fighters[i].getOwnerID() === died) {
+    if (world.Fighters[i].getOwnerID() === died) { // Character is killed
       if (world.Fighters[i].Animator) world.Fighters[i].Animator.destruct(); // Removes event listeners on animator
       PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * RenderSettings.ParticleAmount); // Burst into confetti!
       diedName = world.Fighters[i].DisplayName; // Get name of character who died
 
-      fighterPruneList.push(world.Fighters[i]); // Mark them for pruning (allows kill counting before removal)
-    } else if (world.Fighters[i].getOwnerID() === killer) {
-      world.Fighters[i].EarnKill();
-      killFighter = world.Fighters[i];
-      if (world.Fighters[i].Animator) world.Fighters[i].Animator.killEffectCountdown = 1;
+      world.Fighters[i].MarkedForCleanup = true; // Mark them for pruning (allows kill counting before removal)
+    } else if (world.Fighters[i].getOwnerID() === killer) { // Character earns kill
+      killFighter = world.Fighters[i]; // Keep track of for kill camera
+      killFighter.EarnKill(); // Earn kill and perform kill reward functions
+      if (killFighter.Animator) killFighter.Animator.killEffectCountdown = 1; // Timer until rose petal effects show
 
-      for (let j = 0; j < playerConnects.length; j++) {
-        if (playerConnects[j].getCharacterID() === world.Fighters[i].getOwnerID()) {
+      for (let j = 0; j < playerConnects.length; j++) { // Add kill to character's owner
+        if (playerConnects[j].getCharacterID() === killFighter.getOwnerID()) {
           playerConnects[j].earnKill();
           break;
         }
@@ -171,12 +170,13 @@ function OnDeath(died: number, killer: number) {
     }
   }
 
-  if (died === player.getCharacterID()) { // Set camera focus to your killer as a killcam until you respawn
+  if (died === player.getCharacterID()) { // Death effects and kill cam
     character = null;
     player.removeCharacter();
     uiHealthbar.healthPercentage = 0;
     uiHealthbar.collapse();
-    if (killFighter) {
+
+    if (killFighter) { // Set camera focus to your killer as a killcam until you respawn
       cam.SetFocus(killFighter);
       uiKillCam.text = `Killed by ${killFighter.DisplayName}`;
     }
@@ -414,14 +414,11 @@ function DoFrame(tick: number) {
   ScrapeInput();
 
   // Prune fighters that have died
-  if (fighterPruneList.length > 0) {
-    for (let i = 0; i < fighterPruneList.length; i++) {
-      const ind = world.Fighters.indexOf(fighterPruneList[i]);
-      if (ind > -1) {
-        world.Fighters.splice(ind, 1);
-      }
+  for (let i = 0; i < world.Fighters.length; i++) {
+    if (world.Fighters[i].MarkedForCleanup) {
+      world.Fighters.splice(i, 1);
+      i--;
     }
-    fighterPruneList = [];
   }
 
   Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen || Input.SettingsMenuOpen);

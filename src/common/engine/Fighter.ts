@@ -31,6 +31,7 @@ class Fighter extends Prop {
   public Flipped: boolean;
   public Animator: any;
   public UpdatesMissed: number;
+  public MarkedForCleanup: boolean;
   public DisplayName: string;
 
   public JustHitPosition: Vector;
@@ -79,6 +80,7 @@ class Fighter extends Prop {
     this.Flipped = false; // Do we draw them facing leftward or rightward?
     this.Animator = null; // Animation object
     this.UpdatesMissed = 0;
+    this.MarkedForCleanup = false;
     this.DisplayName = null;
 
     this.JustHitPosition = new Vector(0, 0, 0);
