@@ -163,9 +163,9 @@ function OnDeath(died: number, killer: number) {
     character = null;
     if (killFighter) {
       cam.LerpToFocus(killFighter);
-      uiManager.PlayerDied(`Killed by ${killFighter.DisplayName}`);
+      uiManager.playerDied(`Killed by ${killFighter.DisplayName}`);
     } else {
-      uiManager.PlayerDied();
+      uiManager.playerDied();
     }
   }
 
@@ -209,13 +209,13 @@ const Input = {
 let guiInputSubscribers: SubscriberContainer = null;
 function parseKeys(input: PlayerInput) {
   // Type into username textbox
-  if (uiManager.InGUIMode() && guiInputSubscribers == null) {
+  if (uiManager.inGUIMode() && guiInputSubscribers == null) {
     // When we enter GUI mode, bind the events
     guiInputSubscribers = new SubscriberContainer();
     guiInputSubscribers.attach(InputTopics.keydown, (k: KeyboardButtonInput) => {
-      uiManager.KeyInput(k.key, k.shiftKey);
+      uiManager.keyInput(k.key, k.shiftKey);
     });
-  } else if (!uiManager.InGUIMode() && guiInputSubscribers != null) {
+  } else if (!uiManager.inGUIMode() && guiInputSubscribers != null) {
     // When we leave GUI mode, unbind the events
     guiInputSubscribers.detachAll();
   }
@@ -265,7 +265,7 @@ function ScrapeInput() {
   parseKeys(input);
   parseMouse(input);
 
-  if (uiManager.InGUIMode() || !character) {
+  if (uiManager.inGUIMode() || !character) {
     return; // Do not send input updates if the player is fiddling with UI
   }
 
@@ -448,9 +448,9 @@ function DoFrame(tick: number) {
   // Draw world
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles, world.Props);
   // Then draw UI
-  uiManager.Tick(DeltaTime, canvas, cam, character, clientConnected, spawningCharacter, Input);
+  uiManager.tick(DeltaTime, canvas, cam, character, clientConnected, spawningCharacter, Input);
 
-  if (uiManager.isPlayerListOpen() && !uiManager.InGUIMode()) {
+  if (uiManager.isPlayerListOpen() && !uiManager.inGUIMode()) {
     Renderer.DrawPlayerList(canvas, cam, 'Player List');
     for (let i = 0; i < uiPlayerList.length; i++) {
       uiPlayerList[i].update();
@@ -553,7 +553,7 @@ const preloader = new AssetPreloader([
       MessageBus.subscribe(BusTopics.Connections, (msg: IEvent) => {
         if (msg.type === TypeEnum.ClientDisconnected) {
           clientConnected = false;
-          uiManager.SetConnectionText('Connection lost - Reload the webpage');
+          uiManager.setConnectionText('Connection lost - Reload the webpage');
         }
       });
 
@@ -579,7 +579,7 @@ const preloader = new AssetPreloader([
     })
     .catch((err) => {
       console.error('Failed to connect!', err);
-      uiManager.SetConnectionText('Connection failed - Reload the webpage');
+      uiManager.setConnectionText('Connection failed - Reload the webpage');
     })
     .finally(() => console.log('... and finally!'));
 }());

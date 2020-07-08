@@ -85,7 +85,7 @@ class UIManager {
   }
 
   // Inputs a key into the UI
-  public KeyInput(key: string, shift: boolean = false) {
+  public keyInput(key: string, shift: boolean = false) {
     if (this.usernameSelectOpen) {
       switch (key) {
         case 'Enter': this.usernameSelect.enter(); break;
@@ -108,14 +108,14 @@ class UIManager {
     }
   }
   // Checks to see if mouse is hovering over the given UI frame, and clicks it if mouse is newly down
-  public DoFrameInteraction(Input: any, cam: Camera, frame: UIFrame) {
+  public doFrameInteraction(Input: any, cam: Camera, frame: UIFrame) {
     const hovering = frame.checkMouse(Input.MouseX / cam.Width, Input.MouseY / cam.Height);
     frame.onHover(hovering);
     if (hovering && !Input.MouseDown && Input.MouseDownLastFrame) frame.onClick();
   }
 
   // Performs UI death effects like healthbar toppling
-  public PlayerDied(killcamText: string = '') {
+  public playerDied(killcamText: string = '') {
     this.killcam.text = killcamText;
 
     this.healthbar.healthPercentage = 0;
@@ -123,7 +123,7 @@ class UIManager {
     if (this.specialBarInUse) this.specialbar.collapse();
   }
   // Sets the connection text
-  public SetConnectionText(text: string = '') {
+  public setConnectionText(text: string = '') {
     this.connectionText.text = text;
   }
 
@@ -151,7 +151,7 @@ class UIManager {
   }
 
   // Returns true if there is should be a GUI background present
-  public InGUIMode(): boolean {
+  public inGUIMode(): boolean {
     return this.classSelectOpen || this.usernameSelectOpen || this.settingsMenuOpen;
   }
   // Other getters
@@ -160,7 +160,7 @@ class UIManager {
   public isSettingsMenuOpen(): boolean { return this.settingsMenuOpen; }
   public isPlayerListOpen(): boolean { return this.playerListOpen; }
 
-  public Tick(
+  public tick(
     DeltaTime: number,
     canvas: CanvasRenderingContext2D,
     cam: Camera,
@@ -169,7 +169,7 @@ class UIManager {
     spawning: boolean, // Is the character spawning? (prevent killcam and such from drawing until player is assigned by server)
     InputState: any, // State of player inputs--used for mouse tracking in UI interaction
   ) {
-    if (this.InGUIMode()) Renderer.DrawUIFrame(canvas, cam, this.backdrop);
+    if (this.inGUIMode()) Renderer.DrawUIFrame(canvas, cam, this.backdrop);
 
 
     // Healthbar Management //
@@ -210,15 +210,15 @@ class UIManager {
     if (this.classSelectOpen) {
       if (connectionStatus) this.classSelect.addConfirmButton(); // Only allow luchadors to be selected if the connection is stable
       for (let i = 0; i < this.classSelect.frames.length; i++) {
-        this.DoFrameInteraction(InputState, cam, this.classSelect.frames[i]);
+        this.doFrameInteraction(InputState, cam, this.classSelect.frames[i]);
         Renderer.DrawUIFrame(canvas, cam, this.classSelect.frames[i]);
       }
     }
 
     if (this.usernameSelectOpen) {
-      this.DoFrameInteraction(InputState, cam, this.backdrop); // Enable clicking on backdrop to disable clicking
+      this.doFrameInteraction(InputState, cam, this.backdrop); // Enable clicking on backdrop to disable clicking
       for (let i = 0; i < this.usernameSelect.frames.length; i++) {
-        this.DoFrameInteraction(InputState, cam, this.usernameSelect.frames[i]);
+        this.doFrameInteraction(InputState, cam, this.usernameSelect.frames[i]);
       }
 
       // Adjust flashing cursor to be at the end of the line of text
@@ -232,7 +232,7 @@ class UIManager {
 
     if (this.settingsMenuOpen) {
       for (let i = 0; i < this.settingsMenu.frames.length; i++) {
-        this.DoFrameInteraction(InputState, cam, this.settingsMenu.frames[i]);
+        this.doFrameInteraction(InputState, cam, this.settingsMenu.frames[i]);
       }
       this.settingsMenu.Tick(DeltaTime); // Tick effects like selection color
       for (let i = 0; i < this.settingsMenu.frames.length; i++) {
@@ -241,8 +241,8 @@ class UIManager {
     }
 
     // Options Gear Button //
-    if (!this.InGUIMode()) {
-      this.DoFrameInteraction(InputState, cam, this.settingsButton);
+    if (!this.inGUIMode()) {
+      this.doFrameInteraction(InputState, cam, this.settingsButton);
       Renderer.DrawUIFrame(canvas, cam, this.settingsButton);
     }
 
