@@ -1,4 +1,4 @@
-import Vector from '../common/engine/Vector';
+import { Vector, PiOverTwo } from '../common/engine/math';
 import Fighter from '../common/engine/Fighter';
 import RenderSettings from './RenderSettings';
 
@@ -16,6 +16,11 @@ class Camera {
   public Zoom: number;
   public Shake: number;
 
+  private lerpFocusPosition: Vector; // Initial focus position of lerp
+  private lerpTime: number; // Time progressed through lerp
+  private lerpTimeMax: number; // Set lerp time
+  private lerping: boolean;
+
   constructor(
     public Width: number,
     public Height: number,
@@ -30,6 +35,11 @@ class Camera {
 
     this.OffsetX = Width / 2;
     this.OffsetY = Height / 2;
+
+    this.lerpFocusPosition = this.FocusPosition;
+    this.lerpTime = 0;
+    this.lerpTimeMax = 1;
+    this.lerping = false;
   }
 
   // Call this when viewport is resized--adjusts internal variables
@@ -40,16 +50,41 @@ class Camera {
     this.OffsetY = newHeight / 2;
   }
 
+
   public SetFocus(newFocus: Fighter) { // Should we lerp to new focus or simply snap to them?
     if (newFocus) this.Focus = newFocus;
   }
+  public LerpToFocus(newFocus: Fighter, lerpTime: number = 0.15) {
+    if (!newFocus) return; // Return if no focus was given
+    this.lerpTimeMax = lerpTime;
+    this.lerpTime = 0;
+    this.lerping = true;
+
+    this.lerpFocusPosition = Vector.Clone(this.FocusPosition);
+    this.Focus = newFocus;
+  }
+
+
   public UpdateFocus(DeltaTime: number) { // Internal, snaps camera to focus
     let focusSpeed: number = 0; // Zoom out as speed increases to give you a slight better idea of where you're going
     let zoomBoost: number = 1; // Ranged classes get a slight zoom boost
 
     if (this.Focus) {
-      // Focus camera on center of character
-      this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0);
+      if (this.lerping) {
+        this.lerpTime += DeltaTime;
+        if (this.lerpTime >= this.lerpTimeMax) {
+          this.lerping = false; // End lerp
+          this.lerpTime = this.lerpTimeMax;
+        }
+
+        this.FocusPosition = Vector.Lerp(
+          this.lerpFocusPosition,
+          new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0),
+          Math.sin(PiOverTwo * (this.lerpTime / this.lerpTimeMax)),
+        );
+      } else { // Focus camera on center of character
+        this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0);
+      }
 
       let moveSpeed = this.Focus.Velocity.lengthXY(); // Get velocity of player
       if (this.Focus.riding) moveSpeed += this.Focus.riding.Velocity.lengthXY(); // Don't forget to tack in velocity of who they're riding!

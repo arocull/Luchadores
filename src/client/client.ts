@@ -1,8 +1,6 @@
 /* eslint-disable object-curly-newline */
 import _ from 'lodash';
-import {
-  sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput,
-} from './controls/playerinput';
+import { sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput } from './controls/playerinput';
 import NetworkClient from './network/client';
 import { MessageBus, Topics as BusTopics } from '../common/messaging/bus';
 import { SubscriberContainer } from '../common/messaging/container';
@@ -13,13 +11,14 @@ import decodeWorldState from './network/WorldStateDecoder';
 import Vector from '../common/engine/Vector';
 import Random from '../common/engine/Random';
 import { Particle, PConfetti, PRosePetal, PSmashEffect } from './particles/index';
-import { Fighter, Flamingo } from '../common/engine/fighters/index';
+import { Fighter } from '../common/engine/fighters/index';
 import { MakeAnimator } from './animation';
 import Player from '../common/engine/Player';
 import World from '../common/engine/World';
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
-import { UIFrame, UIClassSelect, UIUsernameSelect, UIHealthbar, UITextBox, UIDeathNotification, UIPlayerInfo, UILoadScreen, UISettingsMenu } from './ui/index';
+import { UIDeathNotification, UIPlayerInfo, UILoadScreen } from './ui/index';
+import UIManager from './ui/UIManager';
 import Renderer from './Render';
 import { FighterType } from '../common/engine/Enums';
 import Wristwatch from '../common/engine/time/Wristwatch';
@@ -28,10 +27,9 @@ import AssetPreloader from './AssetPreloader';
 
 // Set up base client things
 const player = new Player('');
-// eslint-disable-next-line
-let luchador: FighterType = FighterType.Sheep;
 let character: Fighter = null;
-let respawnTimer = 3;
+let respawnTimer = 3; // Counts up from 0 until player is spawning
+let spawningCharacter = false; // True if player has selected character and is waiting on assignment from server
 let clientConnected: boolean = false;
 
 // Generate World
@@ -50,22 +48,13 @@ const topics = {
 // Get rendering viewport--browser only
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
-// RenderSettings generated for global use
 const fpsCount: number[] = [];
 
 const cam = new Camera(viewport.width, viewport.height, 18, 14);
 cam.SetFocusPosition(new Vector(world.Map.Width / 2, world.Map.Height / 2, 0));
 
 const uiLoadScreen = new UILoadScreen();
-const connectingText = new UITextBox(0.01, 0.925, 1, 0.05, false, 'Stabilizing connection...');
-const uiBackdrop = new UIFrame(0, 0, 1, 1, false);
-const uiClassSelect = new UIClassSelect(2, 2, 3);
-const uiUsernameSelect = new UIUsernameSelect();
-const uiSettingsMenu = new UISettingsMenu();
-const uiSettingsMenuOpen = new UIFrame(0, 0, 0.03, 0.03, true);
-const uiHealthbar = new UIHealthbar();
-const uiSpecialBar = new UIHealthbar();
-const uiKillCam = new UITextBox(0, 0.9, 1, 0.1, false, '');
+const uiManager = new UIManager();
 const uiDeathNotifs: UIDeathNotification[] = [];
 const uiPlayerList: UIPlayerInfo[] = [];
 
@@ -172,13 +161,11 @@ function OnDeath(died: number, killer: number) {
 
   if (died === player.getCharacterID()) { // Death effects and kill cam
     character = null;
-    player.removeCharacter();
-    uiHealthbar.healthPercentage = 0;
-    uiHealthbar.collapse();
-
-    if (killFighter) { // Set camera focus to your killer as a killcam until you respawn
-      cam.SetFocus(killFighter);
-      uiKillCam.text = `Killed by ${killFighter.DisplayName}`;
+    if (killFighter) {
+      cam.LerpToFocus(killFighter);
+      uiManager.playerDied(`Killed by ${killFighter.DisplayName}`);
+    } else {
+      uiManager.playerDied();
     }
   } else { // Remove other character
     for (let j = 0; j < playerConnects.length; j++) {
@@ -215,11 +202,6 @@ function OnDeath(died: number, killer: number) {
 // User Input //
 const Input = {
   // CLIENTSIDE ONLY
-  GUIMode: false,
-  UsernameSelectOpen: true,
-  ClassSelectOpen: false,
-  SettingsMenuOpen: false,
-  PlayerListOpen: false, // Opens player list GUI on local client--does not need to be networked
   MouseX: 0,
   MouseY: 0,
   MouseDownLastFrame: false,
@@ -234,20 +216,13 @@ const Input = {
 let guiInputSubscribers: SubscriberContainer = null;
 function parseKeys(input: PlayerInput) {
   // Type into username textbox
-  if (Input.UsernameSelectOpen && guiInputSubscribers == null) {
+  if (uiManager.inGUIMode() && guiInputSubscribers == null) {
     // When we enter GUI mode, bind the events
     guiInputSubscribers = new SubscriberContainer();
     guiInputSubscribers.attach(InputTopics.keydown, (k: KeyboardButtonInput) => {
-      if (k.key === 'Enter') {
-        uiUsernameSelect.enter();
-      } else if (k.key === 'Backspace') {
-        uiUsernameSelect.backspace();
-      } else if (k.key.length === 1) {
-        uiUsernameSelect.shift(k.shiftKey);
-        uiUsernameSelect.typeCharacter(k.key);
-      }
+      uiManager.keyInput(k.key, k.shiftKey);
     });
-  } else if (!Input.UsernameSelectOpen && guiInputSubscribers != null) {
+  } else if (!uiManager.inGUIMode() && guiInputSubscribers != null) {
     // When we leave GUI mode, unbind the events
     guiInputSubscribers.detachAll();
   }
@@ -261,7 +236,7 @@ function parseKeys(input: PlayerInput) {
   else Input.MoveDirection.y = 0;
 
   Input.Jump = (input.Keys[' '] === true);
-  Input.PlayerListOpen = (input.Keys.y === true);
+  uiManager.togglePlayerList(input.Keys.y === true);
 }
 
 function parseMouse(input: PlayerInput) {
@@ -297,7 +272,7 @@ function ScrapeInput() {
   parseKeys(input);
   parseMouse(input);
 
-  if (Input.GUIMode || !character) {
+  if (uiManager.inGUIMode() || !character) {
     return; // Do not send input updates if the player is fiddling with UI
   }
 
@@ -317,40 +292,6 @@ function ScrapeInput() {
 }
 
 // UI Management
-uiBackdrop.alpha = 0.25;
-uiBackdrop.renderStyle = '#000000';
-uiBackdrop.onClick = (() => {
-  uiUsernameSelect.deselect();
-});
-connectingText.alpha = 0;
-connectingText.textStyle = '#ffffff';
-connectingText.textAlignment = 'left';
-uiKillCam.alpha = 0;
-uiKillCam.textFont = 'flamenco';
-uiKillCam.textFontSize = 60;
-uiSpecialBar.POSY -= UIHealthbar.HEIGHT * 1.25;
-uiSpecialBar.reset();
-uiSettingsMenuOpen.constrainAspect = true;
-uiSettingsMenuOpen.constrainAspectCenterX = false;
-uiSettingsMenuOpen.constrainAspectCenterY = false;
-uiSettingsMenuOpen.image = new Image();
-uiSettingsMenuOpen.image.src = 'Interface/Gear.png';
-uiSettingsMenuOpen.alpha = 0;
-uiSettingsMenuOpen.onHover = ((hovering) => {
-  if (hovering) {
-    uiSettingsMenuOpen.imageAlpha = 1;
-  } else {
-    uiSettingsMenuOpen.imageAlpha = 0.8;
-  }
-});
-uiSettingsMenuOpen.onClick = (() => {
-  Input.SettingsMenuOpen = true;
-});
-function doUIFrameInteraction(frame: UIFrame) {
-  const hovering = frame.checkMouse(Input.MouseX / viewport.width, Input.MouseY / viewport.height);
-  frame.onHover(hovering);
-  if (hovering && !Input.MouseDown && Input.MouseDownLastFrame) frame.onClick();
-}
 MessageBus.subscribe('PickUsername', (name: string) => {
   player.setUsername(name);
 
@@ -360,25 +301,20 @@ MessageBus.subscribe('PickUsername', (name: string) => {
     username: name,
   });
 
-  Input.UsernameSelectOpen = false;
-  Input.ClassSelectOpen = true;
+  uiManager.closeUsernameSelect();
+  uiManager.openClassSelect();
 
   uiPlayerList.push(new UIPlayerInfo(player, true)); // Add self to the player list now that they are connected
 });
 MessageBus.subscribe('PickCharacter', (type: FighterType) => {
-  luchador = type;
   respawnTimer = 3;
-  Input.ClassSelectOpen = false;
+  spawningCharacter = true;
+  uiManager.closeClassSelect();
 
   MessageBus.publish(topics.ClientNetworkToServer, {
     type: TypeEnum.PlayerSpawned,
     fighterClass: type,
   });
-
-  // character = world.spawnFighter(player, luchador);
-});
-MessageBus.subscribe('UI_SettingsClose', () => {
-  Input.SettingsMenuOpen = false;
 });
 
 
@@ -395,8 +331,7 @@ function UpdatePlayerState(msg: IPlayerState) {
   if (mismatch && character) { // If there is a character ID mismatch, then we should remove current character
     character.HP = 0;
     character.LastHitBy = null;
-
-    // character = world.spawnFighter(player, luchador);
+    // TODO: Queue fighter for deletion (setting health to zero does not kill on client)--requires updated death management branch
   }
 
   if (character) character.HP = msg.health;
@@ -420,8 +355,6 @@ function DoFrame(tick: number) {
       i--;
     }
   }
-
-  Input.GUIMode = (Input.ClassSelectOpen || Input.UsernameSelectOpen || Input.SettingsMenuOpen);
 
   if (stateUpdatePending && stateUpdate) {
     stateUpdatePending = false;
@@ -453,6 +386,9 @@ function DoFrame(tick: number) {
     character.aim(Input.MouseDirection);
     character.Firing = Input.MouseDown;
 
+    if (spawningCharacter) cam.LerpToFocus(character); // If this is the first frame character is available, lerp the camera position
+    spawningCharacter = false; // Character has spawned, act as normal
+
     cam.SetFocus(character);
   }
 
@@ -468,7 +404,7 @@ function DoFrame(tick: number) {
   for (let i = 0; i < world.Fighters.length; i++) {
     const a = world.Fighters[i];
     if (a) {
-      if (a.getOwnerID() === player.getCharacterID()) character = a;
+      if (a.getOwnerID() === player.getCharacterID()) character = a; // Set new character
 
       // Tick animators, prune and generate new ones based off of need
       if (!a.Animator) a.Animator = MakeAnimator(a);
@@ -506,13 +442,11 @@ function DoFrame(tick: number) {
   if (character) {
     cam.Shake += character.BulletShock;
     respawnTimer = 3;
-  } else if (respawnTimer > 0 && !Input.UsernameSelectOpen && !Input.ClassSelectOpen) {
+  } else if (!(uiManager.isClassSelectOpen() || uiManager.isUsernameSelectOpen())) { // Do not tick if player is selecting username or character
     respawnTimer -= DeltaTime;
 
     if (respawnTimer <= 0) { // If their respawn timer reached 0, pull up class elect again
-      Input.SettingsMenuOpen = false;
-      Input.ClassSelectOpen = true;
-      respawnTimer = 0;
+      uiManager.openClassSelect();
     }
   }
 
@@ -526,70 +460,12 @@ function DoFrame(tick: number) {
     }
   }
 
+  // Draw world
   Renderer.DrawScreen(canvas, cam, world.Map, world.Fighters, world.Bullets, particles, world.Props);
+  // Then draw UI
+  uiManager.tick(DeltaTime, canvas, cam, character, clientConnected, spawningCharacter, Input);
 
-  if (Input.GUIMode) {
-    Renderer.DrawUIFrame(canvas, cam, uiBackdrop);
-  } else if ((character && character.HP > 0) || uiHealthbar.collapsing) {
-    if (character) uiHealthbar.healthPercentage = character.HP / character.MaxHP;
-    uiHealthbar.tick(DeltaTime);
-
-    Renderer.DrawUIFrame(canvas, cam, uiHealthbar.base);
-    Renderer.DrawUIFrame(canvas, cam, uiHealthbar.barBack);
-    Renderer.DrawUIFrame(canvas, cam, uiHealthbar.bar);
-    uiHealthbar.checkReset();
-
-    let useSpecialBar = false;
-    if (character && character.getCharacter() === FighterType.Flamingo) {
-      useSpecialBar = true;
-
-      const flam = <Flamingo>(character);
-      uiSpecialBar.healthPercentage = flam.getBreath() / 50;
-      uiSpecialBar.barBack.renderStyle = '#732303';
-      if (flam.isBreathing()) uiSpecialBar.bar.renderStyle = '#929190';
-      else uiSpecialBar.bar.renderStyle = '#e0a524';
-    }
-    if (useSpecialBar) {
-      uiSpecialBar.tick(DeltaTime);
-      Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.base);
-      Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.barBack);
-      Renderer.DrawUIFrame(canvas, cam, uiSpecialBar.bar);
-      uiSpecialBar.checkReset();
-    }
-  }
-  if (Input.ClassSelectOpen) {
-    if (clientConnected) uiClassSelect.addConfirmButton();
-    for (let i = 0; i < uiClassSelect.frames.length; i++) {
-      doUIFrameInteraction(uiClassSelect.frames[i]);
-      Renderer.DrawUIFrame(canvas, cam, uiClassSelect.frames[i]);
-    }
-  }
-  if (Input.UsernameSelectOpen) {
-    doUIFrameInteraction(uiBackdrop); // Enable clicking on backdrop to disable clicking
-    for (let i = 0; i < uiUsernameSelect.frames.length; i++) {
-      doUIFrameInteraction(uiUsernameSelect.frames[i]);
-    }
-
-    uiUsernameSelect.setCursorPosition(Renderer.GetTextWidth(canvas, cam, uiUsernameSelect.getTextBox()));
-    uiUsernameSelect.tick(DeltaTime);
-
-    for (let i = 0; i < uiUsernameSelect.frames.length; i++) {
-      Renderer.DrawUIFrame(canvas, cam, uiUsernameSelect.frames[i]);
-    }
-  }
-  if (Input.SettingsMenuOpen) {
-    for (let i = 0; i < uiSettingsMenu.frames.length; i++) {
-      doUIFrameInteraction(uiSettingsMenu.frames[i]);
-    }
-    uiSettingsMenu.Tick(DeltaTime);
-    for (let i = 0; i < uiSettingsMenu.frames.length; i++) {
-      Renderer.DrawUIFrame(canvas, cam, uiSettingsMenu.frames[i]);
-    }
-  } else if (!Input.GUIMode && !Input.PlayerListOpen) {
-    doUIFrameInteraction(uiSettingsMenuOpen);
-    Renderer.DrawUIFrame(canvas, cam, uiSettingsMenuOpen);
-  }
-  if (Input.PlayerListOpen && !Input.GUIMode) {
+  if (uiManager.isPlayerListOpen() && !uiManager.inGUIMode()) {
     Renderer.DrawPlayerList(canvas, cam, 'Player List');
     for (let i = 0; i < uiPlayerList.length; i++) {
       uiPlayerList[i].update();
@@ -597,8 +473,6 @@ function DoFrame(tick: number) {
       Renderer.DrawUIFrame(canvas, cam, uiPlayerList[i]);
     }
   }
-  if (respawnTimer > 0 && respawnTimer < 3) Renderer.DrawUIFrame(canvas, cam, uiKillCam);
-
   for (let i = 0; i < uiDeathNotifs.length; i++) {
     uiDeathNotifs[i].timeLeft -= DeltaTime;
     if (uiDeathNotifs[i].timeLeft <= 0) {
@@ -621,11 +495,6 @@ function DoFrame(tick: number) {
     avgDT /= fpsCount.length;
 
     Renderer.DrawFPS(canvas, cam, avgDT);
-  }
-
-  // Draw connection status last so it goes on top
-  if (!clientConnected) {
-    Renderer.DrawUIFrame(canvas, cam, connectingText);
   }
 
   Input.MouseDownLastFrame = Input.MouseDown;
@@ -699,7 +568,7 @@ const preloader = new AssetPreloader([
       MessageBus.subscribe(BusTopics.Connections, (msg: IEvent) => {
         if (msg.type === TypeEnum.ClientDisconnected) {
           clientConnected = false;
-          connectingText.text = 'Connection lost. Let the tears flow 😭 (and reload the game)';
+          uiManager.setConnectionText('Connection lost - Reload the webpage');
         }
       });
 
@@ -725,7 +594,7 @@ const preloader = new AssetPreloader([
     })
     .catch((err) => {
       console.error('Failed to connect!', err);
-      connectingText.text = 'Connection failed 😭';
+      uiManager.setConnectionText('Connection failed - Reload the webpage');
     })
     .finally(() => console.log('... and finally!'));
 }());
