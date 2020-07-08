@@ -97,6 +97,13 @@ class Player {
   getKills(): number {
     return this.kills;
   }
+  getKillstreak(): number {
+    if (this.character) return this.character.Kills;
+    return 0;
+  }
+  getMaxKillstreak(): number {
+    return this.maxStreak;
+  }
 
   earnDeath() {
     this.deaths++;

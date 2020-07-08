@@ -465,6 +465,7 @@ function DoFrame(tick: number) {
   // Then draw UI
   uiManager.tick(DeltaTime, canvas, cam, character, clientConnected, spawningCharacter, Input);
 
+  // Draw player list (requires data and sorting, hence why drawn here)
   if (uiManager.isPlayerListOpen() && !uiManager.inGUIMode()) {
     Renderer.DrawPlayerList(canvas, cam, 'Player List');
     for (let i = 0; i < uiPlayerList.length; i++) {
