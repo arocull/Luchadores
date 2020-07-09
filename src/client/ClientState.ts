@@ -1,26 +1,28 @@
 /* eslint-disable object-curly-newline */
 /* eslint-disable padded-blocks */
-import _ from 'lodash';
-import { sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput } from '../controls/playerinput';
-import NetworkClient from './client';
-import { MessageBus, Topics as BusTopics } from '../../common/messaging/bus';
-import { SubscriberContainer } from '../../common/messaging/container';
-import { decodeInt64 } from '../../common/messaging/serde';
-import { IEvent, TypeEnum } from '../../common/events/index';
-import { IPlayerConnect, IPlayerState, IWorldState, IPlayerListState, WorldState } from '../../common/events/events';
-import decodeWorldState from '../network/WorldStateDecoder';
-import World from '../../common/engine/World';
-import Player from '../../common/engine/Player';
-import Fighter from '../../common/engine/Fighter';
-import Random from '../../common/engine/Random';
-import Camera from '../../client/Camera';
-import { MapPreset, FighterType } from '../../common/engine/Enums';
-import { UIDeathNotification, UIPlayerInfo } from '../ui';
-import UIManager from '../ui/UIManager';
-import { Vector } from '../../common/engine/math';
-import InputState from '../../client/controls/InputState';
+import { sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput } from './controls/playerinput';
+import NetworkClient from './network/client';
+import { MessageBus, Topics as BusTopics } from '../common/messaging/bus';
+import { SubscriberContainer } from '../common/messaging/container';
+import { decodeInt64 } from '../common/messaging/serde';
+import { IEvent, TypeEnum } from '../common/events/index';
+import { IPlayerConnect, IPlayerState, IWorldState, IPlayerListState } from '../common/events/events';
+import decodeWorldState from './network/WorldStateDecoder';
+import World from '../common/engine/World';
+import Player from '../common/engine/Player';
+import Fighter from '../common/engine/Fighter';
+import Random from '../common/engine/Random';
+import Camera from './Camera';
+import { MapPreset, FighterType } from '../common/engine/Enums';
+import { UIDeathNotification, UIPlayerInfo } from './ui';
+import UIManager from './ui/UIManager';
+import { Vector } from '../common/engine/math';
+import InputState from './controls/InputState';
+import Wristwatch from '../common/engine/time/Wristwatch';
 /* eslint-enable object-curly-newline */
 
+
+// Client State - Main data handler for clients
 class Client {
   // Player and Character objects
   public player: Player;
@@ -54,7 +56,7 @@ class Client {
   private uiDeathNotifs: UIDeathNotification[];
   public uiManager: UIManager; // Hook-up, should not be auto-generated
 
-  constructor() {
+  constructor(connection: string, doConnect: boolean, promiseWaitList: any[]) {
     this.player = new Player('');
     this.character = null;
 
@@ -72,7 +74,7 @@ class Client {
 
     // Initialize basic, empty world for player to roam around in if we use it
     // Is populated and changed when player connects
-    this.world = new World(MapPreset.Grassy, false, true);
+    this.world = new World(MapPreset.Grassy, false, false);
     Random.randomSeed();
 
     this.worldUpdatePending = false;
@@ -118,6 +120,64 @@ class Client {
         fighterClass: type,
       });
     });
+
+
+    // Finally, perform connection
+    if (doConnect) {
+      const ws = new NetworkClient(`ws://${window.location.host}/socket`);
+      promiseWaitList.push(ws.connect());
+      Promise.all(promiseWaitList)
+        .then((results) => {
+          const connected = results[1];
+          this.topics.ClientNetworkFromServer = connected.topicInbound;
+          this.topics.ClientNetworkToServer = connected.topicOutbound;
+          console.log('Connected OK!', connected);
+
+          console.log('Synchronizing wristwatches...');
+          return Wristwatch.syncWith(ws.getPingHandler());
+        })
+        .then(() => {
+          console.log(
+            'Synchronized! Calculated drift:', Wristwatch.getClockDriftToRemote(),
+            'Synced time:', Wristwatch.getSyncedNow(),
+          );
+          return Promise.resolve();
+        })
+        .then(() => {
+          this.connected = true;
+          MessageBus.subscribe(BusTopics.Connections, (msg: IEvent) => {
+            if (msg.type === TypeEnum.ClientDisconnected) {
+              this.connected = false;
+              if (this.uiManager) this.uiManager.setConnectionText('Connection lost - Reload the webpage');
+            }
+          });
+
+          MessageBus.subscribe(this.topics.ClientNetworkFromServer, (msg: IEvent) => {
+            switch (msg.type) {
+              case TypeEnum.WorldState:
+                this.worldUpdatePending = true;
+                this.worldUpdate = msg;
+                this.worldUpdateLastPacketTime = decodeInt64(msg.timestamp);
+                break;
+              case TypeEnum.PlayerListState:
+                this.onPlayerListUpdate(msg);
+                break;
+              case TypeEnum.PlayerState:
+                this.updatePlayerState(msg);
+                break;
+              case TypeEnum.PlayerDied:
+                this.onDeath(msg.characterId, msg.killerId);
+                break;
+              default: // None
+            }
+          });
+        })
+        .catch((err) => {
+          console.error('Failed to connect!', err);
+          if (this.uiManager) this.uiManager.setConnectionText('Connection failed - Reload the webpage');
+        })
+        .finally(() => console.log('... and finally!'));
+    }
   }
 
 
@@ -359,7 +419,9 @@ class Client {
   // Updates time by X seconds
   public doFrame(DeltaTime: number) {
     let appliedWorldState = false;
+    let worldDeltaTime = DeltaTime;
 
+    this.input.MouseDownLastFrame = this.input.MouseDown;
     this.scrapeInput(); // Capture inputs (updates this.input)
 
     // Prune fighters that have died
@@ -372,6 +434,93 @@ class Client {
         i--;
       }
     }
+
+
+    if (this.worldUpdatePending && this.worldUpdate) {
+      this.worldUpdatePending = false;
+
+      // Applies world state and resets UpdateMissed on all updated fighters
+      decodeWorldState(this.worldUpdate, this.world, this.worldUpdateFirst);
+      appliedWorldState = true;
+      this.worldUpdateFirst = false;
+
+      // Prune fighters who fail to recieve consistent updates from server
+      for (let i = 0; i < this.world.Fighters.length; i++) {
+        this.world.Fighters[i].UpdatesMissed++;
+        if (this.world.Fighters[i].UpdatesMissed > 5) {
+          this.onDeath(this.world.Fighters[i].getOwnerID(), -1);
+        }
+      }
+
+      // TODO: Get server time in client-server handshake and use that for time calculations
+      worldDeltaTime = (Wristwatch.getSyncedNow() - this.worldUpdateLastPacketTime) / 1000;
+    }
+
+    if (this.character) { // Apply user inputs and set camera focus
+      if (this.input.Jump) this.character.Jump();
+      this.character.Move(this.input.MoveDirection);
+      this.character.aim(this.input.MouseDirection);
+      this.character.Firing = this.input.MouseDown;
+
+      if (this.respawning) this.camera.LerpToFocus(this.character);
+      this.respawning = false;
+
+      this.camera.SetFocus(this.character);
+    }
+
+    this.world.tick(worldDeltaTime, appliedWorldState);
+    this.camera.UpdateFocus(DeltaTime);
+
+    // Interwoven visuals
+    for (let i = 0; i < this.world.Fighters.length; i++) {
+      const a = this.world.Fighters[i];
+      if (a) {
+        // Set character
+        if (a.getOwnerID() === this.player.getCharacterID()) this.character = a;
+
+        // Apply any fighter names who do not have names yet
+        if (!a.DisplayName) {
+          const owner = this.getPlayerFromCharacterID(a.getOwnerID());
+          if (owner) owner.assignCharacter(a);
+        }
+
+        // Collision effects
+        if (a.JustHitMomentum > 700) {
+          MessageBus.publish('Effect_ParticleBurst_Smash', { pos: a.JustHitPosition, intensity: a.JustHitMomentum / 5000 });
+          // particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000)); // run 3 times
+
+          if (this.character && Vector.Distance(a.Position, this.character.Position) <= 2.5) {
+            this.camera.Shake += a.JustHitMomentum / 1500;
+          }
+
+          a.JustHitMomentum = 0;
+        }
+      }
+    }
+
+    if (this.character) {
+      this.camera.Shake += this.character.BulletShock;
+      this.respawnTimer = 3;
+    } else if (!this.uiManager || !(this.uiManager.isClassSelectOpen() || this.uiManager.isUsernameSelectOpen())) { // Do not tick if player is selecting username or character
+      this.respawnTimer -= DeltaTime;
+
+      if (this.respawnTimer <= 0 && this.uiManager) {
+        this.uiManager.openClassSelect();
+      }
+    }
+
+    // Then perform drawing (done in separate module)
+  }
+
+
+  public getWorld(): World {
+    return this.world;
+  }
+  public getPlayerList(): UIPlayerInfo[] {
+    return this.uiPlayerList;
+  }
+  public getKillFeed(): UIDeathNotification[] {
+    return this.uiDeathNotifs;
   }
 }
 /* eslint-enable padded-blocks */
