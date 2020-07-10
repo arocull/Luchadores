@@ -1,4 +1,4 @@
-import { Vector } from "../../common/engine/math";
+import { Vector } from '../../common/engine/math';
 
 class InputState {
   public MouseX: number;

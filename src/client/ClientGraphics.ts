@@ -1,12 +1,16 @@
 import Client from './ClientState';
 import UIManager from './ui/UIManager';
 import Camera from './Camera';
-import { Particle, PRosePetal } from './particles';
+import {
+  Particle, PRosePetal, PSmashEffect, PConfetti,
+} from './particles';
 import Render from './Render';
 import RenderSettings from './RenderSettings';
 import World from '../common/engine/World';
 import { UIDeathNotification, UIPlayerInfo } from './ui';
 import { MakeAnimator } from './animation';
+import { Vector } from '../common/engine/math';
+import { MessageBus } from '../common/messaging/bus';
 
 class ClientGraphics {
   public uiManager: UIManager;
@@ -32,9 +36,17 @@ class ClientGraphics {
     this.fpsCounter = [];
 
     this.particles = [];
+
+    MessageBus.subscribe('Effect_NewParticle', (msg) => {
+      this.particles.push(msg as Particle);
+    });
+    MessageBus.subscribe('Effect_PlayerDied', (msg) => {
+      PConfetti.Burst(this.particles, msg as Vector, 0.2, 4, 50 * RenderSettings.ParticleAmount); // Burst into confetti!
+    });
   }
 
   public tick(DeltaTime: number) {
+    // Apply visual effects, such as smashing, rose petals, and animators
     for (let i = 0; i < this.world.Fighters.length; i++) {
       const a = this.world.Fighters[i];
       if (a) {
@@ -42,16 +54,47 @@ class ClientGraphics {
         if (!a.Animator) a.Animator = MakeAnimator(a);
         else if (a.Animator) {
           a.Animator.Tick(DeltaTime);
-          if (a.Animator.killEffectCountdown === 0) {
+          if (a.Animator.killEffectCountdown === 0) { // If a death effect is to occur, execute it
             PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 20 * RenderSettings.ParticleAmount);
           }
+        }
+
+        // Collision effects
+        if (a.JustHitMomentum > 700) {
+          for (let j = 0; j < 3; j++) { // Smash effect particles
+            this.particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000));
+          }
+
+          // Camera shake upon impact or nearby impact
+          if (this.clientState.character && Vector.Distance(a.Position, this.clientState.character.Position) <= 2) {
+            this.camera.Shake += a.JustHitMomentum / 1500;
+          }
+
+          a.JustHitMomentum = 0; // Reset fighter momentums (only used for visual effects)
         }
       }
     }
 
+    // Tick and prune particles
+    for (let i = 0; i < this.particles.length; i++) {
+      this.particles[i].Tick(DeltaTime);
+
+      if (this.particles[i].Finished === true) {
+        this.particles.splice(i, 1);
+        i--;
+      }
+    }
+
+    // Update camera scale, position, and zoom
+    this.clientState.scaleScreen(this.viewport.width, this.viewport.height);
+    this.clientState.camera.UpdateFocus(DeltaTime);
+
+    // Draw screen
     Render.DrawScreen(this.canvas, this.camera, this.world.Map, this.world.Fighters, this.world.Bullets, this.particles, this.world.Props);
+    // Do interface actions and draw interface
     this.uiManager.tick(DeltaTime, this.canvas, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning, this.clientState.input);
 
+    // Draw player list and kill feed
     const playerList = this.clientState.getPlayerList();
     const killfeed = this.clientState.getKillFeed();
 
@@ -74,6 +117,7 @@ class ClientGraphics {
       }
     }
 
+    // Draw FPS counter
     if (RenderSettings.FPScounter) {
       if (this.fpsCounter.length >= 30) this.fpsCounter.shift();
       this.fpsCounter.push(DeltaTime);

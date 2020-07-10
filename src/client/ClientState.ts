@@ -56,7 +56,7 @@ class Client {
   private uiDeathNotifs: UIDeathNotification[];
   public uiManager: UIManager; // Hook-up, should not be auto-generated
 
-  constructor(connection: string, doConnect: boolean, promiseWaitList: any[]) {
+  constructor(connectionURL: string, doConnect: boolean, promiseWaitList: any[]) {
     this.player = new Player('');
     this.character = null;
 
@@ -64,6 +64,7 @@ class Client {
     this.respawning = false; // True if player has selected character and is waiting on assignment from server
 
     this.connected = false;
+    this.playerList = [];
     this.topics = { // TODO: HAX - get topics to use from web socket
       ClientNetworkToServer: null as string,
       ClientNetworkFromServer: null as string,
@@ -124,7 +125,7 @@ class Client {
 
     // Finally, perform connection
     if (doConnect) {
-      const ws = new NetworkClient(`ws://${window.location.host}/socket`);
+      const ws = new NetworkClient(`ws://${connectionURL}/socket`);
       promiseWaitList.push(ws.connect());
       Promise.all(promiseWaitList)
         .then((results) => {
@@ -270,13 +271,9 @@ class Client {
     for (let i = 0; i < this.world.Fighters.length; i++) { // Iterate through all fighters
 
       if (this.world.Fighters[i].getOwnerID() === died) { // Character is killed
-        // Burst confetti PConfetti.Burst(particles, world.Fighters[i].Position, 0.2, 4, 50 * RenderSettings.ParticleAmount)
+        MessageBus.publish('Effect_PlayerDied', this.world.Fighters[i].Position);
         diedName = this.world.Fighters[i].DisplayName; // Obtain this honorable luchador's name
         this.world.Fighters[i].MarkedForCleanup = true; // Mark for cleanup (allows kill counting before removal)
-
-        // Do not remove character from player who died until cleanup
-        // const diedPlayer = this.getPlayerFromCharacterID(died);
-        // if (diedPlayer) diedPlayer.removeCharacter(); // Remove character from player who died
 
       } else if (this.world.Fighters[i].getOwnerID() === killer) { // Character that did it
         killerCharacter = this.world.Fighters[i]; // Keep track of killer (for killcam)
@@ -290,6 +287,8 @@ class Client {
 
     if (died === this.player.getCharacterID()) { // Death effects and killcam
       this.character = null;
+      this.respawning = false;
+      this.respawnTimer = 0;
       if (killerCharacter) {
         this.camera.LerpToFocus(killerCharacter);
         if (this.uiManager) this.uiManager.playerDied(`Killed by ${killerCharacter.DisplayName}`);
@@ -404,6 +403,15 @@ class Client {
     }
 
     if (this.character) this.character.HP = msg.health;
+    else {
+      for (let i = 0; i < this.world.Fighters.length; i++) {
+        if (this.world.Fighters[i].getOwnerID() === msg.characterID) {
+          this.character = this.world.Fighters[i];
+          this.character.DisplayName = this.player.getUsername();
+          break;
+        }
+      }
+    }
   }
 
 
@@ -424,14 +432,18 @@ class Client {
     this.input.MouseDownLastFrame = this.input.MouseDown;
     this.scrapeInput(); // Capture inputs (updates this.input)
 
-    // Prune fighters that have died
+    // Prune fighters that have died, and add names to those who don't have ones
     for (let i = 0; i < this.world.Fighters.length; i++) {
-      if (this.world.Fighters[i].MarkedForCleanup) {
-        const plr = this.getPlayerFromCharacterID(this.world.Fighters[i].getOwnerID());
+      const fighter = this.world.Fighters[i];
+      if (fighter.MarkedForCleanup) {
+        const plr = this.getPlayerFromCharacterID(fighter.getOwnerID());
         if (plr) plr.removeCharacter(); // Remove player character
 
         this.world.Fighters.splice(i, 1);
         i--;
+      } else if (!fighter.DisplayName) { // If they do not have a name, make one for them
+        const owner = this.getPlayerFromCharacterID(fighter.getOwnerID());
+        if (owner) owner.assignCharacter(fighter);
       }
     }
 
@@ -464,43 +476,18 @@ class Client {
 
       if (this.respawning) this.camera.LerpToFocus(this.character);
       this.respawning = false;
+      this.respawnTimer = 3;
 
       this.camera.SetFocus(this.character);
+    } else {
+      this.respawnTimer += DeltaTime;
     }
 
     this.world.tick(worldDeltaTime, appliedWorldState);
-    this.camera.UpdateFocus(DeltaTime);
-
-    // Interwoven visuals
-    for (let i = 0; i < this.world.Fighters.length; i++) {
-      const a = this.world.Fighters[i];
-      if (a) {
-        // Set character
-        if (a.getOwnerID() === this.player.getCharacterID()) this.character = a;
-
-        // Apply any fighter names who do not have names yet
-        if (!a.DisplayName) {
-          const owner = this.getPlayerFromCharacterID(a.getOwnerID());
-          if (owner) owner.assignCharacter(a);
-        }
-
-        // Collision effects
-        if (a.JustHitMomentum > 700) {
-          MessageBus.publish('Effect_ParticleBurst_Smash', { pos: a.JustHitPosition, intensity: a.JustHitMomentum / 5000 });
-          // particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000)); // run 3 times
-
-          if (this.character && Vector.Distance(a.Position, this.character.Position) <= 2.5) {
-            this.camera.Shake += a.JustHitMomentum / 1500;
-          }
-
-          a.JustHitMomentum = 0;
-        }
-      }
-    }
+    // Camera and visuals ticked separately on ClientGraphics
 
     if (this.character) {
       this.camera.Shake += this.character.BulletShock;
-      this.respawnTimer = 3;
     } else if (!this.uiManager || !(this.uiManager.isClassSelectOpen() || this.uiManager.isUsernameSelectOpen())) { // Do not tick if player is selecting username or character
       this.respawnTimer -= DeltaTime;
 
