@@ -34,7 +34,7 @@ function AnimationFrame(tick: number) {
   viewport.width = window.innerWidth;
   viewport.height = window.innerHeight;
 
-  if (client) client.doFrame(DeltaTime);
+  if (client) client.tick(DeltaTime);
   if (graphics) graphics.tick(DeltaTime);
 
   return window.requestAnimationFrame(AnimationFrame);

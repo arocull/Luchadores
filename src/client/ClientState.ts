@@ -64,7 +64,7 @@ class Client {
     this.respawning = false; // True if player has selected character and is waiting on assignment from server
 
     this.connected = false;
-    this.playerList = [];
+    this.playerList = [this.player];
     this.topics = { // TODO: HAX - get topics to use from web socket
       ClientNetworkToServer: null as string,
       ClientNetworkFromServer: null as string,
@@ -288,7 +288,7 @@ class Client {
     if (died === this.player.getCharacterID()) { // Death effects and killcam
       this.character = null;
       this.respawning = false;
-      this.respawnTimer = 0;
+      this.respawnTimer = 3;
       if (killerCharacter) {
         this.camera.LerpToFocus(killerCharacter);
         if (this.uiManager) this.uiManager.playerDied(`Killed by ${killerCharacter.DisplayName}`);
@@ -403,15 +403,6 @@ class Client {
     }
 
     if (this.character) this.character.HP = msg.health;
-    else {
-      for (let i = 0; i < this.world.Fighters.length; i++) {
-        if (this.world.Fighters[i].getOwnerID() === msg.characterID) {
-          this.character = this.world.Fighters[i];
-          this.character.DisplayName = this.player.getUsername();
-          break;
-        }
-      }
-    }
   }
 
 
@@ -425,7 +416,7 @@ class Client {
 
   /* Tick */
   // Updates time by X seconds
-  public doFrame(DeltaTime: number) {
+  public tick(DeltaTime: number) {
     let appliedWorldState = false;
     let worldDeltaTime = DeltaTime;
 
@@ -468,31 +459,43 @@ class Client {
       worldDeltaTime = (Wristwatch.getSyncedNow() - this.worldUpdateLastPacketTime) / 1000;
     }
 
+    if (!this.character) { // Look for character that matches ID if one does not already exist
+      for (let i = 0; i < this.world.Fighters.length; i++) {
+        if (this.world.Fighters[i].getOwnerID() === this.player.getCharacterID()) {
+          this.character = this.world.Fighters[i];
+          this.character.DisplayName = this.player.getUsername();
+          this.respawning = true; // Mark as 'respawning' for camera lerp and UI
+          break;
+        }
+      }
+    }
     if (this.character) { // Apply user inputs and set camera focus
       if (this.input.Jump) this.character.Jump();
       this.character.Move(this.input.MoveDirection);
       this.character.aim(this.input.MouseDirection);
       this.character.Firing = this.input.MouseDown;
 
-      if (this.respawning) this.camera.LerpToFocus(this.character);
-      this.respawning = false;
+      if (this.respawning) { // If they are respawning (newly assigned character), lerp camera focus to them and close class select if open
+        this.respawning = false;
+        this.camera.LerpToFocus(this.character);
+        if (this.uiManager) this.uiManager.closeClassSelect();
+      }
       this.respawnTimer = 3;
 
       this.camera.SetFocus(this.character);
-    } else {
-      this.respawnTimer += DeltaTime;
     }
 
     this.world.tick(worldDeltaTime, appliedWorldState);
     // Camera and visuals ticked separately on ClientGraphics
 
-    if (this.character) {
+    if (this.character) { // Apply bullet shock
       this.camera.Shake += this.character.BulletShock;
     } else if (!this.uiManager || !(this.uiManager.isClassSelectOpen() || this.uiManager.isUsernameSelectOpen())) { // Do not tick if player is selecting username or character
-      this.respawnTimer -= DeltaTime;
+      this.respawnTimer -= DeltaTime; // Count down respawn timer to zero from three
 
-      if (this.respawnTimer <= 0 && this.uiManager) {
+      if (this.respawnTimer <= 0 && this.uiManager && !this.uiManager.inGUIMode()) { // If it reaches zero, they are allowed to spawn--open menus
         this.uiManager.openClassSelect();
+        this.respawning = true;
       }
     }
 
