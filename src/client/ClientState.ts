@@ -13,7 +13,7 @@ import Player from '../common/engine/Player';
 import Fighter from '../common/engine/Fighter';
 import Random from '../common/engine/Random';
 import Camera from './Camera';
-import { MapPreset, FighterType } from '../common/engine/Enums';
+import { FighterType } from '../common/engine/Enums';
 import { UIDeathNotification, UIPlayerInfo } from './ui';
 import UIManager from './ui/UIManager';
 import { Vector } from '../common/engine/math';
@@ -75,7 +75,7 @@ class Client {
 
     // Initialize basic, empty world for player to roam around in if we use it
     // Is populated and changed when player connects
-    this.world = new World(MapPreset.Grassy, false, false);
+    this.world = new World();
     Random.randomSeed();
 
     this.worldUpdatePending = false;

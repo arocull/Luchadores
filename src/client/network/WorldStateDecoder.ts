@@ -77,8 +77,8 @@ function decodeWorldState(state: IWorldState, world: World, firstState: boolean 
   world.Map.Width = state.mapWidth;
   world.Map.Height = state.mapHeight;
   world.Map.Friction = state.mapFriction;
-  // Map ID would be used to set map texture, but we only have one right now, so leave it as-is
   world.Map.wallStrength = state.mapWallStrength;
+  world.Map.mapID = state.mapId;
 
   if (firstState) {
     world.Map.loadTexture(state.mapId);

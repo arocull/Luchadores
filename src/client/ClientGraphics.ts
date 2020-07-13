@@ -30,7 +30,6 @@ class ClientGraphics {
     this.world = this.clientState.getWorld();
 
     this.clientState.uiManager = this.uiManager;
-    this.world.Map.loadTexture();
 
     this.viewport = <HTMLCanvasElement>document.getElementById('render');
     this.canvas = this.viewport.getContext('2d');
@@ -44,6 +43,21 @@ class ClientGraphics {
     MessageBus.subscribe('Effect_PlayerDied', (msg) => {
       PConfetti.Burst(this.particles, msg as Vector, 0.2, 4, 50 * RenderSettings.ParticleAmount); // Burst into confetti!
     });
+    MessageBus.subscribe('LoadAsset_Prop', (msg) => {
+      AssetPreloader.getImage(msg.texture).then((img) => {
+        // eslint-disable-next-line no-param-reassign
+        msg.prop.texture = img;
+      });
+    });
+    MessageBus.subscribe('LoadAsset_Map', (msg) => {
+      AssetPreloader.getImage(msg.texture).then((img) => {
+        // eslint-disable-next-line no-param-reassign
+        msg.map.Texture = img;
+      });
+    });
+
+    // Load textures after events are hooked up
+    this.world.Map.loadTexture();
   }
 
   public tick(DeltaTime: number) {
@@ -83,15 +97,6 @@ class ClientGraphics {
       if (this.particles[i].Finished === true) {
         this.particles.splice(i, 1);
         i--;
-      }
-    }
-
-    // Add textures to props (not done in prop class to avoid client implementation in engine class)
-    for (let i = 0; i < this.world.Props.length; i++) {
-      if (!this.world.Props[i].texture && this.world.Props[i].textureSource !== '') {
-        AssetPreloader.getImage(this.world.Props[i].textureSource).then((img: HTMLImageElement) => {
-          this.world.Props[i].texture = img;
-        });
       }
     }
 

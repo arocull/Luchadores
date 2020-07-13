@@ -1,6 +1,7 @@
 import Entity from '../Entity';
 import { EntityType, ColliderType } from '../Enums';
 import { Vector, Ray, TraceResult } from '../math';
+import { MessageBus } from '../../messaging/bus';
 
 const normalUp = new Vector(0, 0, 1);
 const normalDown = new Vector(0, 0, -1);
@@ -18,7 +19,6 @@ class Prop extends Entity {
   public onSurface: boolean; // If this object is resting on top of another object
 
   public texture: HTMLImageElement;
-  public textureSource: string;
   public textureUpscale: number;
 
   constructor(
@@ -239,8 +239,7 @@ class Prop extends Entity {
 
 
   public SetTexture(src: string, upscale: number = 1) {
-    this.texture = null;
-    this.textureSource = src;
+    MessageBus.publish('LoadAsset_Prop', { prop: this, texture: src });
     this.textureUpscale = upscale;
   }
 }
