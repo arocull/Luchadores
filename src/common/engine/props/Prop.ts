@@ -18,6 +18,7 @@ class Prop extends Entity {
   public onSurface: boolean; // If this object is resting on top of another object
 
   public texture: HTMLImageElement;
+  public textureSource: string;
   public textureUpscale: number;
 
   constructor(
@@ -238,8 +239,8 @@ class Prop extends Entity {
 
 
   public SetTexture(src: string, upscale: number = 1) {
-    this.texture = new Image();
-    this.texture.src = src;
+    this.texture = null;
+    this.textureSource = src;
     this.textureUpscale = upscale;
   }
 }

@@ -11,6 +11,7 @@ import { UIDeathNotification, UIPlayerInfo } from './ui';
 import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
 import { MessageBus } from '../common/messaging/bus';
+import AssetPreloader from './AssetPreloader';
 
 class ClientGraphics {
   public uiManager: UIManager;
@@ -82,6 +83,15 @@ class ClientGraphics {
       if (this.particles[i].Finished === true) {
         this.particles.splice(i, 1);
         i--;
+      }
+    }
+
+    // Add textures to props (not done in prop class to avoid client implementation in engine class)
+    for (let i = 0; i < this.world.Props.length; i++) {
+      if (!this.world.Props[i].texture && this.world.Props[i].textureSource !== '') {
+        AssetPreloader.getImage(this.world.Props[i].textureSource).then((img: HTMLImageElement) => {
+          this.world.Props[i].texture = img;
+        });
       }
     }
 

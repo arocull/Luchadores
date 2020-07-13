@@ -1,5 +1,6 @@
 import Fighter from '../../common/engine/Fighter';
 import { fighterTypeToString } from '../../common/engine/Enums';
+import AssetPreloader from '../AssetPreloader';
 
 enum AnimationState {
   Idle = 0,
@@ -31,8 +32,9 @@ class Animator {
   public killEffectCountdown: number; // Ticks down until rose petals effects show after a kill
 
   constructor(protected owner: Fighter) {
-    this.SpriteSheet = new Image();
-    this.SpriteSheet.src = `Sprites/${fighterTypeToString(owner.getCharacter())}.png`;
+    AssetPreloader.getImage(`Sprites/${fighterTypeToString(owner.getCharacter())}.png`).then((img) => {
+      this.SpriteSheet = img;
+    });
 
     this.FrameWidth = 512;
     this.FrameHeight = 512;

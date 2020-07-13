@@ -56,7 +56,7 @@ class Client {
   private uiDeathNotifs: UIDeathNotification[];
   public uiManager: UIManager; // Hook-up, should not be auto-generated
 
-  constructor(connectionURL: string, doConnect: boolean, promiseWaitList: any[]) {
+  constructor(connectionURL: string, doConnect: boolean) {
     this.player = new Player('');
     this.character = null;
 
@@ -126,10 +126,8 @@ class Client {
     // Finally, perform connection
     if (doConnect) {
       const ws = new NetworkClient(`ws://${connectionURL}/socket`);
-      promiseWaitList.push(ws.connect());
-      Promise.all(promiseWaitList)
-        .then((results) => {
-          const connected = results[1];
+      ws.connect()
+        .then((connected) => {
           this.topics.ClientNetworkFromServer = connected.topicInbound;
           this.topics.ClientNetworkToServer = connected.topicOutbound;
           console.log('Connected OK!', connected);

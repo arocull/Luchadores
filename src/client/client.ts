@@ -13,18 +13,6 @@ const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
 
 const uiLoadScreen = new UILoadScreen();
-const preloader = new AssetPreloader([
-  'Interface/Gear.png',
-  'Maps/Arena.jpg',
-  'Maps/Grass.jpg',
-  'Portraits/Sheep.png',
-  'Portraits/Deer.png',
-  'Portraits/Flamingo.png',
-  'Sprites/Sheep.png',
-  'Sprites/Deer.png',
-  'Sprites/Flamingo.png',
-  'Sprites/Barrel.png',
-]);
 
 let lastFrame = 0;
 function AnimationFrame(tick: number) {
@@ -51,7 +39,7 @@ function AnimationFrame(tick: number) {
     Render.DrawUIFrame(canvas, tempCam, uiLoadScreen.frames[i]);
   }
 
-  preloader.on('progress', (status) => {
+  AssetPreloader.on('progress', (status) => {
     console.log(`Preload progress: ${Math.round(status.progress * 100)}% ... (${status.file})`);
 
     viewport.width = window.innerWidth;
@@ -64,12 +52,22 @@ function AnimationFrame(tick: number) {
     }
   });
 
-  client = new ClientState(window.location.host, true, [
-    preloader.preload()
-      .then(() => {
-        console.log('Asset preloading complete.');
-        window.requestAnimationFrame(AnimationFrame);
-      }),
-  ]);
-  graphics = new ClientGraphics(client);
+  // TODO: Generate asset list at compile time and return them here
+  AssetPreloader.getImages([
+    'Interface/Gear.png',
+    'Maps/Arena.jpg',
+    'Maps/Grass.jpg',
+    'Portraits/Sheep.png',
+    'Portraits/Deer.png',
+    'Portraits/Flamingo.png',
+    'Sprites/Sheep.png',
+    'Sprites/Deer.png',
+    'Sprites/Flamingo.png',
+    'Sprites/Barrel.png',
+  ]).then(() => {
+    client = new ClientState(window.location.host, true);
+    graphics = new ClientGraphics(client);
+    console.log('Asset preloading complete. Initializing clients.');
+    window.requestAnimationFrame(AnimationFrame);
+  });
 }());

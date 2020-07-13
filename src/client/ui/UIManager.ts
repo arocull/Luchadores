@@ -5,6 +5,7 @@ import Renderer from '../Render';
 import { MessageBus } from '../../common/messaging/bus';
 import { Fighter } from '../../common/engine/fighters';
 import { FighterType } from '../../common/engine/Enums';
+import AssetPreloader from '../AssetPreloader';
 
 // UI Manager - Class used for UI management and settings
 class UIManager {
@@ -49,8 +50,9 @@ class UIManager {
     this.settingsButton.constrainAspect = true; // Force it to be a square
     this.settingsButton.constrainAspectCenterX = false; // Make sure it stays in top-left corner of screen
     this.settingsButton.constrainAspectCenterY = false;
-    this.settingsButton.image = new Image();
-    this.settingsButton.image.src = 'Interface/Gear.png'; // TODO: Should we pipe the image from the asset loader into here?
+    AssetPreloader.getImage('Interface/Gear.png').then((img) => {
+      this.settingsButton.image = img;
+    });
     this.settingsButton.alpha = 0;
     this.settingsButton.imageAlpha = 0.8;
     this.settingsButton.onHover = ((hovering) => {
