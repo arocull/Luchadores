@@ -41,9 +41,19 @@ class Ray {
     return result;
   }
 
-  // Trace an infinite cylinder with given center and radius
-  // Special thanks to this guide https://www.cs.princeton.edu/courses/archive/spring14/cos426/lectures/12-ray.pdf
-  public traceCylinder(center: Vector, radius: number): TraceResult {
+  /**
+   * @function
+   * @summary Trace an infinite cylinder with given center and radius.
+   *
+   * @description Made with special thanks to this guide https://www.cs.princeton.edu/courses/archive/spring14/cos426/lectures/12-ray.pdf
+   *
+   * @param {Vector} center The center position of the cylinder
+   * @param {number} radius The radius of the cylinder--if you are colliding two cylinders, put in the radius of both for proper distancing of positions
+   * @param {boolean} dualSided Whether or not this should allow collisions from traces cast inside the cylinder
+   *
+   * @returns {TraceResult} Returns a TraceResult
+   */
+  public traceCylinder(center: Vector, radius: number, dualSided: boolean = false): TraceResult {
     const result = new TraceResult();
     const L = Vector.Subtract(center, this.start);
     L.z = 0; // Level off Z component
@@ -58,10 +68,11 @@ class Ray {
     const t = distC - distMid; // Point closest to ray origin; to get point furthest from ray origin, distC + distMid
 
     if (t <= this.length) { // Make sure trace went as far as sphere
-      result.collided = true;
       result.Position = Vector.Add(this.start, Vector.Multiply(this.direction, t));
       result.Normal = Vector.UnitVectorXY(Vector.Subtract(result.Position, center)); // This is where it variates from a sphere (XY versus XYZ)
+      if (!dualSided && Vector.DotProduct(result.Normal, this.direction) >= 0) return result; // Normal should always be somewhat opposite of ray direction
       result.distance = Vector.Distance(this.start, result.Position);
+      result.collided = true;
     }
     return result;
   }

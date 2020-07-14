@@ -62,15 +62,25 @@ class Prop extends Entity {
   }
 
 
-  // Applies the given ray trace to all surfaces of the prop until a valid collision is discovered or none was found
-  public traceProp(ray: Ray, radiusBoost: number = 0): TraceResult {
+  /**
+   * @function traceProp
+   *
+   * @summary Applies the given ray trace to all surfaces of the prop until a valid collision is discovered or none was found
+   *
+   * @param {Ray} ray The ray to trace this prop object with
+   * @param {number} radiusBoost If the collision needs to locate another object a set distance away, add the colliding object's radius here
+   * @param {boolean} bulletTrace If this trace is being performed for a bullet collision, set this to true
+   *
+   * @returns {TraceResult} Returns a trace result
+   */
+  public traceProp(ray: Ray, radiusBoost: number = 0, bulletTrace: boolean = false): TraceResult {
     switch (this.shape) {
-      case ColliderType.Cylinder: return this.traceCylinder(ray, radiusBoost);
+      case ColliderType.Cylinder: return this.traceCylinder(ray, radiusBoost, bulletTrace);
       default: return this.traceBox(ray, radiusBoost);
     }
   }
   // To call, use traceProp; Ray traces a cylinder
-  private traceCylinder(ray: Ray, radiusBoost: number = 0): TraceResult {
+  private traceCylinder(ray: Ray, radiusBoost: number = 0, bulletTrace: boolean = false): TraceResult {
     const radius = this.Radius + radiusBoost;
 
     // Top surface collision
@@ -89,7 +99,7 @@ class Prop extends Entity {
     }
 
     // If object is a cylinder, get surface normal that corresponds with ray direction
-    const trace = ray.traceCylinder(this.Position, radius); // Traces on cylinders end here
+    const trace = ray.traceCylinder(this.Position, radius, bulletTrace); // Traces on cylinders end here
     // Trace should land somewhere within cylinder, top exclusive to avoid colliding whilst on top of multiple, flush surfaces
     if (trace.Position.z < this.Position.z + this.Height && trace.Position.z >= this.Position.z) {
       return trace;

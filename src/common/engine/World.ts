@@ -15,7 +15,18 @@ import { TypeEnum } from '../events';
 // Internal Functions //
 /* eslint-disable no-param-reassign */
 
-// Traces does a collision trace upon prop B using the movement ray of prop A
+/**
+ * @function CollisionTrace
+ *
+ * @summary Does a collision trace upon prop B using the movement ray of prop A
+ * @description Tests object B to see if it is in the path of of object A, and then performs a collision test from prop A's trajectory onto prop B
+ *
+ * @param {Prop}  a   The object that is in motion
+ * @param {Prop}  b   The object to test the prop A's trajectory against for collisions
+ * @param {Ray}   ray Object A's trajectory, used for collision testing and detection
+ *
+ * @returns {TraceResult} Returns a bullet trace result, or null if the initial test failed
+ */
 function CollisionTrace(a: Prop, b: Prop, ray: Ray): TraceResult {
   // See if the point is anywhere close enough to the ray for an intersection
   if (ray.pointDistanceXY(b.Position) < a.Radius + b.Radius) { // Bottom center of fighter
@@ -31,10 +42,20 @@ function CollisionTrace(a: Prop, b: Prop, ray: Ray): TraceResult {
 
   return null; // Basic point tests failed, return null
 }
-// Simple collision test and trace for bullets
+/**
+ * @function CollisionTraceBullet
+ *
+ * @summary Simple collision test and trace for bullets
+ * @description Tests the object to see if it is in the path of the bullet's trajectory, and then performs a collision test on the the given prop
+ *
+ * @param {Prop}  a   The object to test the bullet trajectory against for collisions
+ * @param {Ray}   ray The bullet trajectory used for collision testing and detection
+ *
+ * @returns {TraceResult} Returns a bullet trace result, or null if the initial test failed
+ */
 function CollisionTraceBullet(a: Prop, ray: Ray): TraceResult {
-  if (ray.pointDistanceXY(a.Position) < a.Radius) {
-    return a.traceProp(ray);
+  if (ray.pointDistanceXY(a.Position) < a.Radius) { // Make sure point of projectile is along a trajectory that faces the prop
+    return a.traceProp(ray, 0, true); // If so, trace prop--could potentially increase bullet thickness using the radius boost
   }
 
   return null; // Return null if simple point distance test failed
@@ -78,19 +99,20 @@ function CollideFighters(a: Fighter, b: Fighter, info: TraceResult) {
 /* eslint-enable no-param-reassign */
 
 
-// World Class - Manages bullets and fighters
-/* General flow of things:
-
-- Apply player inputs
-
-- Fire bullets and handle character updates
-- Tick physics
-
-- Check for deaths
-
-- Distribute updates
-
-*/
+/**
+ * @class
+ * @name World
+ *
+ * @summary Manages bullets and fighters
+ *
+ * @description General flow of things:
+ * - Apply player inputs
+ * - Fire bullets and handle character updates
+ * - Tick physics
+ * - Check for deaths
+ * - Distribute updates
+ *
+ */
 class World {
   public static MAX_LOBBY_SIZE: number = 20;
 
@@ -437,8 +459,7 @@ class World {
       let closest = 10000; // How many units away the closest collision is
       let closestHit: TraceResult = null; // Fighter hit by this result
 
-      // Normally we would shoot a ray at a cylinder, but that's kind of difficult
-      // So instead, we will test 3 point along the bullet trajectory to check if has collided with the fighter or not
+      // First, check collisions on all fighters
       for (let i = 0; i < this.Fighters.length; i++) {
         const result: TraceResult = CollisionTraceBullet(this.Fighters[i], ray);
         if (result && result.collided && this.Fighters[i].getOwnerID() !== b.getOwnerID()) { // If collision is valid and not owner
@@ -450,6 +471,7 @@ class World {
         }
       }
 
+      // Then check collisions on all props
       for (let i = 0; i < this.Props.length; i++) {
         const result: TraceResult = CollisionTraceBullet(this.Props[i], ray);
         if (result && result.collided) { // If collision is valid and not owner
