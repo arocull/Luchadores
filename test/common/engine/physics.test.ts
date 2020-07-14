@@ -106,7 +106,6 @@ test('physics inside-bounding collision test', () => {
   // Do basic ray trace from inside to outside to make sure that this is not causing collisions
   const ray = new Ray(new Vector(xPos, yPos, 0.9), new Vector(xPos, yPos, 5));
   const result = prop.traceProp(ray, flam.Radius);
-  console.log(result);
   expect(result.collided).toBe(false);
 
   // Check if real thing matches
@@ -128,6 +127,4 @@ test('physics inside-bounding collision test', () => {
   }
   expect(flam.Position.x).toBeCloseTo(xPos);
   expect(flam.Position.y).toBeCloseTo(yPos);
-
-  console.log(flam.Position);
 });
