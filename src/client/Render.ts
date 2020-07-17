@@ -369,10 +369,12 @@ class Renderer {
 
     startY += (cam.Height * UIPlayerInfo.HEIGHT) / 2;
 
-    canvas.fillText('Kills', startX + width * 0.1, startY, width * 0.1);
+    canvas.fillText('Kills', startX + width * 0.05, startY, width * 0.05);
+    canvas.textAlign = 'center';
+    canvas.fillText('Streak', startX + width * 0.125, startY, width * 0.05);
     canvas.textAlign = 'left';
-    canvas.fillText('Luchador', startX + width * 0.5, startY, width * 0.2);
-    canvas.fillText('Player', startX + width * 0.15, startY, width * 0.3);
+    canvas.fillText('Player', startX + width * 0.2, startY, width * 0.2);
+    canvas.fillText('Luchador', startX + width * 0.6, startY, width * 0.2);
     canvas.fillText('Ping', startX + width * 0.9, startY, width * 0.1);
 
     canvas.lineWidth = 4;
@@ -513,6 +515,13 @@ class Renderer {
     } else if (frame.type === UIFrameType.PlayerInfo) {
       const card = <UIPlayerInfo>(frame);
 
+      if (card.isClient) {
+        canvas.fillStyle = '#2afbaa';
+        canvas.globalAlpha = 0.5;
+        canvas.fillRect(startX, startY, width, height);
+        canvas.globalAlpha = 1;
+      }
+
       canvas.font = '18px roboto';
       canvas.textBaseline = 'middle';
       canvas.textAlign = 'right';
@@ -521,18 +530,27 @@ class Renderer {
       startY += height / 2;
 
       // Draw kills
-      canvas.fillText(card.getOwner().getKills().toString(), startX + width * 0.1, startY, width * 0.1);
+      canvas.fillText(card.getOwner().getKills().toString(), startX + width * 0.05, startY, width * 0.05);
+      canvas.textAlign = 'center';
+      canvas.fillText(card.getOwner().getKillstreak().toString(), startX + width * 0.125, startY, width * 0.05);
 
       // Selected character
       canvas.textAlign = 'left';
-      canvas.fillText(card.fighter, startX + width * 0.5, startY, width * 0.2);
+      canvas.fillText(card.fighter, startX + width * 0.6, startY, width * 0.2);
 
       // Draw username
-      if (card.isClient) canvas.fillStyle = '#008a4a';
-      canvas.fillText(card.getOwner().getUsername(), startX + width * 0.15, startY, width * 0.3);
+      canvas.fillText(card.getOwner().getUsername(), startX + width * 0.2, startY, width * 0.3);
 
       // Ping
       canvas.fillText(card.getOwner().getPing().toString(), startX + width * 0.9, startY, width * 0.1);
+
+      canvas.lineWidth = 0.01 * cam.Zoom;
+      canvas.lineCap = 'butt';
+      canvas.strokeStyle = '#333333';
+      canvas.beginPath();
+      canvas.moveTo(startX + width * 0.025, startY + height / 2);
+      canvas.lineTo(startX + width * 0.975, startY + height / 2);
+      canvas.stroke();
     }
   }
 
