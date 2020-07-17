@@ -1,4 +1,4 @@
-import { Vector } from '../../../src/common/engine/math';
+import { Vector, Ray } from '../../../src/common/engine/math';
 import Prop from '../../../src/common/engine/props/Prop';
 import { Sheep, Flamingo } from '../../../src/common/engine/fighters';
 import Map from '../../../src/common/engine/Map';
@@ -91,4 +91,40 @@ test('physics prop collision tests', () => {
   expect(flam.onSurface).toBe(true); // Flamingo is on stable surface
 
   expect(sheep3.Position.y).toBeCloseTo(box2.Position.y + box2.Depth / 2 + sheep3.Radius); // Sheep does not clip through floating box
+});
+
+test('physics inside-bounding collision test', () => {
+  const world = new World();
+
+  // Slight offset to allow direction vector to form if pushed outward
+  const xPos = 0.01;
+  const yPos = 0.01;
+
+  const flam = new Flamingo(1, new Vector(xPos, yPos, 1.1));
+  const prop = new Prop(new Vector(0, 0, 0), ColliderType.Cylinder, 0.5, 1);
+
+  // Do basic ray trace from inside to outside to make sure that this is not causing collisions
+  const ray = new Ray(new Vector(xPos, yPos, 0.9), new Vector(xPos, yPos, 5));
+  const result = prop.traceProp(ray, flam.Radius);
+  expect(result.collided).toBe(false);
+
+  // Check if real thing matches
+  world.Fighters.push(flam);
+  world.Props.push(prop);
+
+  for (let i = 0; i < 20; i++) {
+    world.tick(0.03);
+  }
+
+  expect(flam.Position.x).toBeCloseTo(xPos);
+  expect(flam.Position.y).toBeCloseTo(yPos);
+  expect(flam.Position.z).toBeCloseTo(1);
+
+  flam.Jump();
+
+  for (let i = 0; i < 20; i++) {
+    world.tick(0.03);
+  }
+  expect(flam.Position.x).toBeCloseTo(xPos);
+  expect(flam.Position.y).toBeCloseTo(yPos);
 });
