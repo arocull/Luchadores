@@ -1,6 +1,7 @@
 import Entity from '../Entity';
 import { EntityType, ColliderType } from '../Enums';
 import { Vector, Ray, TraceResult } from '../math';
+import { MessageBus } from '../../messaging/bus';
 
 const normalUp = new Vector(0, 0, 1);
 const normalDown = new Vector(0, 0, -1);
@@ -248,8 +249,7 @@ class Prop extends Entity {
 
 
   public SetTexture(src: string, upscale: number = 1) {
-    this.texture = new Image();
-    this.texture.src = src;
+    MessageBus.publish('LoadAsset_Prop', { prop: this, texture: src });
     this.textureUpscale = upscale;
   }
 }
