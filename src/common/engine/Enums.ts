@@ -53,16 +53,46 @@ enum RenderQuality {
   High = 3,
 }
 
+
+/**
+ * @enum
+ * @name ScoreMethod
+ * @summary Used for determining how points are scored in a gamemode.
+ */
+enum ScoreMethod {
+  /** Kills are counted directly towards score */
+  Kills = 0,
+  /** Time spent on the hill or in a zone is counted towards score */
+  Zone = 1,
+  /** Making goals with soccer balls are counted towards score */
+  Goals = 2,
+}
+
+/**
+ * @enum
+ * @name Team
+ * @summary Used for identifying what team a player is on.
+ */
+enum Team {
+  Neutral = 0,
+  Red = 1,
+  Blue = 2,
+  Green = 3,
+  Yellow = 4,
+}
+
+
+// Functions
 const FighterTypeStrings = [
   'Sheep',
   'Deer',
   'Flamingo',
   'Toad',
 ];
-
 function fighterTypeToString(type: FighterType) {
   return FighterTypeStrings[type];
 }
+
 
 export {
   EntityType,
@@ -73,5 +103,7 @@ export {
   MapPreset,
   UIFrameType,
   RenderQuality,
+  ScoreMethod,
+  Team,
   fighterTypeToString,
 };

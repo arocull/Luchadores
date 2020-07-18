@@ -1,7 +1,9 @@
 // Includes Vector.js
 import Vector from './Vector';
 import Prop from './props/Prop';
-import { EntityType, FighterType, ColliderType } from './Enums';
+// eslint-disable-next-line object-curly-newline
+import { EntityType, FighterType, ColliderType, Team } from './Enums';
+import { TeamManager } from './gamemode';
 
 // Static Configurations
 const KILL_HEALTH_RETURN = 0.25; // Percentage of max health that is restored upon earning a kill
@@ -33,6 +35,7 @@ class Fighter extends Prop {
   public UpdatesMissed: number;
   public MarkedForCleanup: boolean;
   public DisplayName: string;
+  public Team: Team;
 
   public JustHitPosition: Vector;
   public JustHitMomentum: number;
@@ -82,6 +85,7 @@ class Fighter extends Prop {
     this.UpdatesMissed = 0;
     this.MarkedForCleanup = false;
     this.DisplayName = null;
+    this.Team = Team.Neutral;
 
     this.JustHitPosition = new Vector(0, 0, 0);
     this.JustHitMomentum = 0;
@@ -105,10 +109,18 @@ class Fighter extends Prop {
 
 
   // Takes damage from the set attacker, does NOT handle kills (kills should only be handled by server)
-  public TakeDamage(dmg: number, attacker: Fighter) {
-    this.HP -= dmg;
+  public TakeDamage(dmg: number, attacker: Fighter, hitDirection: Vector = new Vector(0, 0, 0)) {
+    if (attacker) { // If the attacker is given, check to make sure they are not a teammate
+      if (TeamManager.isTeammate(this.Team, attacker.Team)) { // If they are a teammate, simply take damage as knockback instead
+        this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(Vector.UnitVector(hitDirection), dmg / this.Mass));
+      } else { // If they are not teammates, track the attacker, and take the damage
+        this.LastHitBy = attacker.ID;
+        this.HP -= dmg;
+      }
+    } else if (!attacker) { // Simply subtract out the damage otherwise
+      this.HP -= dmg;
+    }
 
-    if (attacker) this.LastHitBy = attacker.ID;
     if (this.HP < 0) this.HP = 0;
   }
   // Award this fighter a kill, can be overridden by subclasses for special abilities
