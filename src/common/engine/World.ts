@@ -1,3 +1,4 @@
+/* eslint-disable object-curly-newline */
 import { Vector, Ray, TraceResult } from './math';
 import Player from './Player';
 import Entity from './Entity';
@@ -7,9 +8,11 @@ import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
-import { FighterType, MapPreset, EntityType } from './Enums';
+import { FighterType, MapPreset, EntityType, GamePhase } from './Enums';
 import { Sheep, Deer, Flamingo } from './fighters';
 import { TypeEnum } from '../events';
+import { Gamemode, MakeGamemode, GamemodeType } from './gamemode';
+/* eslint-enable object-curly-newline */
 
 
 // Internal Functions //
@@ -124,6 +127,10 @@ class World {
   public doReaping: boolean;
   private kills: IPlayerDied[];
 
+  public timer: number;
+  public phase: GamePhase;
+  public ruleset: Gamemode;
+
   constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
     if (loadTextures) this.Map.loadTexture();
@@ -138,6 +145,10 @@ class World {
 
     this.doReaping = false;
     this.kills = [];
+
+    this.timer = 0;
+    this.phase = GamePhase.Freeplay;
+    this.ruleset = MakeGamemode(GamemodeType.Deathmatch);
 
     MessageBus.subscribe('NewProjectile', (message) => {
       this.Bullets.push(message as Projectile);

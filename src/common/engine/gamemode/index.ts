@@ -1,9 +1,10 @@
 import Gamemode from './Gamemode';
+// eslint-disable-next-line import/no-cycle
 import TeamManager from './TeamManager';
 import { ScoreMethod } from '../Enums';
 
 /**
- * @enum
+ * @enum {number}
  * @name GamemodeType
  * @summary Gamemode presets handled as an enum for easy transferring.
  */

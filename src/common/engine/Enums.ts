@@ -55,7 +55,7 @@ enum RenderQuality {
 
 
 /**
- * @enum
+ * @enum {number}
  * @name ScoreMethod
  * @summary Used for determining how points are scored in a gamemode.
  */
@@ -69,7 +69,7 @@ enum ScoreMethod {
 }
 
 /**
- * @enum
+ * @enum {number}
  * @name Team
  * @summary Used for identifying what team a player is on.
  */
@@ -79,6 +79,23 @@ enum Team {
   Blue = 2,
   Green = 3,
   Yellow = 4,
+}
+
+/**
+ * @enum {number}
+ * @name GamePhase
+ * @summary Game
+ */
+enum GamePhase {
+  /** Freeplay - No special player management occurs here--join, fight, and play as you like */
+  Freeplay = 0,
+  /** Join Phase - Server waits for players to join here. Acts like freeplay, but points are cleared at end of phase.
+   * Bots populate server near end of period. */
+  Join = 1,
+  Setup = 2,
+  Battle = 3,
+  /** Round Finish - End of round. Displays leaderboard, player inputs ignored. */
+  RoundFinish = 4,
 }
 
 
@@ -105,5 +122,6 @@ export {
   RenderQuality,
   ScoreMethod,
   Team,
+  GamePhase,
   fighterTypeToString,
 };

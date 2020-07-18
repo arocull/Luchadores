@@ -1,10 +1,12 @@
 import Fighter from './Fighter';
+import { Team } from './Enums';
 
 class Player {
   private username: string;
   private kills: number; // Number of kills player has made
   private deaths: number; // Number of times player has died
   private maxStreak: number; // Largest kill streak this player has had
+  private team: Team;
 
   public accountedFor: boolean; // Client-side only, was this player accounted for?
 
@@ -21,6 +23,7 @@ class Player {
     this.kills = 0;
     this.deaths = 0;
     this.maxStreak = 0;
+    this.team = Team.Neutral;
 
     this.accountedFor = false;
 
@@ -73,6 +76,7 @@ class Player {
   assignCharacter(newCharacter: Fighter) {
     this.character = newCharacter;
     this.character.DisplayName = this.username;
+    this.character.Team = this.team;
   }
   // Remove player's character (fighter died)
   removeCharacter() {
@@ -111,6 +115,15 @@ class Player {
   getDeaths(): number {
     return this.deaths;
   }
+
+  getTeam(): Team {
+    return this.team;
+  }
+  assignTeam(newTeam: Team) {
+    this.team = newTeam;
+    if (this.character) this.character.Team = this.team;
+  }
+
 
   setTopics(send: string, receive: string) {
     this.topicSend = send;

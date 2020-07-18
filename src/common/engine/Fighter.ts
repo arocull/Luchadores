@@ -3,6 +3,7 @@ import Vector from './Vector';
 import Prop from './props/Prop';
 // eslint-disable-next-line object-curly-newline
 import { EntityType, FighterType, ColliderType, Team } from './Enums';
+// eslint-disable-next-line import/no-cycle
 import { TeamManager } from './gamemode';
 
 // Static Configurations
