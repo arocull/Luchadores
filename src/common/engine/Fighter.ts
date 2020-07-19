@@ -1,15 +1,23 @@
-// Includes Vector.js
+/* eslint-disable object-curly-newline */
 import Vector from './Vector';
 import Prop from './props/Prop';
-// eslint-disable-next-line object-curly-newline
 import { EntityType, FighterType, ColliderType, Team } from './Enums';
-// eslint-disable-next-line import/no-cycle
-import { TeamManager } from './gamemode';
+/* eslint-enable object-curly-newline */
 
 // Static Configurations
 const KILL_HEALTH_RETURN = 0.25; // Percentage of max health that is restored upon earning a kill
 
-/* A standard fighter with basic properties shared by all characters
+/**
+ * Listed here to avoid dependency looping.
+ * @function isTeammate
+ * @see TeamManager.isTeammate
+*/
+function isTeammate(a: Team, b: Team): boolean {
+  return (a === b && a !== Team.Neutral);
+}
+
+/**
+ * A standard fighter with basic properties shared by all characters
 
 Default properties that should always be replicated to client:
 - Class Type
@@ -112,7 +120,7 @@ class Fighter extends Prop {
   // Takes damage from the set attacker, does NOT handle kills (kills should only be handled by server)
   public TakeDamage(dmg: number, attacker: Fighter, hitDirection: Vector = new Vector(0, 0, 0)) {
     if (attacker) { // If the attacker is given, check to make sure they are not a teammate
-      if (TeamManager.isTeammate(this.Team, attacker.Team)) { // If they are a teammate, simply take damage as knockback instead
+      if (isTeammate(this.Team, attacker.Team)) { // If they are a teammate, simply take damage as knockback instead
         this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(Vector.UnitVector(hitDirection), dmg / this.Mass));
       } else { // If they are not teammates, track the attacker, and take the damage
         this.LastHitBy = attacker.ID;
