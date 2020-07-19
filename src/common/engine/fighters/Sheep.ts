@@ -35,7 +35,7 @@ class Sheep extends Fighter {
     super.CollideWithFighter(hit, momentum);
 
     if (momentum > this.MaxMomentum / 3) { // Stacking passengers adds to max momentum
-      hit.TakeDamage((momentum / this.MaxMomentum) * 40, this);
+      hit.TakeDamage((momentum / this.MaxMomentum) * 40, this, Vector.UnitVector(this.Velocity));
     }
   }
 

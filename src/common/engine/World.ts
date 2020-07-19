@@ -148,7 +148,7 @@ class World {
 
     this.timer = 0;
     this.phase = GamePhase.Freeplay;
-    this.ruleset = MakeGamemode(GamemodeType.Deathmatch);
+    this.ruleset = MakeGamemode(GamemodeType.TeamDeathmatch);
 
     MessageBus.subscribe('NewProjectile', (message) => {
       this.Bullets.push(message as Projectile);

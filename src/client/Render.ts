@@ -1,7 +1,7 @@
 // Client only -- Renders stuff to the screen
 /* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
-import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality } from '../common/engine/Enums';
+import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality, getTeamColor } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters';
 import Animator from './animation/Animator';
@@ -245,7 +245,7 @@ class Renderer {
 
         if (a.DisplayName) {
           canvas.globalAlpha = 1;
-          canvas.fillStyle = '#000000';
+          canvas.fillStyle = getTeamColor(a.Team);
 
           canvas.fillText(
             a.DisplayName,
@@ -525,7 +525,7 @@ class Renderer {
       canvas.font = '18px roboto';
       canvas.textBaseline = 'middle';
       canvas.textAlign = 'right';
-      canvas.fillStyle = '#000000';
+      canvas.fillStyle = getTeamColor(card.getOwner().getTeam());
 
       startY += height / 2;
 

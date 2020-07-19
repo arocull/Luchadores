@@ -75,7 +75,7 @@ class Projectile extends Entity {
   // Called when projectile hits a fighter--it does damage and then marks projectile to be destroyed
   Hit(hit: Fighter) {
     if (this.Owner && hit.getOwnerID() === this.Owner.getOwnerID()) return;
-    hit.TakeDamage(this.Damage, this.Owner);
+    hit.TakeDamage(this.Damage, this.Owner, Vector.UnitVector(this.Velocity));
     this.finished = true;
   }
 

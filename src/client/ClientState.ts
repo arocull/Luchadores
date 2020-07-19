@@ -235,6 +235,7 @@ class Client {
       plr.setKills(msg.players[i].kills);
       // TODO: Set max killstreak and/or current killstreak?
       plr.updatePing(msg.players[i].averagePing);
+      plr.assignTeam(msg.players[i].team);
       plr.accountedFor = true;
 
       if (isNew) this.onPlayerConnect(plr);
@@ -393,6 +394,7 @@ class Client {
     const mismatch = msg.characterID !== this.player.getCharacterID();
 
     this.player.assignCharacterID(msg.characterID);
+    this.player.assignTeam(msg.team);
 
     if (mismatch && this.character) { // Kill character if there was an ID mismatch
       this.character.HP = 0;
@@ -461,6 +463,7 @@ class Client {
       for (let i = 0; i < this.world.Fighters.length; i++) {
         if (this.world.Fighters[i].getOwnerID() === this.player.getCharacterID()) {
           this.character = this.world.Fighters[i];
+          this.player.assignCharacter(this.character);
           this.character.DisplayName = this.player.getUsername();
           this.respawning = true; // Mark as 'respawning' for camera lerp and UI
           break;

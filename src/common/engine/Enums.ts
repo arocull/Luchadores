@@ -110,6 +110,17 @@ function fighterTypeToString(type: FighterType) {
   return FighterTypeStrings[type];
 }
 
+const TeamColors = [
+  '#000000',
+  '#df0000',
+  '#0033df',
+  '#00ef33',
+  '#ffec00',
+];
+function getTeamColor(type: Team) {
+  return TeamColors[type];
+}
+
 
 export {
   EntityType,
@@ -124,4 +135,5 @@ export {
   Team,
   GamePhase,
   fighterTypeToString,
+  getTeamColor,
 };

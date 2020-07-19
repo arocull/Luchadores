@@ -121,12 +121,12 @@ class Fighter extends Prop {
   public TakeDamage(dmg: number, attacker: Fighter, hitDirection: Vector = new Vector(0, 0, 0)) {
     if (attacker) { // If the attacker is given, check to make sure they are not a teammate
       if (isTeammate(this.Team, attacker.Team)) { // If they are a teammate, simply take damage as knockback instead
-        this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(Vector.UnitVector(hitDirection), dmg / this.Mass));
+        this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(Vector.UnitVector(hitDirection), (dmg * 10) / this.Mass));
       } else { // If they are not teammates, track the attacker, and take the damage
         this.LastHitBy = attacker.ID;
         this.HP -= dmg;
       }
-    } else if (!attacker) { // Simply subtract out the damage otherwise
+    } else { // Simply subtract out the damage otherwise
       this.HP -= dmg;
     }
 

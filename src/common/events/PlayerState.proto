@@ -2,4 +2,5 @@ message PlayerState {
     required int32 type = 1;
     required int32 characterID = 2;
     required float health = 3;
+    required int32 team = 4;
 }

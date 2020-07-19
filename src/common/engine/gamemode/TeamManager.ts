@@ -18,6 +18,12 @@ class TeamManager {
     return (a === b && a !== Team.Neutral);
   }
 
+  /**
+   * @function assignTeams
+   * @summary Distributes a list of players among a set number of teams, or assigns them to neutral if there is only 1 team or less
+   * @param {Player[]} players List of players to distribute between teams
+   * @param {number} numTeams Number of teams
+   */
   public static assignTeams(players: Player[], numTeams: number) {
     const randomPlayers: Player[] = players.slice(); // Create duplicate array of players
 
@@ -36,6 +42,41 @@ class TeamManager {
         randomPlayers[i].assignTeam((i % numTeams) + 1);
       }
     }
+  }
+
+  /**
+   * @function assignTeam
+   * @summary Assigns the given player to the team with the lowest amount of players
+   * @param {Player} player Player to assign to a team
+   * @param {Player[]} players Current list of players (used for counting teams)
+   * @param {numbeR} numTeams Number of teams used in this gamemode
+   */
+  public static assignTeam(player: Player, players: Player[], numTeams: number) {
+    if (numTeams <= 1) { // If there is one team or less, default to neutral
+      player.assignTeam(Team.Neutral);
+      return;
+    }
+
+    // There are only four teams by default--not all of these will be filled
+    const teams: number[] = [0, 0, 0, 0];
+    // Tally how many players are on each team
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].getTeam() !== Team.Neutral) { // Don't tally neutrals
+        teams[players[i].getTeam() - 1]++;
+      }
+    }
+
+    // Find the team with the least amount of players (if all teams are equal, defaults to the first team)
+    let min = 1000;
+    let minIndex = 0;
+    for (let i = 0; i < numTeams; i++) { // Make sure we do not check teams that are not in use
+      if (teams[i] < min) {
+        min = teams[i];
+        minIndex = i;
+      }
+    }
+
+    player.assignTeam(minIndex + 1); // Assigns team to the minimum
   }
 }
 

@@ -17,6 +17,7 @@ import {
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
 import { MapPreset } from '../common/engine/Enums';
+import { TeamManager } from '../common/engine/gamemode';
 
 interface Action {
   player: Player;
@@ -108,6 +109,7 @@ class Clockwork {
         type: TypeEnum.PlayerState,
         characterID: conn.getCharacterID(),
         health: conn.getCharacter() ? conn.getCharacter().HP : 0,
+        team: conn.getTeam(),
       });
     }
   }
@@ -119,6 +121,7 @@ class Clockwork {
         username: this.connections[i].getUsername(),
         kills: this.connections[i].getKills(),
         averagePing: Math.floor(this.connections[i].getPing() + 0.5),
+        team: this.connections[i].getTeam(),
       });
     }
 
@@ -194,6 +197,9 @@ class Clockwork {
     const player = new Player(message.id); // Create player objects
     player.assignCharacterID(this.getLowestUnusedCharacterID()); // Assign them a basic numeric ID for world-state synchronization
     player.setTopics(message.topicOutbound, message.topicInbound);
+
+    // Assign player to team based off of ruleset and existing teams
+    TeamManager.assignTeam(player, this.connections, this.world.ruleset.teams);
 
     // TODO: Move message handling responsibility directly into `Player`?
     this.subscribers.attachSpecific(message.id, player.getTopicReceive(), (msg: IEvent) => { // Hook up event for when the player sets their username
