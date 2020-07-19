@@ -12,6 +12,7 @@ enum FighterType {
   Toad = 3,
 
   None = -1,
+  Soccerball = -2,
 }
 
 enum ProjectileType {
@@ -107,9 +108,11 @@ const FighterTypeStrings = [
   'Toad',
 ];
 function fighterTypeToString(type: FighterType) {
-  return FighterTypeStrings[type];
+  switch (type) {
+    case FighterType.Soccerball: return 'Soccerball';
+    default: return FighterTypeStrings[type];
+  }
 }
-
 const TeamColors = [
   '#000000',
   '#df0000',

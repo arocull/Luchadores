@@ -2,7 +2,7 @@
 import Vector from '../../common/engine/Vector';
 import Random from '../../common/engine/Random';
 import World from '../../common/engine/World';
-import { Fighter, Sheep, Deer, Flamingo } from '../../common/engine/fighters/index';
+import { Fighter, Sheep, Deer, Flamingo, Soccerball } from '../../common/engine/fighters/index';
 import { Projectile, BBullet, BFire } from '../../common/engine/projectiles/index';
 import { FighterType, ProjectileType } from '../../common/engine/Enums';
 import { IWorldState, IEntityFighter, IEntityProjectile } from '../../common/events/events';
@@ -26,6 +26,7 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
     if (packet.class === FighterType.Sheep) newFighter = new Sheep(packet.ownerId, pos);
     else if (packet.class === FighterType.Deer) newFighter = new Deer(packet.ownerId, pos);
     else if (packet.class === FighterType.Flamingo) newFighter = new Flamingo(packet.ownerId, pos);
+    else if (packet.class === FighterType.Soccerball) newFighter = new Soccerball(packet.ownerId, pos);
     else throw new Error(`Unknown fighter type: ${packet.class}`);
     world.Fighters.push(newFighter); // Otherwise, add them to the list
   } else newFighter.Position = pos;

@@ -9,9 +9,10 @@ import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
 import { FighterType, MapPreset, EntityType, GamePhase } from './Enums';
-import { Sheep, Deer, Flamingo } from './fighters';
+import { Sheep, Deer, Flamingo, Soccerball } from './fighters';
 import { TypeEnum } from '../events';
 import { Gamemode, MakeGamemode, GamemodeType } from './gamemode';
+import { map } from 'lodash';
 /* eslint-enable object-curly-newline */
 
 
@@ -148,7 +149,7 @@ class World {
 
     this.timer = 0;
     this.phase = GamePhase.Freeplay;
-    this.ruleset = MakeGamemode(GamemodeType.TeamDeathmatch);
+    this.applyRuleset(MakeGamemode(GamemodeType.Soccer));
 
     MessageBus.subscribe('NewProjectile', (message) => {
       this.Bullets.push(message as Projectile);
@@ -209,6 +210,24 @@ class World {
 
     return fight;
   }
+
+
+  public reset() {
+    this.Bullets = [];
+    this.Fighters = [];
+    this.Props = [];
+  }
+  public applyRuleset(newRuleset: Gamemode) {
+    this.ruleset = newRuleset;
+    this.reset();
+
+    if (this.ruleset.soccerballs > 0) {
+      for (let i = 1; i <= this.ruleset.soccerballs; i++) {
+        this.Fighters.push(new Soccerball(-i, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
+      }
+    }
+  }
+
 
   // Returns a list of IPlayerDied events for every fighter that has died
   // Also removes fighters from the Fighters list
