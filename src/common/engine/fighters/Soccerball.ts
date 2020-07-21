@@ -11,7 +11,7 @@ import { FighterType } from '../Enums';
  * To save data during replication, some values are now used for different purposes:
  * - Bullet Cooldown is now used as a timer (counts down to zero before spinning off)
  * - specialNumber is now used to describe how much momentum is stored in the object
- * - Acceleration is now used to store the direction of the incoming momentum boost
+ * - AimDirection is now used to store the direction of the incoming momentum boost
  */
 class Soccerball extends Fighter {
   private storedMomentum: number;
@@ -25,6 +25,7 @@ class Soccerball extends Fighter {
 
     this.ranged = false;
     this.storedMomentum = 0;
+    this.AimDirection = new Vector(0, 0, 0);
     this.frozen = false;
     this.lastAttacker = null;
     this.queueVelocity = null;
@@ -46,13 +47,14 @@ class Soccerball extends Fighter {
     const hitVelo = Vector.Multiply(Vector.UnitVector(hitDirection), (dmg * 10) / this.Mass);
 
     // If the hit velocity is in the opposite direction of current momentum, slow ball down
-    if (Vector.DotProduct(hitDirection, this.Velocity) < 0 && dmg < this.Velocity.length()) {
+    if (Vector.DotProduct(hitDirection, this.Velocity) < 0.5 && dmg < this.Velocity.length()) {
       this.Velocity = Vector.Add(this.Velocity, hitVelo);
     } else { // Otherwise, freeze the ball and add the momentum while resetting the timer
       this.BulletCooldown = 0.2;
-      this.Velocity = new Vector();
 
+      this.storeMomentum(this.Velocity);
       this.storeMomentum(hitVelo);
+      this.Velocity = new Vector();
 
       if (attacker) this.lastAttacker = attacker;
       if (this.storedMomentum * this.Mass > this.MaxMomentum) this.applyMomentum();
@@ -84,13 +86,13 @@ class Soccerball extends Fighter {
   }
 
   private applyMomentum() {
-    this.Velocity = Vector.Multiply(Vector.UnitVector(this.Acceleration), this.storedMomentum);
-    this.Acceleration = new Vector(0, 0, 0);
+    this.Velocity = Vector.Multiply(this.AimDirection, this.storedMomentum);
+    this.AimDirection = new Vector(0, 0, 0);
     this.setSpecialStates(0, false);
     this.BulletCooldown = 0;
   }
   private storeMomentum(moment: Vector) {
-    this.Acceleration = Vector.Divide(Vector.UnitVector(Vector.Add(Vector.Multiply(this.Acceleration, this.storedMomentum), moment)), 10);
+    this.AimDirection = Vector.UnitVector(Vector.Add(Vector.Multiply(this.AimDirection, this.storedMomentum), moment));
     this.storedMomentum += moment.length();
     this.frozen = true;
 

@@ -28,7 +28,7 @@ class AnimSoccerball extends Animator {
       if (!RenderSettings.nextParticle()) return;
       const smoke = new PSmoke(
         this.owner.Position,
-        Vector.Multiply(Vector.UnitVector(this.owner.Acceleration), -this.owner.getSpecialNumber() / 12),
+        Vector.Multiply(Vector.UnitVector(this.owner.getAim()), -this.owner.getSpecialNumber() / 12),
         this.owner.getSpecialNumber() / 75,
       );
       MessageBus.publish('Effect_NewParticle', smoke);
