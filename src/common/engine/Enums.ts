@@ -101,16 +101,13 @@ enum GamePhase {
 
 
 // Functions
-const FighterTypeStrings = [
-  'Sheep',
-  'Deer',
-  'Flamingo',
-  'Toad',
-];
 function fighterTypeToString(type: FighterType) {
   switch (type) {
+    case FighterType.Sheep: default: return 'Sheep';
+    case FighterType.Deer: return 'Deer';
+    case FighterType.Flamingo: return 'Flamingo';
+    case FighterType.Toad: return 'Toad';
     case FighterType.Soccerball: return 'Soccerball';
-    default: return FighterTypeStrings[type];
   }
 }
 const TeamColors = [

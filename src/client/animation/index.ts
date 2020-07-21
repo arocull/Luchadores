@@ -6,6 +6,8 @@ import AnimSheep from './Sheep';
 import AnimDeer from './Deer';
 import AnimFlamingo from './Flamingo';
 
+import AnimSoccerball from './Soccerball';
+
 
 function MakeAnimator(owner: Fighter): Animator {
   switch (owner.getCharacter()) {
@@ -15,6 +17,8 @@ function MakeAnimator(owner: Fighter): Animator {
       return new AnimDeer(owner);
     case FighterType.Flamingo:
       return new AnimFlamingo(owner);
+    case FighterType.Soccerball:
+      return new AnimSoccerball(owner);
     default:
       return new Animator(owner);
   }
@@ -26,5 +30,6 @@ export {
   AnimSheep,
   AnimDeer,
   AnimFlamingo,
+  AnimSoccerball,
   MakeAnimator,
 };

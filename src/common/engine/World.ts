@@ -12,7 +12,6 @@ import { FighterType, MapPreset, EntityType, GamePhase } from './Enums';
 import { Sheep, Deer, Flamingo, Soccerball } from './fighters';
 import { TypeEnum } from '../events';
 import { Gamemode, MakeGamemode, GamemodeType } from './gamemode';
-import { map } from 'lodash';
 /* eslint-enable object-curly-newline */
 
 
@@ -138,6 +137,7 @@ class World {
 
     this.Fighters = [];
     this.Bullets = [];
+    this.Props = [];
     if (loadProps) {
       this.Props = this.Map.getProps(mapPreset, loadTextures);
     } else {
@@ -215,7 +215,6 @@ class World {
   public reset() {
     this.Bullets = [];
     this.Fighters = [];
-    this.Props = [];
   }
   public applyRuleset(newRuleset: Gamemode) {
     this.ruleset = newRuleset;
@@ -223,7 +222,7 @@ class World {
 
     if (this.ruleset.soccerballs > 0) {
       for (let i = 1; i <= this.ruleset.soccerballs; i++) {
-        this.Fighters.push(new Soccerball(-i, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
+        this.Fighters.push(new Soccerball(-i - 1, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
       }
     }
   }
