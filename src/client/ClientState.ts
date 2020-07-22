@@ -6,8 +6,8 @@ import { MessageBus, Topics as BusTopics } from '../common/messaging/bus';
 import { SubscriberContainer } from '../common/messaging/container';
 import { decodeInt64 } from '../common/messaging/serde';
 import { IEvent, TypeEnum } from '../common/events/index';
-import { IPlayerConnect, IPlayerState, IWorldState, IPlayerListState } from '../common/events/events';
-import decodeWorldState from './network/WorldStateDecoder';
+import { IPlayerConnect, IPlayerState, IWorldState, IPlayerListState, IWorldRuleset } from '../common/events/events';
+import { decodeWorldState, decodeWorldRuleset } from './network/WorldStateDecoder';
 import World from '../common/engine/World';
 import Player from '../common/engine/Player';
 import Fighter from '../common/engine/Fighter';
@@ -46,7 +46,8 @@ class Client {
   private worldUpdatePending: boolean; // Is there a WorldState update that is pending
   private worldUpdateLastPacketTime: number; // Time the world state packet was received
   private worldUpdate: IWorldState; // WorldState event
-  private worldUpdateFirst: boolean; // Is this the first WorldState the client is receiving (applied map prop loading)?
+  private worldRulesetPending: boolean;
+  private worldRulesetUpdate: IWorldRuleset;
 
   // Render Hook-Ups, contain some render data but also important information
   private screenWidth: number;
@@ -81,7 +82,6 @@ class Client {
     this.worldUpdatePending = false;
     this.worldUpdateLastPacketTime = 0;
     this.worldUpdate = null;
-    this.worldUpdateFirst = true;
 
     // Initialize render hookups (implemented by ClientGraphics module)
     this.screenWidth = 600;
@@ -157,6 +157,10 @@ class Client {
                 this.worldUpdatePending = true;
                 this.worldUpdate = msg;
                 this.worldUpdateLastPacketTime = decodeInt64(msg.timestamp);
+                break;
+              case TypeEnum.WorldRuleset:
+                this.worldRulesetPending = true;
+                this.worldRulesetUpdate = msg;
                 break;
               case TypeEnum.PlayerListState:
                 this.onPlayerListUpdate(msg);
@@ -439,13 +443,21 @@ class Client {
     }
 
 
+    // World Ruleset generates a new world with proper map and gamemode applied
+    if (this.worldRulesetPending && this.worldRulesetUpdate) {
+      this.worldRulesetPending = false;
+      this.world = decodeWorldRuleset(this.worldRulesetUpdate);
+      this.character = null;
+      this.player.removeCharacter();
+      this.respawnTimer = 3;
+      this.camera.SetFocusPosition(new Vector(this.world.Map.Width / 2, this.world.Map.Height / 2, 0));
+    }
     if (this.worldUpdatePending && this.worldUpdate) {
       this.worldUpdatePending = false;
 
       // Applies world state and resets UpdateMissed on all updated fighters
-      decodeWorldState(this.worldUpdate, this.world, this.worldUpdateFirst);
+      decodeWorldState(this.worldUpdate, this.world);
       appliedWorldState = true;
-      this.worldUpdateFirst = false;
 
       // Prune fighters who fail to recieve consistent updates from server
       for (let i = 0; i < this.world.Fighters.length; i++) {

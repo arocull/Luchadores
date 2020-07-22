@@ -25,6 +25,12 @@ class Random {
     index++;
     return Math.sin(index * seed - index ** Math.PI + seed / index) / 2 + 0.5;
   }
+  static getInteger(min: number, max: number): number {
+    return Math.floor(this.getFloat() * (max - min) + min + 0.5);
+  }
+  static getBoolean(): boolean {
+    return (this.getFloat() > 0.5);
+  }
 
   static getSeed(): number {
     return seed;

@@ -63,6 +63,7 @@ function AnimationFrame(tick: number) {
     'Sprites/Sheep.png',
     'Sprites/Deer.png',
     'Sprites/Flamingo.png',
+    'Sprites/Soccerball.png',
     'Sprites/Barrel.png',
   ]).then(() => {
     client = new ClientState(window.location.host, true);

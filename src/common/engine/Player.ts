@@ -6,6 +6,7 @@ class Player {
   private kills: number; // Number of kills player has made
   private deaths: number; // Number of times player has died
   private maxStreak: number; // Largest kill streak this player has had
+  private score: number;
   private team: Team;
 
   public accountedFor: boolean; // Client-side only, was this player accounted for?
@@ -108,9 +109,25 @@ class Player {
   getMaxKillstreak(): number {
     return this.maxStreak;
   }
+  resetKillstreak() {
+    this.maxStreak = 0;
+  }
+
+  earnScore(points: number = 1) {
+    this.score += points;
+  }
+  setScore(newScore: number) {
+    this.score = newScore;
+  }
+  getScore() {
+    return this.score;
+  }
 
   earnDeath() {
     this.deaths++;
+  }
+  setDeaths(newDeaths: number) {
+    this.deaths = newDeaths;
   }
   getDeaths(): number {
     return this.deaths;

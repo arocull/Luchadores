@@ -4,7 +4,7 @@ import Camera from '../Camera';
 import Renderer from '../Render';
 import { MessageBus } from '../../common/messaging/bus';
 import { Fighter } from '../../common/engine/fighters';
-import { FighterType } from '../../common/engine/Enums';
+import { FighterType, GamePhase } from '../../common/engine/Enums';
 import AssetPreloader from '../AssetPreloader';
 
 // UI Manager - Class used for UI management and settings
@@ -28,6 +28,14 @@ class UIManager {
 
   private killcam: UITextBox;
   private connectionText: UITextBox;
+
+  /** Timer displayed on top of screen, depicts how much time is left in the current phase */
+  private roundTimer: UITextBox;
+  /** Text displaying phase of the round */
+  private roundPhase: UITextBox;
+  /** Title text displayed by world for broadcasted messages */
+  private roundTitle: UITextBox;
+  private roundTitleTimer: number;
 
   constructor() {
     this.backdrop = new UIFrame(0, 0, 1, 1, false);
@@ -76,6 +84,32 @@ class UIManager {
     this.killcam.alpha = 0;
     this.killcam.textFont = 'flamenco';
     this.killcam.textFontSize = 60;
+
+    this.roundTimer = new UITextBox(0.45, 0, 0.1, 0.05, false, '0:00');
+    this.roundTimer.alpha = 0.5;
+    this.roundTimer.renderStyle = '#555555';
+    this.roundTimer.borderRenderStyle = '#bbbbbb';
+    this.roundTimer.color = this.roundTimer.renderStyle;
+    this.roundTimer.borderColor = this.roundTimer.borderRenderStyle;
+    this.roundTimer.textStyle = '#ffffff';
+    this.roundTimer.textFontSize = 36;
+    this.roundTimer.textAlpha = 1;
+
+    this.roundPhase = new UITextBox(0, 0.05, 1, 0.025, false, 'Join Phase');
+    this.roundPhase.alpha = 0;
+    this.roundPhase.textStyle = '#ffffff';
+    this.roundPhase.textFontSize = 24;
+    this.roundPhase.textFont = 'flamenco';
+
+    this.roundTitle = new UITextBox(0, 0.1, 1, 0.075, false, '');
+    this.roundTitle.alpha = 0;
+    this.roundTitle.textStyle = '#ffffff';
+    this.roundTitle.textFontSize = 48;
+    this.roundTitle.textFont = 'flamenco';
+    MessageBus.subscribe('Title', (msg) => {
+      this.roundTitle.text = msg;
+      this.roundTitleTimer = 5;
+    });
 
     this.connectionText = new UITextBox(0, 0.9, 1, 0.1, false, 'Stabilizing connection...');
     this.connectionText.alpha = 0.1;
@@ -127,6 +161,36 @@ class UIManager {
   // Sets the connection text
   public setConnectionText(text: string = '') {
     this.connectionText.text = text;
+  }
+  /**
+   * @function updateRoundInfo
+   * @summary Updates roundTimer and roundPhase with given info
+   * @param {number} timeLeft Time left in the current phase of the round
+   * @param {GamePhase} phase Current phase of the game (i.e. join phase, battle, setup, etc)
+   */
+  public updateRoundInfo(timeLeft: number, phase: GamePhase, gamemode: string) {
+    if (timeLeft === -1) {
+      this.roundTimer.text = '∞';
+    } else {
+      const mins = Math.floor(timeLeft / 60);
+      const secs = Math.floor(timeLeft % 60);
+      if (secs < 10) this.roundTimer.text = `${mins}:0${secs}`;
+      else this.roundTimer.text = `${mins}:${secs}`;
+    }
+
+    switch (phase) {
+      case GamePhase.Freeplay:
+        this.roundPhase.text = 'Freeplay'; break;
+      case GamePhase.Join:
+        this.roundPhase.text = 'Waiting for Players'; break;
+      case GamePhase.Setup:
+        this.roundPhase.text = 'Setup'; break;
+      case GamePhase.Battle:
+        this.roundPhase.text = gamemode; break;
+      case GamePhase.RoundFinish:
+        this.roundPhase.text = 'Scoreboard'; break;
+      default: this.roundPhase.text = '';
+    }
   }
 
   // Open and close functions for different menus (in case we want to add transitions later)
@@ -242,10 +306,23 @@ class UIManager {
       }
     }
 
-    // Options Gear Button //
+    // Options Gear Button and Game Info //
     if (!this.inGUIMode()) {
       this.doFrameInteraction(InputState, cam, this.settingsButton);
       Renderer.DrawUIFrame(canvas, cam, this.settingsButton);
+
+      // If title message was broadcasting the allotted amount of time, remove it
+      if (this.roundTitleTimer > 0) {
+        this.roundTitleTimer -= DeltaTime;
+        if (this.roundTitleTimer <= 0) {
+          this.roundTitleTimer = 0;
+          this.roundTitle.text = '';
+        }
+      }
+
+      Renderer.DrawUIFrame(canvas, cam, this.roundTimer);
+      Renderer.DrawUIFrame(canvas, cam, this.roundPhase);
+      Renderer.DrawUIFrame(canvas, cam, this.roundTitle);
     }
 
     // Killcam - only draw if no character is present, character is not spawning, and select screens are not open

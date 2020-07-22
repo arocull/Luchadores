@@ -1,5 +1,4 @@
 import Gamemode from './Gamemode';
-// eslint-disable-next-line import/no-cycle
 import TeamManager from './TeamManager';
 import { ScoreMethod } from '../Enums';
 
@@ -35,21 +34,21 @@ enum GamemodeType {
 function MakeGamemode(preset: GamemodeType) {
   switch (preset) {
     case GamemodeType.Deathmatch: default: // Deathmatch is default gamemode
-      return new Gamemode('Deathmatch', 'First luchador to 20 kills wins', 20, 1, ScoreMethod.Kills, false, 0);
+      return new Gamemode('Deathmatch', 'First luchador to 20 kills wins', 20, 1, ScoreMethod.Kills, false, 240, 0);
     case GamemodeType.TeamDeathmatch:
-      return new Gamemode('Team Deathmatch', 'First team to 40 kills wins', 40, 2, ScoreMethod.Kills, false, 0);
+      return new Gamemode('Team Deathmatch', 'First team to 40 kills wins', 40, 2, ScoreMethod.Kills, false, 300, 0);
     case GamemodeType.Skirmish:
-      return new Gamemode('Skirmish', 'Last luchador standing wins', 0, 1, ScoreMethod.Kills, true, 0);
+      return new Gamemode('Skirmish', 'Last luchador standing wins', 0, 1, ScoreMethod.Kills, true, 120, 0);
     case GamemodeType.TeamSkirmish:
-      return new Gamemode('Team Skirmish', 'Last team standing wins', 0, 2, ScoreMethod.Kills, true, 0);
+      return new Gamemode('Team Skirmish', 'Last team standing wins', 0, 2, ScoreMethod.Kills, true, 150, 0);
     case GamemodeType.ZoneControl:
-      return new Gamemode('Zone Control', 'One luchador must hold the zone for a total of 30 seconds', 30, 1, ScoreMethod.Zone, false, 0);
+      return new Gamemode('Zone Control', 'One luchador must hold the zone for a total of 30 seconds', 30, 1, ScoreMethod.Zone, false, 180, 0);
     case GamemodeType.TeamZoneControl:
-      return new Gamemode('King of the Hill', 'One team must hold the zone for a total of 90 seconds', 90, 2, ScoreMethod.Zone, false, 0);
+      return new Gamemode('King of the Hill', 'One team must hold the zone for a total of 90 seconds', 90, 2, ScoreMethod.Zone, false, 300, 0);
     case GamemodeType.Soccer:
-      return new Gamemode('Luchador Ball', 'A lethal game of soccer, first team to 5 goals wins', 5, 2, ScoreMethod.Goals, false, 1);
+      return new Gamemode('Luchador Ball', 'A lethal game of soccer, first team to 5 goals wins', 5, 2, ScoreMethod.Goals, false, 300, 1);
     case GamemodeType.Custom:
-      return new Gamemode('Custom', 'A customly configurable gamemode!', 20, 1, ScoreMethod.Kills, false, 0);
+      return new Gamemode('Custom', 'A customly configurable gamemode!', 20, 1, ScoreMethod.Kills, false, 180, 0);
   }
 }
 

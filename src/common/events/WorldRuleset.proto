@@ -1,0 +1,15 @@
+message WorldRuleset {
+    required int32 type = 1;
+    required int32 mapId = 2;
+    required int32 mapWidth = 3;
+    required int32 mapHeight = 4;
+    required float mapFriction = 5;
+    required int32 mapWallStrength = 6;
+    required bool loadProps = 7;
+    required int32 winScore = 8;
+    required int32 teams = 9;
+    required int32 scoreMethod = 10;
+    required bool permadeath = 11;
+    required string name = 12;
+    required string descript = 13;
+}

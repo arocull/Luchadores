@@ -5,7 +5,8 @@ import World from '../../common/engine/World';
 import { Fighter, Sheep, Deer, Flamingo, Soccerball } from '../../common/engine/fighters/index';
 import { Projectile, BBullet, BFire } from '../../common/engine/projectiles/index';
 import { FighterType, ProjectileType } from '../../common/engine/Enums';
-import { IWorldState, IEntityFighter, IEntityProjectile } from '../../common/events/events';
+import { IWorldState, IWorldRuleset, IEntityFighter, IEntityProjectile } from '../../common/events/events';
+import { Gamemode } from '../../common/engine/gamemode';
 /* eslint-enable object-curly-newline */
 
 
@@ -69,22 +70,19 @@ function generateProjectile(world: World, packet: IEntityProjectile): Projectile
 }
 
 
-// Decode world-state--hand it a WorldState event and then a world instance to apply the changes to
 /* eslint-disable no-param-reassign */
-function decodeWorldState(state: IWorldState, world: World, firstState: boolean = false) {
+/**
+ * @function decodeWorldState
+ * @summary Decode world-state--hand it a WorldState event and then a world instance to apply the changes to
+ * @param {IWorldState} state WorldState event to decode
+ * @param {World} world World to apply WorldState event to
+ */
+function decodeWorldState(state: IWorldState, world: World) {
   Random.setSeed(state.randomSeed);
   Random.setIndex(state.randomIndex);
 
-  world.Map.Width = state.mapWidth;
-  world.Map.Height = state.mapHeight;
-  world.Map.Friction = state.mapFriction;
-  world.Map.wallStrength = state.mapWallStrength;
-  world.Map.mapID = state.mapId;
-
-  if (firstState) {
-    world.Map.loadTexture(state.mapId);
-    world.Props = world.Map.getProps(state.mapId, true);
-  }
+  world.timer = state.timer;
+  world.phase = state.phase;
 
   for (let i = 0; i < state.fighters.length; i++) {
     updateFighter(world, state.fighters[i] as IEntityFighter);
@@ -97,4 +95,30 @@ function decodeWorldState(state: IWorldState, world: World, firstState: boolean 
 }
 /* eslint-enable no-param-reassign */
 
-export { decodeWorldState as default };
+/**
+ * @function decodeWorldRuleset
+ * @summary Generates a new world with a given map and ruleset applied
+ * @param {IWorldRuleset} state WorldRuleset event to decode
+ * @returns {World} Returns a newly generated world
+ */
+function decodeWorldRuleset(state: IWorldRuleset): World {
+  const world = new World(state.mapId, state.loadProps, true);
+  world.Map.Width = state.mapWidth;
+  world.Map.Height = state.mapHeight;
+  world.Map.Friction = state.mapFriction;
+  world.Map.wallStrength = state.mapWallStrength;
+
+  world.ruleset = new Gamemode(
+    state.name,
+    state.descript,
+    state.winScore,
+    state.teams,
+    state.scoreMethod,
+    state.permadeath,
+    0,
+    0,
+  );
+  return world;
+}
+
+export { decodeWorldState, decodeWorldRuleset };

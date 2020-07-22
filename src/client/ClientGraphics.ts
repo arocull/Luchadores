@@ -12,6 +12,7 @@ import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
 import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
+import { GamePhase } from '../common/engine/Enums';
 
 class ClientGraphics {
   public uiManager: UIManager;
@@ -61,6 +62,8 @@ class ClientGraphics {
   }
 
   public tick(DeltaTime: number) {
+    this.world = this.clientState.getWorld();
+
     // Apply visual effects, such as smashing, rose petals, and animators
     for (let i = 0; i < this.world.Fighters.length; i++) {
       const a = this.world.Fighters[i];
@@ -104,6 +107,8 @@ class ClientGraphics {
     this.clientState.scaleScreen(this.viewport.width, this.viewport.height);
     this.clientState.camera.UpdateFocus(DeltaTime);
 
+    this.uiManager.updateRoundInfo(this.world.timer, this.world.phase, this.world.ruleset.name);
+
     // Draw screen
     Render.DrawScreen(this.canvas, this.camera, this.world.Map, this.world.Fighters, this.world.Bullets, this.particles, this.world.Props);
     // Do interface actions and draw interface
@@ -113,7 +118,7 @@ class ClientGraphics {
     const playerList = this.clientState.getPlayerList();
     const killfeed = this.clientState.getKillFeed();
 
-    if (this.uiManager.isPlayerListOpen() && !this.uiManager.inGUIMode()) {
+    if ((this.uiManager.isPlayerListOpen() || this.world.phase === GamePhase.RoundFinish) && !this.uiManager.inGUIMode()) {
       Render.DrawPlayerList(this.canvas, this.camera, 'Player List');
       for (let i = 0; i < playerList.length; i++) {
         playerList[i].update();

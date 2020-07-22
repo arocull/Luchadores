@@ -5,7 +5,7 @@ import { Fighter } from '../common/engine/fighters';
 import { Projectile } from '../common/engine/projectiles';
 import { EntityType } from '../common/engine/Enums';
 import { Timer } from '../common/engine/time/Time';
-import { TypeEnum } from '../common/events';
+import { TypeEnum, IWorldRuleset } from '../common/events';
 import { IWorldState } from '../common/events/events';
 
 function encodeEntity(obj: Entity): any {
@@ -35,18 +35,19 @@ function encodeEntity(obj: Entity): any {
   return result;
 }
 
-// Encodes the entire WorldState into a Protobuff
-// May need to include time packet was sent?
+/**
+ * @function encodeWorldState
+ * @summary Encodes data from the given world into a packet to be sent to clients
+ * @param {World} world Given world to encode
+ * @returns {IWorldState} WorldState event
+ */
 function encodeWorldState(world: World): IWorldState {
   const result: IWorldState = {
     type: TypeEnum.WorldState,
     randomSeed: Random.getSeed(),
     randomIndex: Random.getIndex(),
-    mapWidth: world.Map.Width,
-    mapHeight: world.Map.Height,
-    mapFriction: world.Map.Friction,
-    mapId: world.Map.mapID,
-    mapWallStrength: world.Map.wallStrength,
+    timer: world.timer,
+    phase: world.phase,
     timestamp: Timer.now(),
     fighters: [],
     projectiles: [],
@@ -62,4 +63,22 @@ function encodeWorldState(world: World): IWorldState {
   return result;
 }
 
-export { encodeWorldState as default };
+function encodeWorldRuleset(world: World): IWorldRuleset {
+  return {
+    type: TypeEnum.WorldRuleset,
+    mapId: world.Map.mapID,
+    mapWidth: world.Map.Width,
+    mapHeight: world.Map.Height,
+    mapFriction: world.Map.Friction,
+    mapWallStrength: world.Map.wallStrength,
+    loadProps: (world.Props.length > 0),
+    winScore: world.ruleset.winScore,
+    teams: world.ruleset.teams,
+    scoreMethod: world.ruleset.scoreMethod,
+    permadeath: world.ruleset.permadeath,
+    name: world.ruleset.name,
+    descript: world.ruleset.descript,
+  } as IWorldRuleset;
+}
+
+export { encodeWorldState, encodeWorldRuleset };

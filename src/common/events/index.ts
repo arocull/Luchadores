@@ -66,6 +66,10 @@ export interface IWorldState extends events.IWorldState {
   type: TypeEnum.WorldState;
 }
 
+export interface IWorldRuleset extends events.IWorldRuleset {
+  type: TypeEnum.WorldRuleset;
+}
+
 export interface IPlayerListState extends events.IPlayerListState {
   type: TypeEnum.PlayerListState;
 }
@@ -86,5 +90,6 @@ export type IEvent =
   | IPing
   | IPong
   | IWorldState
+  | IWorldRuleset
   | IPlayerListState
   ;

@@ -3,7 +3,7 @@ import { Timer } from '../common/engine/time/Time';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
 import World from '../common/engine/World';
-import encodeWorldState from './WorldStateEncoder';
+import { encodeWorldState, encodeWorldRuleset } from './WorldStateEncoder';
 import {
   TypeEnum,
   IEvent,
@@ -16,8 +16,9 @@ import {
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
-import { MapPreset } from '../common/engine/Enums';
-import { TeamManager } from '../common/engine/gamemode';
+import { TeamManager, MakeGamemode, GamemodeType } from '../common/engine/gamemode';
+import Random from '../common/engine/Random';
+import { FighterType, GamePhase } from '../common/engine/Enums';
 
 interface Action {
   player: Player;
@@ -36,19 +37,104 @@ class Clockwork {
   private tickTimeout: NodeJS.Timeout;
   private lastPublish: number = 0;
 
+  private inSetup: boolean;
+
   constructor() {
-    this.world = new World(MapPreset.Sandy, true);
-    this.world.doReaping = true;
+    Random.randomSeed();
 
     this.actions = {};
     this.subscribers = new SubscriberContainer();
     this.tickRate = Math.floor(1000 / 66); // Number of milliseconds per tick (tick rate = 66 per second)
     this.publishRate = Math.floor(1000 / 20); // Number of milliseconds per world state publish
+
+    // Round begins function--clear away bullets, reassign teams, respawn everyone and reset stats, and update player list to reflect new info
+    this.subscribers.attach('RoundBegan', (world) => {
+      if (world === this.world) {
+        this.inSetup = true;
+        this.world.Bullets = [];
+
+        TeamManager.assignTeams(this.connections, this.world.ruleset.teams);
+        this.forceRespawns();
+        this.updatePlayerList();
+        this.broadcast(encodeWorldState(this.world));
+        this.inSetup = false;
+      }
+    });
+    this.subscribers.attach('RoundEnded', (world) => {
+      if (world === this.world) this.startRound();
+    });
+
+    this.startRound();
+  }
+
+  /**
+   * @function startRound
+   * @summary Selects a random map and gamemode, broadcasts a ruleset message, and begins the round
+   *
+   * @todo Random gamemode picks based off of number of players
+   * @todo Potentially add voting options in future?
+   * @todo Servers dedicated to single gamemodes
+   * @todo Custom game modes on private servers
+   */
+  private startRound() {
+    this.world = new World((Math.random() > 0.5) ? 0 : 1, (Math.random() > 0.5), false);
+    this.world.doReaping = true;
+
+    // Clear out all characters and clear out stats as this is a new match
+    for (let i = 0; i < this.connections.length; i++) {
+      this.connections[i].removeCharacter();
+      this.connections[i].setKills(0);
+      this.connections[i].resetKillstreak();
+      this.connections[i].setDeaths(0);
+      this.connections[i].setScore(0);
+    }
+
+    // Select a random gamemode, apply ruleset, and broadcast it
+    const ruleset = MakeGamemode(GamemodeType.Deathmatch); // Random.getInteger(1, 6));
+    this.world.applyRuleset(ruleset);
+    this.broadcast(encodeWorldRuleset(this.world));
+
+    // During join phase, players should all be neutral and player list should be updated
+    TeamManager.assignTeams(this.connections, 1);
+    this.updatePlayerList();
+
+    Logger.info('Starting a new round with settings\n\tMap Preset %i with props %j\n\tRuleset %j', this.world.Map.mapID, (this.world.Props.length > 0), ruleset);
+  }
+  /**
+   * @function forceRespawns
+   * Forces respawns on all players with existing fighters and resets player stats
+   */
+  private forceRespawns() {
+    for (let i = 0; i < this.connections.length; i++) {
+      const plr = this.connections[i];
+      if (plr.getCharacter()) {
+        const fighterClass: FighterType = plr.getCharacter().getCharacter();
+
+        // Remove existing character from world
+        const index = this.world.Fighters.indexOf(plr.getCharacter());
+        if (index >= 0) {
+          this.world.Fighters.splice(index, 1);
+        }
+
+        // Make sure they're dead and doesn't count as a kill
+        plr.getCharacter().HP = 0;
+        plr.getCharacter().LastHitBy = 0;
+        plr.removeCharacter();
+
+        // Respawn a new character for them ASAP
+        plr.assignCharacter(this.world.spawnFighter(plr, fighterClass)); // Spawn them a fighter
+      }
+
+      plr.setKills(0);
+      plr.resetKillstreak();
+      plr.setDeaths(0);
+      plr.setScore(0);
+    }
   }
 
   private tick(delta: number) {
     if (this.running) {
-      if (delta > 0) {
+      if (delta > 0 && !this.inSetup) {
         // Apply each action into the world state.
         Object.values(this.actions).forEach((act) => {
           this.world.applyAction(act.player, act.input);
@@ -57,6 +143,8 @@ class Clockwork {
 
         // Then tick the world by the tick rate for this tick
         this.world.tick(this.tickRate / 1000);
+        // Win-condition is server only
+        this.world.checkWinCondition(this.connections);
 
         // Is it time to publish another world state?
         const now = Timer.now();
@@ -93,15 +181,28 @@ class Clockwork {
     }
   }
 
+  /**
+   * @function broadcast
+   * @summary Broadcasts a single message to all clients
+   * @param {IEvent} message Message to broadcast to all clients
+   */
   public broadcast(message: IEvent) {
     this.connections.forEach((conn) => MessageBus.publish(conn.getTopicSend(), message));
   }
-
+  /**
+   * @function broadcastList
+   * @summary Broadcasts a list of messages to all clients
+   * @param {IEvent[]} messages Messages to broadcast to all clients
+   */
   public broadcastList(messages: IEvent[]) {
     messages.forEach((msg) => this.broadcast(msg));
   }
 
-  public updatePlayerStates() { // Iterates through all players and informs them of their character ID and health
+  /**
+   * @function updatePlayerStates
+   * @summary Iterates through all players and informs them of their character ID, health, and team
+   */
+  public updatePlayerStates() {
     for (let i = 0; i < this.connections.length; i++) {
       // Only sends message if their character exists though (they shouldn't need it if they don't have a character)
       const conn = this.connections[i];
@@ -113,6 +214,19 @@ class Clockwork {
       });
     }
   }
+  /**
+   * @function updatePlayerList
+   * @summary Builds a list of player info and broadcasts it to all players
+   * @description Builds a list of player info from all current connections, and broadcasts the list as an event to all players.
+   * Information contains
+   * - Character ID
+   * - Username
+   * - Kills
+   * - Average Ping
+   * - Team
+   *
+   * A message of the character ID of the player who is recieving the packet is also sent to prevent duplication
+   */
   public updatePlayerList() {
     const list = [];
     for (let i = 0; i < this.connections.length; i++) { // Build player list info
@@ -167,6 +281,11 @@ class Clockwork {
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
     plr.setUsername(message.username);
 
+    MessageBus.publish(plr.getTopicSend(), encodeWorldRuleset(this.world));
+
+    // Assign player to team based off of ruleset and existing teams (wait to username is made to avoid filling with AFK players)
+    if (this.world.phase !== GamePhase.Join) TeamManager.assignTeam(plr, this.connections, this.world.ruleset.teams);
+
     // Broadcast an state of all player names, scores, IDs, etc; also sends clients their character IDs
     this.updatePlayerList();
   }
@@ -197,9 +316,6 @@ class Clockwork {
     const player = new Player(message.id); // Create player objects
     player.assignCharacterID(this.getLowestUnusedCharacterID()); // Assign them a basic numeric ID for world-state synchronization
     player.setTopics(message.topicOutbound, message.topicInbound);
-
-    // Assign player to team based off of ruleset and existing teams
-    TeamManager.assignTeam(player, this.connections, this.world.ruleset.teams);
 
     // TODO: Move message handling responsibility directly into `Player`?
     this.subscribers.attachSpecific(message.id, player.getTopicReceive(), (msg: IEvent) => { // Hook up event for when the player sets their username

@@ -40,6 +40,8 @@ function getProtobufType(object: IEvent): ProtobufTypeSerde {
       return events.PingPong;
     case TypeEnum.WorldState:
       return events.WorldState;
+    case TypeEnum.WorldRuleset:
+      return events.WorldRuleset;
     case TypeEnum.PlayerListState:
       return events.PlayerListState;
     default:

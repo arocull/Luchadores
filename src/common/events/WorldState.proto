@@ -6,12 +6,9 @@ message WorldState {
     required int32 type = 1;
     required int32 randomSeed = 2;
     required int32 randomIndex = 3;
-    required int32 mapWidth = 4;
-    required int32 mapHeight = 5;
-    required float mapFriction = 6;
-    required int32 mapId = 7;
-    required int32 mapWallStrength = 8;
-    required int64 timestamp = 9;
-    repeated EntityFighter fighters = 10;
-    repeated EntityProjectile projectiles = 11;
+    required int32 timer = 4;
+    required int32 phase = 5;
+    required int64 timestamp = 6;
+    repeated EntityFighter fighters = 7;
+    repeated EntityProjectile projectiles = 8;
 }

@@ -1,5 +1,5 @@
-import encodeWorldState from '../../../src/server/WorldStateEncoder';
-import decodeWorldState from '../../../src/client/network/WorldStateDecoder';
+import { encodeWorldState } from '../../../src/server/WorldStateEncoder';
+import { decodeWorldState } from '../../../src/client/network/WorldStateDecoder';
 import Random from '../../../src/common/engine/Random';
 import Vector from '../../../src/common/engine/Vector';
 import World from '../../../src/common/engine/World';
@@ -30,10 +30,6 @@ test('world state encode / decode', () => {
 
   expect(Random.getSeed()).toBe(10);
   expect(Random.getIndex()).toBe(5);
-
-  expect(end.Map.Width).toBe(100);
-  expect(end.Map.Height).toBe(50);
-  expect(end.Map.Friction).toBe(0.5);
 
   expect(start.Fighters.length).toBe(2);
   expect(start.Bullets.length).toBe(1);
