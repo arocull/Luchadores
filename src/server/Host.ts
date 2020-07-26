@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
 
+import config from 'config';
+
 import logger from './Logger';
 import SocketHost from './SocketHost';
 import WebHost from './WebHost';
@@ -41,6 +43,18 @@ class Host extends EventEmitter {
 
     this.socketHost.on('connect', connectionCountChange);
     this.socketHost.on('disconnect', connectionCountChange);
+
+    // Report to heartbeat server(s).
+    // We do this even if the game instance is not running because it *could*
+    // be running if someone would just connect.
+    setInterval(() => {
+      const servers = config.get<string[]>('heartbeatServers') || [];
+      if (!Array.isArray(servers) || typeof servers[0] !== 'string') {
+        console.error('Heartbeat servers is misconfigured as %j', servers);
+        return;
+      }
+      console.log('Reporting with heartbeat servers:', servers);
+    }, 10 * 1000); // TODO: Re-evaluate this reporting interval later
   }
 }
 

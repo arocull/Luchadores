@@ -1,0 +1,5 @@
+{
+  "heartbeatServers": [
+    "http://localhost:3500"
+  ]
+}

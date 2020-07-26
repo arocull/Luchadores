@@ -11,7 +11,7 @@
     "fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "clean": "rm -rf dist/",
     "generate-events": "pbjs -t static-module -w commonjs src/common/events/**/*.proto -o src/common/events/events.js && pbts -o src/common/events/events.d.ts src/common/events/events.js",
-    "prebuild": "mkdir -p dist/public/ && cp -R assets/* dist/public/ && npm run generate-events",
+    "prebuild": "mkdir -p dist/public/ && cp -R assets/* dist/public/ && mkdir -p dist/config/ && cp -R config/* dist/config/ && npm run generate-events",
     "build": "tsc && webpack --config ./webpack/development.js",
     "rebuild": "npm run clean && npm run build",
     "watch": "npm run prebuild && webpack --config ./webpack/development.js --watch",
