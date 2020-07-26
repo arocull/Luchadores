@@ -64,8 +64,8 @@ class Host extends EventEmitter {
         const heartbeatData: HeartbeatData = {
           title: config.get<string>('server.title'),
           address: config.get<string>('server.address'),
-          playerCount: 0, // TODO!
-          playerCapacity: 20, // TODO!
+          playerCount: this.getPlayerCount(),
+          playerCapacity: this.getPlayerCapacity(),
         };
 
         addresses.forEach((address) => {
@@ -79,6 +79,19 @@ class Host extends EventEmitter {
         });
       }, 10 * 1000); // TODO: Re-evaluate this reporting interval later
     }
+  }
+
+  private getPlayerCount(): number {
+    if (this.clockwork) {
+      return this.clockwork.getPlayerCount();
+    }
+    return 0; // No server instance running
+  }
+
+  private getPlayerCapacity(): number {
+    // TODO: Implement an actual capacity.
+    //       See issue #75 in Gitlab
+    return 20;
   }
 }
 

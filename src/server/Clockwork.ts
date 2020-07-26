@@ -281,6 +281,10 @@ class Clockwork {
   pushAction(action: Action) {
     this.actions[action.player.getCharacterID()] = action;
   }
+
+  getPlayerCount(): number {
+    return this.connections.length;
+  }
 }
 
 export { Clockwork as default };
