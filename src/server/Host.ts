@@ -8,36 +8,34 @@ import Clockwork from './Clockwork';
 class Host extends EventEmitter {
   private socketHost: SocketHost;
   private webHost: WebHost;
-  private instance: Clockwork;
+  private clockwork: Clockwork;
 
   constructor(port: number) {
     super();
 
     this.webHost = new WebHost(port);
     this.socketHost = new SocketHost(this.webHost.http);
-
-    this.instance = null;
   }
 
   initialize() {
     this.webHost.initialize();
 
     const connectionCountChange = () => {
-      if (this.instance && this.socketHost.getClients().length === 0) {
+      if (this.clockwork && this.socketHost.getClients().length === 0) {
         // Wait a moment to receive any residual packets, or maybe a player will
         // refill the spot.
         setTimeout(() => {
           // Make sure our conditions still hold.
-          if (this.instance && this.socketHost.getClients().length === 0) {
+          if (this.clockwork && this.socketHost.getClients().length === 0) {
             logger.info('Shutting down game instance ...');
-            this.instance.stop();
-            this.instance = null;
+            this.clockwork.stop();
+            this.clockwork = null;
           }
         }, 5 * 1000);
-      } else if (!this.instance && this.socketHost.getClients().length > 0) {
+      } else if (!this.clockwork && this.socketHost.getClients().length > 0) {
         logger.info('Spinning up game instance ...');
-        this.instance = new Clockwork();
-        this.instance.start();
+        this.clockwork = new Clockwork();
+        this.clockwork.start();
       }
     };
 
