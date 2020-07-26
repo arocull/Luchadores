@@ -1,5 +1,7 @@
 import { EventEmitter } from 'events';
+import { URL } from 'url';
 
+import axios from 'axios';
 import config from 'config';
 
 import logger from './Logger';
@@ -47,14 +49,36 @@ class Host extends EventEmitter {
     // Report to heartbeat server(s).
     // We do this even if the game instance is not running because it *could*
     // be running if someone would just connect.
-    setInterval(() => {
-      const servers = config.get<string[]>('heartbeatServers') || [];
-      if (!Array.isArray(servers) || typeof servers[0] !== 'string') {
-        console.error('Heartbeat servers is misconfigured as %j', servers);
-        return;
+    const servers = config.get<string[]>('heartbeat.servers') || [];
+    if (!Array.isArray(servers) || typeof servers[0] !== 'string') {
+      logger.error('Heartbeat servers is misconfigured as %j', servers);
+    } else {
+      interface HeartbeatData {
+        title: string;
+        address: string;
+        playerCount: number;
+        playerCapacity: number;
       }
-      console.log('Reporting with heartbeat servers:', servers);
-    }, 10 * 1000); // TODO: Re-evaluate this reporting interval later
+      const addresses = servers.map((baseUrl) => new URL('/heartbeat', baseUrl).toString());
+      setInterval(() => {
+        const heartbeatData: HeartbeatData = {
+          title: config.get<string>('server.title'),
+          address: config.get<string>('server.address'),
+          playerCount: 0, // TODO!
+          playerCapacity: 20, // TODO!
+        };
+
+        addresses.forEach((address) => {
+          axios.post(address, heartbeatData)
+            .then(() => {
+              logger.debug('Reporting to %o was OK', address);
+            })
+            .catch((err) => {
+              logger.error('Failed to report to %o: %j', address, err);
+            });
+        });
+      }, 10 * 1000); // TODO: Re-evaluate this reporting interval later
+    }
   }
 }
 
