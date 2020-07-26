@@ -66,10 +66,10 @@ class Host extends EventEmitter {
       addresses.forEach((address) => {
         axios.post(address, heartbeatData)
           .then(() => {
-            logger.silly('Heartbeat reporting to %o was OK', address);
+            logger.silly('Heartbeat reporting to %s was OK', address);
           })
           .catch((err) => {
-            logger.error('Heartbeat reporting to %o failed: %j', address, err);
+            logger.error('Heartbeat reporting to %s failed: %j', address, err);
           });
       });
     };
@@ -77,7 +77,7 @@ class Host extends EventEmitter {
     // Run once now, and then keep running on an interval
     // TODO: Re-evaluate this reporting interval later
     fnHeartbeat();
-    setInterval(fnHeartbeat, 10 * 1000);
+    setInterval(() => fnHeartbeat(), 10 * 1000);
   }
 
   private onConnectionCountChange() {
