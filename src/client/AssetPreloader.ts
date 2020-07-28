@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import { EventEmitter } from 'events';
 
 /* To test this go to Firefox's developer panel, under the Networking tab find
@@ -6,45 +5,61 @@ import { EventEmitter } from 'events';
  * This will slow down connections so you can watch the asset loading.
  */
 
-class AssetPreloader extends EventEmitter {
+class AssetPreloaderImpl extends EventEmitter {
   private loadedCount = 0;
+  private preloads: Record<string, Promise<HTMLImageElement>>;
 
-  constructor(private resources: string[]) {
+  constructor(resources: string[]) {
     super();
+
+    this.preloads = resources.reduce((acc, src) => {
+      acc[src] = this.loadImage(src);
+      return acc;
+    }, {} as Record<string, Promise<HTMLImageElement>>);
   }
 
-  public addResource(source: string) {
-    this.resources.push(source);
-  }
+  // /**
+  //  * @deprecated unnecessary. Use `getImages`
+  //  */
+  // public preload() : Promise<HTMLImageElement[]> {
+  //   return Promise.all(Object.values(this.preloads));
+  // }
 
-  public preload() : Promise<void[]> {
-    const loadQueue : Promise<void>[] = [];
-
-    _.each(this.resources, (resource) => {
-      loadQueue.push(this.loadImage(resource));
-    });
-
-    return Promise.all(loadQueue);
-  }
-
-  private loadImage(source : string) : Promise<void> {
-    return new Promise((resolve) => {
+  private loadImage(source : string) : Promise<HTMLImageElement> {
+    return new Promise<HTMLImageElement>((resolve) => {
       const image = new Image();
 
       image.onload = () => {
         this.loadedCount++;
         this.emit('progress', { progress: this.getProgress(), file: source });
         // TODO: Garbage collect these?
-        resolve();
+        resolve(image);
       };
 
       image.src = source;
     });
   }
 
+  public getImages(imgSrc: string[]): Promise<HTMLImageElement[]> {
+    const promises = imgSrc.map((src) => this.getImage(src));
+    return Promise.all(promises);
+  }
+
+  public getImage(imgSrc: string): Promise<HTMLImageElement> {
+    let promise = this.preloads[imgSrc];
+    if (!promise) {
+      promise = this.loadImage(imgSrc);
+      this.preloads[imgSrc] = promise;
+    }
+    return promise;
+  }
+
   public getProgress() {
-    return this.loadedCount / this.resources.length;
+    return this.loadedCount / Object.keys(this.preloads).length;
   }
 }
+
+// Singleton
+const AssetPreloader = new AssetPreloaderImpl([]);
 
 export { AssetPreloader as default };

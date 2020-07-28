@@ -1,6 +1,7 @@
 import Prop from './props/Prop';
 import { Vector } from './math';
 import { MapPreset, ColliderType } from './Enums';
+import { MessageBus } from '../messaging/bus';
 
 class Map {
   public Texture: HTMLImageElement;
@@ -32,8 +33,7 @@ class Map {
     }
 
     if (textureSrc) {
-      this.Texture = new Image(3072, 3072);
-      this.Texture.src = textureSrc;
+      MessageBus.publish('LoadAsset_Map', { map: this, texture: textureSrc });
     }
   }
 
