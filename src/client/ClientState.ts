@@ -450,10 +450,13 @@ class Client {
       this.character = null;
       this.player.removeCharacter();
       this.respawnTimer = 3;
-      this.camera.SetFocusPosition(new Vector(this.world.Map.Width / 2, this.world.Map.Height / 2, 0));
+      this.camera.LerpToPosition(new Vector(this.world.Map.Width / 2, this.world.Map.Height / 2, 0), 0.3, 0.5);
+      if (this.uiManager) this.uiManager.openClassSelect();
     }
     if (this.worldUpdatePending && this.worldUpdate) {
       this.worldUpdatePending = false;
+
+      const currentPhase = this.world.phase; // Store current phase
 
       // Applies world state and resets UpdateMissed on all updated fighters
       decodeWorldState(this.worldUpdate, this.world);
@@ -466,6 +469,9 @@ class Client {
           this.onDeath(this.world.Fighters[i].getOwnerID(), -1);
         }
       }
+
+      // World phase changed, initiate a camera lerp and other character setup if necessary
+      if (this.world.phase !== currentPhase) this.respawning = true;
 
       // TODO: Get server time in client-server handshake and use that for time calculations
       worldDeltaTime = (Wristwatch.getSyncedNow() - this.worldUpdateLastPacketTime) / 1000;

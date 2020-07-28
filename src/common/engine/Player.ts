@@ -133,6 +133,13 @@ class Player {
     return this.deaths;
   }
 
+  resetStats() {
+    this.setKills(0);
+    this.resetKillstreak();
+    this.setDeaths(0);
+    this.setScore(0);
+  }
+
   getTeam(): Team {
     return this.team;
   }

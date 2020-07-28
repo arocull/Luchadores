@@ -83,10 +83,7 @@ class Clockwork {
     // Clear out all characters and clear out stats as this is a new match
     for (let i = 0; i < this.connections.length; i++) {
       this.connections[i].removeCharacter();
-      this.connections[i].setKills(0);
-      this.connections[i].resetKillstreak();
-      this.connections[i].setDeaths(0);
-      this.connections[i].setScore(0);
+      this.connections[i].resetStats();
     }
 
     // Select a random gamemode, apply ruleset, and broadcast it
@@ -124,11 +121,7 @@ class Clockwork {
         // Respawn a new character for them ASAP
         plr.assignCharacter(this.world.spawnFighter(plr, fighterClass)); // Spawn them a fighter
       }
-
-      plr.setKills(0);
-      plr.resetKillstreak();
-      plr.setDeaths(0);
-      plr.setScore(0);
+      plr.resetStats();
     }
   }
 
@@ -145,6 +138,7 @@ class Clockwork {
         this.world.tick(this.tickRate / 1000);
         // Win-condition is server only
         this.world.checkWinCondition(this.connections);
+        this.world.updateGameStatus();
 
         // Is it time to publish another world state?
         const now = Timer.now();
@@ -152,24 +146,26 @@ class Clockwork {
           this.lastPublish = now;
           this.broadcast(encodeWorldState(this.world)); // Encodes and passes the full world-state as a message
 
-          const kills = this.world.reapKills();
-          this.broadcastList(kills); // Tells players what fighters died and who to award kills to
+          if (this.world.phase !== GamePhase.RoundFinish) { // Do not track kills made during round finish
+            const kills = this.world.reapKills();
+            this.broadcastList(kills); // Tells players what fighters died and who to award kills to
 
-          kills.forEach((kill) => { // First, tally kills
-            Logger.debug('Character IDs %j was killed by %j', kill.characterId, kill.killerId);
-            const killer = this.getPlayerWithcharacterID(kill.killerId);
-            if (killer) {
-              killer.earnKill();
-              if (killer.getCharacter()) killer.getCharacter().EarnKill();
-            }
-          });
-          kills.forEach((kill) => { // Then tally deaths and clear characters
-            const died = this.getPlayerWithcharacterID(kill.characterId);
-            if (died) {
-              died.earnDeath();
-              died.removeCharacter();
-            }
-          });
+            kills.forEach((kill) => { // First, tally kills
+              Logger.debug('Character IDs %j was killed by %j', kill.characterId, kill.killerId);
+              const killer = this.getPlayerWithcharacterID(kill.killerId);
+              if (killer) {
+                killer.earnKill();
+                if (killer.getCharacter()) killer.getCharacter().EarnKill();
+              }
+            });
+            kills.forEach((kill) => { // Then tally deaths and clear characters
+              const died = this.getPlayerWithcharacterID(kill.characterId);
+              if (died) {
+                died.earnDeath();
+                died.removeCharacter();
+              }
+            });
+          }
 
           this.updatePlayerStates(); // Update player states (tell players how much HP they have)
         }

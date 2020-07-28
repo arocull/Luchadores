@@ -132,6 +132,8 @@ class World {
   public ruleset: Gamemode;
   private winConditionMet: boolean;
 
+  public isClientside: boolean;
+
   constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
     if (loadTextures) this.Map.loadTexture(mapPreset);
@@ -147,6 +149,7 @@ class World {
 
     this.doReaping = false;
     this.kills = [];
+    this.isClientside = false;
 
     // Default to infinite freeplay
     this.timer = 0;
@@ -239,14 +242,16 @@ class World {
    * @returns {boolean} Returns true if a win occurred, false if conditions not met
    */
   public checkWinCondition(players: Player[]): boolean {
-    const win: boolean = (this.ruleset.checkWinCondition(players) && this.phase === GamePhase.Battle);
-    if (win) this.checkGameStatus(0, true);
-    return win;
+    this.winConditionMet = (this.ruleset.checkWinCondition(players) && this.phase === GamePhase.Battle);
+    return this.winConditionMet;
   }
-  private checkGameStatus(DeltaTime: number, forceWin: boolean = false) {
-    if (this.timer !== -1) this.timer -= DeltaTime;
-
-    if ((this.timer < 0 && this.timer !== -1) || forceWin) {
+  /**
+   * @function updateGameStatus
+   * @summary Updates the game phase based off of the timer--server only.
+   * Will also broadcast to subscribers to RoundBegan and RoundEnded
+   */
+  public updateGameStatus() {
+    if (this.timer === 0 || this.winConditionMet) {
       let newPhase: GamePhase;
       switch (this.phase) {
         case GamePhase.Join:
@@ -298,7 +303,10 @@ class World {
   public tick(DeltaTime: number, latencyChecks: boolean = false) {
     this.doUpdates(DeltaTime, latencyChecks);
     this.TickPhysics(DeltaTime);
-    this.checkGameStatus(DeltaTime, false);
+    if (this.timer > 0) {
+      this.timer -= DeltaTime;
+      if (this.timer < 0 && this.timer !== -1) this.timer = 0;
+    }
   }
 
   // Do various updates that are not realted to physics

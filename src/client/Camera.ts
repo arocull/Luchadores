@@ -17,6 +17,9 @@ class Camera {
   public Shake: number;
 
   private lerpFocusPosition: Vector; // Initial focus position of lerp
+  private lerpFocusPositionEnd: Vector; // End focus position of lerp (used if no focus provided)
+  private lerpZoomBoost: number;
+  private lerpZoomBoostEnd: number;
   private lerpTime: number; // Time progressed through lerp
   private lerpTimeMax: number; // Set lerp time
   private lerping: boolean;
@@ -37,6 +40,9 @@ class Camera {
     this.OffsetY = Height / 2;
 
     this.lerpFocusPosition = this.FocusPosition;
+    this.lerpFocusPositionEnd = this.FocusPosition;
+    this.lerpZoomBoost = 1;
+    this.lerpZoomBoostEnd = 1;
     this.lerpTime = 0;
     this.lerpTimeMax = 1;
     this.lerping = false;
@@ -62,28 +68,47 @@ class Camera {
 
     this.lerpFocusPosition = Vector.Clone(this.FocusPosition);
     this.Focus = newFocus;
+    this.lerpZoomBoost = this.lerpZoomBoostEnd;
+    this.lerpZoomBoostEnd = 1;
+  }
+  public LerpToPosition(newPosition: Vector, zoomBoost: number, lerpTime: number = 0.15) {
+    this.lerpTimeMax = lerpTime;
+    this.lerpTime = 0;
+    this.lerping = true;
+    this.lerpZoomBoost = this.lerpZoomBoostEnd;
+    this.lerpZoomBoostEnd = zoomBoost;
+
+    this.lerpFocusPosition = Vector.Clone(this.FocusPosition);
+    this.lerpFocusPositionEnd = Vector.Clone(newPosition);
+    this.Focus = null;
   }
 
 
+  private tickLerpTime(DeltaTime: number) {
+    this.lerpTime += DeltaTime;
+    if (this.lerpTime >= this.lerpTimeMax) {
+      this.lerping = false; // End lerp
+      this.lerpTime = this.lerpTimeMax;
+      this.lerpZoomBoost = this.lerpZoomBoostEnd;
+    }
+  }
   public UpdateFocus(DeltaTime: number) { // Internal, snaps camera to focus
     let focusSpeed: number = 0; // Zoom out as speed increases to give you a slight better idea of where you're going
     let zoomBoost: number = 1; // Ranged classes get a slight zoom boost
 
     if (this.Focus) {
       if (this.lerping) {
-        this.lerpTime += DeltaTime;
-        if (this.lerpTime >= this.lerpTimeMax) {
-          this.lerping = false; // End lerp
-          this.lerpTime = this.lerpTimeMax;
-        }
-
+        this.tickLerpTime(DeltaTime);
+        const alpha = Math.sin(PiOverTwo * (this.lerpTime / this.lerpTimeMax));
         this.FocusPosition = Vector.Lerp(
           this.lerpFocusPosition,
           new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0),
-          Math.sin(PiOverTwo * (this.lerpTime / this.lerpTimeMax)),
+          alpha,
         );
+        zoomBoost *= (this.lerpZoomBoost * (1 - alpha) + this.lerpZoomBoostEnd * alpha);
       } else { // Focus camera on center of character
         this.FocusPosition = new Vector(this.Focus.Position.x, this.Focus.Position.y + this.Focus.Height / 2, 0);
+        zoomBoost *= this.lerpZoomBoost;
       }
 
       let moveSpeed = this.Focus.Velocity.lengthXY(); // Get velocity of player
@@ -98,7 +123,24 @@ class Camera {
 
         const shake = (new Vector(Math.random() - 0.5, Math.random() - 0.5, 0)).clamp(1, 1); // Generate random shake direction
         this.FocusPosition = Vector.Add(this.FocusPosition, Vector.Multiply(shake, (Math.random() * this.Shake) / 100)); // Offset camera
-      } else if (!RenderSettings.EnableCameraShake) this.Shake = 0;
+      } else if (!RenderSettings.EnableCameraShake) this.Shake = 0; // Otherwise, forcibly zero camera shake
+    } else if (this.lerping) { // Run lerp to position if focus does not exist
+      this.tickLerpTime(DeltaTime);
+
+      const alpha = Math.sin(PiOverTwo * (this.lerpTime / this.lerpTimeMax));
+      const lastFocus = this.FocusPosition;
+
+      this.FocusPosition = Vector.Lerp(
+        this.lerpFocusPosition,
+        new Vector(this.lerpFocusPositionEnd.x, this.lerpFocusPositionEnd.y + this.lerpFocusPositionEnd.z / 2, 0),
+        alpha,
+      );
+
+      // Add speed depending on how fast focus changes (just for funsies)
+      focusSpeed += (Vector.Subtract(this.FocusPosition, lastFocus).length()) / DeltaTime / 100;
+      zoomBoost *= (this.lerpZoomBoost * (1 - alpha) + this.lerpZoomBoostEnd * alpha);
+    } else {
+      zoomBoost *= this.lerpZoomBoost;
     }
 
     // Use constant aspect ratio, set a minimum value in case of zero
