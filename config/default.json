@@ -1,0 +1,9 @@
+{
+  "server": {
+    "title": "Luchadores Development",
+    "address": "http://localhost:3000/"
+  },
+  "heartbeat": {
+    "servers": ["http://localhost:3500"]
+  }
+}
