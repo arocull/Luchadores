@@ -1,25 +1,15 @@
+// ENTITIES //
 enum EntityType {
   Fighter = 0,
   Projectile = 1,
   Particle = 2,
   Prop = 3,
 }
-
-enum FighterType {
-  Sheep = 0,
-  Deer = 1,
-  Flamingo = 2,
-  Toad = 3,
-
-  None = -1,
-  Soccerball = -2,
-}
-
+// Fighter Type listed further down in FIGHTERS section
 enum ProjectileType {
   Bullet = 0,
   Fire = 1,
 }
-
 enum ParticleType {
   Confetti = 0,
   RosePetal = 1,
@@ -31,23 +21,25 @@ enum ParticleType {
   BulletShell =7,
 }
 
+// PROP //
 enum ColliderType {
   Cylinder = 0,
   Prism = 1,
 }
 
+// MAP //
 enum MapPreset {
   Sandy = 0,
   Grassy = 1,
 }
 
+// GRAPHICS //
 enum UIFrameType {
   Basic = 0,
   Text = 1,
   DeathNotification = 2,
   PlayerInfo = 3,
 }
-
 enum RenderQuality {
   Low = 1,
   Medium = 2,
@@ -55,6 +47,7 @@ enum RenderQuality {
 }
 
 
+// RULESETS and GAMEMODE //
 /**
  * @enum {number}
  * @name ScoreMethod
@@ -68,20 +61,6 @@ enum ScoreMethod {
   /** Making goals with soccer balls are counted towards score */
   Goals = 2,
 }
-
-/**
- * @enum {number}
- * @name Team
- * @summary Used for identifying what team a player is on.
- */
-enum Team {
-  Neutral = 0,
-  Red = 1,
-  Blue = 2,
-  Green = 3,
-  Yellow = 4,
-}
-
 /**
  * @enum {number}
  * @name GamePhase
@@ -95,12 +74,22 @@ enum GamePhase {
   Join = 1,
   Setup = 2,
   Battle = 3,
+  /** Overtime -- Acts as regular battle phase, but timer counts up from zero. Only occurs during team ties. */
+  Overtime = 4,
   /** Round Finish - End of round. Displays leaderboard, player inputs ignored. */
-  RoundFinish = 4,
+  RoundFinish = 5,
 }
 
+// FIGHTER //
+enum FighterType {
+  Sheep = 0,
+  Deer = 1,
+  Flamingo = 2,
+  Toad = 3,
 
-// Functions
+  None = -1,
+  Soccerball = -2,
+}
 function fighterTypeToString(type: FighterType) {
   switch (type) {
     case FighterType.Sheep: default: return 'Sheep';
@@ -110,6 +99,20 @@ function fighterTypeToString(type: FighterType) {
     case FighterType.Soccerball: return 'Soccerball';
   }
 }
+
+// TEAMS //
+/**
+ * @enum {number}
+ * @name Team
+ * @summary Used for identifying what team a player is on.
+ */
+enum Team {
+  Neutral = 0,
+  Red = 1,
+  Blue = 2,
+  Green = 3,
+  Yellow = 4,
+}
 const TeamColors = [
   '#000000',
   '#df0000',
@@ -117,6 +120,11 @@ const TeamColors = [
   '#00ef33',
   '#ffec00',
 ];
+/**
+ * @function getTeamColor
+ * @summary Returns a hex code for the color of the given team
+ * @param {Team} type Given team to return teamcolor of
+ */
 function getTeamColor(type: Team) {
   return TeamColors[type];
 }

@@ -58,13 +58,7 @@ class TeamManager {
     }
 
     // There are only four teams by default--not all of these will be filled
-    const teams: number[] = [0, 0, 0, 0];
-    // Tally how many players are on each team
-    for (let i = 0; i < players.length; i++) {
-      if (players[i].getTeam() !== Team.Neutral) { // Don't tally neutrals
-        teams[players[i].getTeam() - 1]++;
-      }
-    }
+    const teams: number[] = this.tally(players);
 
     // Find the team with the least amount of players (if all teams are equal, defaults to the first team)
     let min = 1000;
@@ -77,6 +71,79 @@ class TeamManager {
     }
 
     player.assignTeam(minIndex + 1); // Assigns team to the minimum
+  }
+
+
+  /**
+   * @function tally
+   * @summary Returns the number of players on the given teams
+   * @param {Player[]} players Players to tally
+   */
+  public static tally(players: Player[]): number[] {
+    // There are only four teams by default--not all of these will be filled
+    const teams: number[] = [0, 0, 0, 0];
+    // Tally how many players are on each team
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].getTeam() !== Team.Neutral) { // Don't tally neutrals
+        teams[players[i].getTeam() - 1]++;
+      }
+    }
+
+    return teams;
+  }
+
+  /**
+   * @function tallyKills
+   * @summary Returns the kill counts of all given teams
+   * @param {Player[]} players Players to tally kills from
+   */
+  public static tallyKills(players: Player[]): number[] {
+    // There are only four teams by default--not all of these will be filled
+    const teams: number[] = [0, 0, 0, 0];
+    // Tally how many kills are on each team
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].getTeam() !== Team.Neutral) { // Don't tally neutrals
+        teams[players[i].getTeam() - 1] += players[i].getKills();
+      }
+    }
+
+    return teams;
+  }
+
+  /**
+   * @function tallyScore
+   * @summary Returns the score of all given teams
+   * @param {Player[]} players Players to tally score from
+   */
+  public static tallyScore(players: Player[]): number[] {
+    // There are only four teams by default--not all of these will be filled
+    const teams: number[] = [0, 0, 0, 0];
+    // Tally how many points scored are on each team
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].getTeam() !== Team.Neutral) { // Don't tally neutrals
+        teams[players[i].getTeam() - 1] += players[i].getScore();
+      }
+    }
+
+    return teams;
+  }
+
+  /**
+   * @function tallyLiving
+   * @summary Returns the number of living players on the given teams
+   * @param {Player[]} players Players to tally
+   */
+  public static tallyLiving(players: Player[]): number[] {
+    // There are only four teams by default--not all of these will be filled
+    const teams: number[] = [0, 0, 0, 0];
+    // Tally how many living players are on each team
+    for (let i = 0; i < players.length; i++) {
+      if (players[i].getTeam() !== Team.Neutral && players[i].getCharacter() && players[i].getCharacter().HP > 0) { // Don't tally neutrals or dead
+        teams[players[i].getTeam() - 1]++;
+      }
+    }
+
+    return teams;
   }
 }
 

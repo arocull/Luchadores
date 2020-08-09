@@ -187,6 +187,8 @@ class UIManager {
         this.roundPhase.text = 'Setup'; break;
       case GamePhase.Battle:
         this.roundPhase.text = gamemode; break;
+      case GamePhase.Overtime:
+        this.roundPhase.text = 'Overtime'; break;
       case GamePhase.RoundFinish:
         this.roundPhase.text = 'Scoreboard'; break;
       default: this.roundPhase.text = '';

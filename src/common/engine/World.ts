@@ -11,7 +11,7 @@ import { MessageBus } from '../messaging/bus';
 import { FighterType, MapPreset, EntityType, GamePhase } from './Enums';
 import { Sheep, Deer, Flamingo, Soccerball } from './fighters';
 import { TypeEnum } from '../events';
-import { Gamemode, MakeGamemode, GamemodeType } from './gamemode';
+import { Gamemode, MakeGamemode, GamemodeType, WinStatus } from './gamemode';
 /* eslint-enable object-curly-newline */
 
 
@@ -130,7 +130,7 @@ class World {
   public timer: number;
   public phase: GamePhase;
   public ruleset: Gamemode;
-  private winConditionMet: boolean;
+  private winStatus: WinStatus;
 
   constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
@@ -149,7 +149,7 @@ class World {
     this.kills = [];
 
     // Default to infinite freeplay
-    this.timer = 0;
+    this.timer = -1;
     this.phase = GamePhase.Freeplay;
     this.applyRuleset(MakeGamemode(GamemodeType.Deathmatch));
 
@@ -239,38 +239,70 @@ class World {
    * @returns {boolean} Returns true if a win occurred, false if conditions not met
    */
   public checkWinCondition(players: Player[]): boolean {
-    this.winConditionMet = (this.ruleset.checkWinCondition(players) && this.phase === GamePhase.Battle);
-    return this.winConditionMet;
+    switch (this.phase) {
+      case GamePhase.Battle:
+      case GamePhase.Overtime:
+        this.winStatus = this.ruleset.checkWinCondition(players);
+        break;
+      default: // Nullify win status if it is not met
+        this.winStatus = null;
+    }
+    return (this.winStatus && this.winStatus.gameWon);
   }
   /**
    * @function updateGameStatus
-   * @summary Updates the game phase based off of the timer--server only.
+   * @summary Updates the game phase based off of the timer or current win status--server only
    * Will also broadcast to subscribers to RoundBegan and RoundEnded
    */
   public updateGameStatus() {
-    if (this.timer === 0 || this.winConditionMet) {
+    if (this.timer === 0 || (this.winStatus && this.winStatus.gameWon)) {
       let newPhase: GamePhase;
+
+      // Figure out where to go next
       switch (this.phase) {
         case GamePhase.Join:
           newPhase = GamePhase.Battle; break;
+
         case GamePhase.Battle:
+          if (this.winStatus && this.winStatus.overtime) { // Induce overtime if necessary
+            this.timer = 0;
+            newPhase = GamePhase.Overtime;
+          } else {
+            newPhase = GamePhase.RoundFinish; // Otherwise run into finish
+          }
+          break;
+
+        case GamePhase.Overtime:
           newPhase = GamePhase.RoundFinish; break;
+
         case GamePhase.RoundFinish:
-          MessageBus.publish('RoundEnded', (this)); return;
-        default:
+          MessageBus.publish('RoundEnded', (this)); return; // Tells Clockwork to end the round and start a new one
+
+        default: // Default to freeplay
           newPhase = GamePhase.Freeplay;
       }
 
-      if (newPhase === GamePhase.Battle) {
-        // Figure out how to force respawns on players without enforcing a reselect--classes should be selected during join phase
-        MessageBus.publish('RoundBegan', this); // Tells Clockwork to force-respawn everyone
-        MessageBus.publish('Title', '¡Luchen!'); // Displays title message for clients, imperative tense, "FIGHT" for multiple subjects
-        this.timer = this.ruleset.time;
-        if (this.ruleset.time === 0) this.timer = -1; // If ruleset time is zero, timer should be infinite
-      } else {
-        this.timer = 15; // Timer defaults to 20 seconds for pre-round and post-round
-      }
+      // Apply new game phase
       this.phase = newPhase;
+      switch (newPhase) {
+        case GamePhase.Battle:
+          MessageBus.publish('RoundBegan', this); // Tells Clockwork to force-respawn everyone
+          MessageBus.publish('Title', '¡Luchen!'); // Displays title message for clients, imperative tense, "FIGHT" for multiple subjects
+          this.timer = this.ruleset.time;
+          if (this.ruleset.time === 0) this.timer = -1; // If ruleset time is zero, timer should be infinite
+          break;
+
+        case GamePhase.Overtime: // Timer counts up from zero during overtime
+          this.timer = 0;
+          break;
+
+        case GamePhase.Freeplay: // If freeplay was selected, do infinite freeplay
+          this.timer = -1;
+          break;
+
+        default: // Default timer for other phases is 10 seconds
+          this.timer = 10;
+      }
     }
   }
 
@@ -300,7 +332,10 @@ class World {
   public tick(DeltaTime: number, latencyChecks: boolean = false) {
     this.doUpdates(DeltaTime, latencyChecks);
     this.TickPhysics(DeltaTime);
-    if (this.timer > 0) {
+
+    if (this.phase === GamePhase.Overtime) { // Count up from zero when overtime is in progress
+      this.timer += DeltaTime;
+    } else if (this.timer > 0) { // Otherwise, count down
       this.timer -= DeltaTime;
       if (this.timer < 0 && this.timer !== -1) this.timer = 0;
     }
