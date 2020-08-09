@@ -132,8 +132,6 @@ class World {
   public ruleset: Gamemode;
   private winConditionMet: boolean;
 
-  public isClientside: boolean;
-
   constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
     if (loadTextures) this.Map.loadTexture(mapPreset);
@@ -149,7 +147,6 @@ class World {
 
     this.doReaping = false;
     this.kills = [];
-    this.isClientside = false;
 
     // Default to infinite freeplay
     this.timer = 0;

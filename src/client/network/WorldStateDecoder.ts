@@ -108,7 +108,7 @@ function decodeWorldRuleset(state: IWorldRuleset): World {
   world.Map.Friction = state.mapFriction;
   world.Map.wallStrength = state.mapWallStrength;
 
-  world.ruleset = new Gamemode(
+  world.applyRuleset(new Gamemode(
     state.name,
     state.descript,
     state.winScore,
@@ -117,7 +117,7 @@ function decodeWorldRuleset(state: IWorldRuleset): World {
     state.permadeath,
     0,
     0,
-  );
+  ));
   return world;
 }
 

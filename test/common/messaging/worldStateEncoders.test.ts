@@ -1,12 +1,13 @@
-import { encodeWorldState } from '../../../src/server/WorldStateEncoder';
-import { decodeWorldState } from '../../../src/client/network/WorldStateDecoder';
+import { encodeWorldState, encodeWorldRuleset } from '../../../src/server/WorldStateEncoder';
+import { decodeWorldState, decodeWorldRuleset } from '../../../src/client/network/WorldStateDecoder';
 import Random from '../../../src/common/engine/Random';
 import Vector from '../../../src/common/engine/Vector';
 import World from '../../../src/common/engine/World';
 import Map from '../../../src/common/engine/Map';
 import { Sheep, Flamingo } from '../../../src/common/engine/fighters/index';
 import { BBullet } from '../../../src/common/engine/projectiles/index';
-import { FighterType, ProjectileType } from '../../../src/common/engine/Enums';
+import { FighterType, ProjectileType, MapPreset } from '../../../src/common/engine/Enums';
+import { MakeGamemode, GamemodeType, Gamemode } from '../../../src/common/engine/gamemode';
 
 test('world state encode / decode', () => {
   const start = new World();
@@ -56,4 +57,32 @@ test('world state encode / decode', () => {
 
   expect(end.Bullets[0].projectileType).toBe(ProjectileType.Bullet);
   expect(end.Bullets[0].Owner).toBe(end.Fighters[indexF1]);
+});
+
+test('world ruleset encode / decode', () => {
+  Random.setSeed(0);
+  Random.setIndex(0);
+  const mode: Gamemode = MakeGamemode(GamemodeType.Soccer);
+
+  const start = new World(MapPreset.Grassy, false, false);
+  start.applyRuleset(mode);
+  start.Map.Width = 100;
+
+  expect(start.Fighters.length).toBeGreaterThan(0); // Soccerball spawned
+
+  const encodedRuleset = encodeWorldRuleset(start);
+
+  const end = decodeWorldRuleset(encodedRuleset);
+
+  // Loaded map settings
+  expect(end.Map.mapID).toBe(MapPreset.Grassy);
+  expect(end.Map.Width).toBe(100);
+
+  expect(end.Fighters.length).toBe(0); // Soccerballs are not spawned by client but rather replicated by server in WorldStates
+
+  // Make sure ruleset properties replicated
+  expect(end.ruleset.name).toBe(mode.name);
+  expect(end.ruleset.descript).toBe(mode.descript);
+  expect(end.ruleset.permadeath).toBe(false);
+  expect(end.ruleset.teams).toBe(2);
 });
