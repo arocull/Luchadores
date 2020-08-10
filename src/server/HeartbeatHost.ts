@@ -7,6 +7,13 @@ import { Express } from 'express';
 import Clockwork from './Clockwork';
 import logger from './Logger';
 
+interface HeartbeatData {
+  title: string;
+  address: string;
+  playerCount: number;
+  playerCapacity: number;
+}
+
 class HeartbeatHost {
   constructor(
     private app: Express,
@@ -32,6 +39,15 @@ class HeartbeatHost {
     return 20;
   }
 
+  private getHeartbeatData(): HeartbeatData {
+    return {
+      title: config.get<string>('server.title'),
+      address: config.get<string>('server.address'),
+      playerCount: this.getPlayerCount(),
+      playerCapacity: this.getPlayerCapacity(),
+    };
+  }
+
   private initializeHeartbeatServers() {
     // Report to heartbeat server(s).
     // We do this even if the game instance is not running because it *could*
@@ -50,21 +66,9 @@ class HeartbeatHost {
       return;
     }
 
-    interface HeartbeatData {
-      title: string;
-      address: string;
-      playerCount: number;
-      playerCapacity: number;
-    }
-
     const addresses = servers.map((baseUrl) => new URL('/heartbeat', baseUrl).toString());
     const fnHeartbeat = () => {
-      const heartbeatData: HeartbeatData = {
-        title: config.get<string>('server.title'),
-        address: config.get<string>('server.address'),
-        playerCount: this.getPlayerCount(),
-        playerCapacity: this.getPlayerCapacity(),
-      };
+      const heartbeatData = this.getHeartbeatData();
 
       addresses.forEach((address) => {
         axios.post(address, heartbeatData)
