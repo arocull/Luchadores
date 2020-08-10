@@ -24,6 +24,7 @@ class Host extends EventEmitter {
     this.webHost.initialize();
     this.heartbeatHost.initialize();
 
+    // TODO: Move to using message bus
     this.socketHost.on('connect', () => this.onConnectionCountChange());
     this.socketHost.on('disconnect', () => this.onConnectionCountChange());
   }
@@ -32,6 +33,10 @@ class Host extends EventEmitter {
     return this.clockwork;
   }
 
+  // TODO: Move this to a wrapper class.
+  // Provide functionality for getting information from Clockwork
+  // with safe defaults for when the server instance is not running.
+  // Then pass that wrapper class around to the places that need it.
   private onConnectionCountChange() {
     if (this.clockwork && this.socketHost.getClients().length === 0) {
       // Wait a moment to receive any residual packets, or maybe a player will
