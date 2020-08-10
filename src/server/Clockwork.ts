@@ -3,6 +3,7 @@ import { Timer } from '../common/engine/time/Time';
 import { MessageBus, Topics } from '../common/messaging/bus';
 import Logger from './Logger';
 import World from '../common/engine/World';
+import RoundManager from './RoundManager';
 import { encodeWorldState, encodeWorldRuleset } from './WorldStateEncoder';
 import {
   TypeEnum,
@@ -16,9 +17,9 @@ import {
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
-import { TeamManager, MakeGamemode, GamemodeType } from '../common/engine/gamemode';
+import { TeamManager } from '../common/engine/gamemode';
 import Random from '../common/engine/Random';
-import { FighterType, GamePhase } from '../common/engine/Enums';
+import { GamePhase } from '../common/engine/Enums';
 
 interface Action {
   player: Player;
@@ -28,6 +29,7 @@ interface Action {
 class Clockwork {
   private connections: Player[] = [];
   private world: World;
+  private roundManager: RoundManager;
   private actions: Record<string, Action>;
   private subscribers: SubscriberContainer;
 
@@ -37,8 +39,6 @@ class Clockwork {
   private tickTimeout: NodeJS.Timeout;
   private lastPublish: number = 0;
 
-  private inSetup: boolean;
-
   constructor() {
     Random.randomSeed();
 
@@ -47,87 +47,26 @@ class Clockwork {
     this.tickRate = Math.floor(1000 / 66); // Number of milliseconds per tick (tick rate = 66 per second)
     this.publishRate = Math.floor(1000 / 20); // Number of milliseconds per world state publish
 
-    // Round begins function--clear away bullets, reassign teams, respawn everyone and reset stats, and update player list to reflect new info
-    this.subscribers.attach('RoundBegan', (world) => {
-      if (world === this.world) {
-        this.inSetup = true;
-        this.world.Bullets = [];
-
-        TeamManager.assignTeams(this.connections, this.world.ruleset.teams);
-        this.forceRespawns();
-        this.updatePlayerList();
-        this.broadcast(encodeWorldState(this.world));
-        this.inSetup = false;
-      }
-    });
-    this.subscribers.attach('RoundEnded', (world) => {
-      if (world === this.world) this.startRound();
+    // Called by RoundManager--updates world and provides new rulesets
+    this.subscribers.attach('RoundManager_NewWorld', (world) => {
+      this.world = world;
+      this.broadcast(encodeWorldRuleset(this.world)); // World is cleared on client upon ruleset broadcast--no need to broadcast world state for now
+      this.updatePlayerList();
     });
 
-    this.startRound();
-  }
+    // Called by RoundManager--updates world and worldstates
+    this.subscribers.attach('RoundManager_BeginBattle', (world) => {
+      this.world = world; // Update world again, just in case
+      this.updatePlayerList();
+      this.broadcast(encodeWorldState(this.world)); // All players were respawned and moved around, and bullets cleared away--broadcast new world state to clients
+    });
 
-  /**
-   * @function startRound
-   * @summary Selects a random map and gamemode, broadcasts a ruleset message, and begins the round
-   *
-   * @todo Random gamemode picks based off of number of players
-   * @todo Potentially add voting options in future?
-   * @todo Servers dedicated to single gamemodes
-   * @todo Custom game modes on private servers
-   */
-  private startRound() {
-    this.world = new World((Math.random() > 0.5) ? 0 : 1, (Math.random() > 0.5), false);
-    this.world.doReaping = true;
-
-    // Clear out all characters and clear out stats as this is a new match
-    for (let i = 0; i < this.connections.length; i++) {
-      this.connections[i].removeCharacter();
-      this.connections[i].resetStats();
-    }
-
-    // Select a random gamemode, apply ruleset, and broadcast it
-    const ruleset = MakeGamemode(GamemodeType.Deathmatch); // Random.getInteger(1, 6));
-    this.world.applyRuleset(ruleset);
-    this.broadcast(encodeWorldRuleset(this.world));
-
-    // During join phase, players should all be neutral and player list should be updated
-    TeamManager.assignTeams(this.connections, 1);
-    this.updatePlayerList();
-
-    Logger.info('Starting a new round with settings\n\tMap Preset %i with props %j\n\tRuleset %j', this.world.Map.mapID, (this.world.Props.length > 0), ruleset);
-  }
-  /**
-   * @function forceRespawns
-   * Forces respawns on all players with existing fighters and resets player stats
-   */
-  private forceRespawns() {
-    for (let i = 0; i < this.connections.length; i++) {
-      const plr = this.connections[i];
-      if (plr.getCharacter()) {
-        const fighterClass: FighterType = plr.getCharacter().getCharacter();
-
-        // Remove existing character from world
-        const index = this.world.Fighters.indexOf(plr.getCharacter());
-        if (index >= 0) {
-          this.world.Fighters.splice(index, 1);
-        }
-
-        // Make sure they're dead and doesn't count as a kill
-        plr.getCharacter().HP = 0;
-        plr.getCharacter().LastHitBy = 0;
-        plr.removeCharacter();
-
-        // Respawn a new character for them ASAP
-        plr.assignCharacter(this.world.spawnFighter(plr, fighterClass)); // Spawn them a fighter
-      }
-      plr.resetStats();
-    }
+    this.roundManager = new RoundManager(this.connections);
   }
 
   private tick(delta: number) {
     if (this.running) {
-      if (delta > 0 && !this.inSetup) {
+      if (delta > 0) {
         // Apply each action into the world state.
         Object.values(this.actions).forEach((act) => {
           this.world.applyAction(act.player, act.input);
@@ -137,8 +76,8 @@ class Clockwork {
         // Then tick the world by the tick rate for this tick
         this.world.tick(this.tickRate / 1000);
         // Win-condition is server only
-        this.world.checkWinCondition(this.connections);
-        this.world.updateGameStatus();
+        this.roundManager.checkWinCondition(this.connections);
+        this.roundManager.updateGameStatus();
 
         // Is it time to publish another world state?
         const now = Timer.now();
@@ -246,7 +185,11 @@ class Clockwork {
     Logger.debug('Broadcasting player list, %i players left', list.length);
   }
 
-  // TODO: Needs tests?
+  /**
+   * @function getLowestUnusedCharacterID
+   * @summary Finds the lowest unused character ID between 1 and X many players and returns it
+   * @returns {number} Returns the lowest unused character ID
+   */
   private getLowestUnusedCharacterID(): number {
     const available = []; // Get list of all possible numbers
     for (let i = 1; i <= World.MAX_LOBBY_SIZE; i++) {

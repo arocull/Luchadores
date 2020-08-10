@@ -24,6 +24,7 @@ class Random {
   static getFloat(): number {
     index++;
     return Math.sin(index * seed - index ** Math.PI + seed / index) / 2 + 0.5;
+    // return (Math.sin(Math.sqrt(seed) * index + (seed2 / (Math.cos(index) ** 2))) + 1) / 2;
   }
   static getInteger(min: number, max: number): number {
     return Math.floor(this.getFloat() * (max - min) + min + 0.5);
@@ -37,6 +38,31 @@ class Random {
   }
   static getIndex(): number {
     return index;
+  }
+
+  /**
+   * @function pickIndexFromWeights
+   * @summary Takes an array of weights and converts them into probabilities,
+   * before generating a random number to select the index from
+   *
+   * Note: This method assumes the random number was generated using a uniform distribution
+   *
+   * @param {number[]} weights Input weights to select from
+   * @param {number} generated Random number input between 0 and 1 that is used in selecting an index from the given weights--defaults using getFloat()
+   * @returns {number} Random index from the array
+   */
+  static pickIndexFromWeights(weights: number[], generated: number = this.getFloat()): number {
+    let sum = 0; // First total out weights
+    for (let i = 0; i < weights.length; i++) {
+      sum += weights[i];
+    }
+
+    let sum2 = 0; // Stacks probabilities together (total sum should be 1)
+    for (let i = 0; i < weights.length; i++) {
+      sum2 += weights[i] / sum; // Find true weight on scale of 0 to 1 and add it to the sum/range
+      if (generated <= sum2) return i; // If the generated number fell into this range, return this index and be done
+    }
+    return weights.length - 1; // This should never be called (random number must be found in weights), but return highest index if so
   }
 }
 

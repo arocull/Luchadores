@@ -29,7 +29,7 @@ class Player {
     this.accountedFor = false;
 
     this.character = null;
-    this.characterID = -1;
+    this.characterID = 0;
 
     this.pingHistory = [];
   }

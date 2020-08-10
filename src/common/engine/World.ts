@@ -225,85 +225,12 @@ class World {
 
     if (this.ruleset.soccerballs > 0) { // Randomly place soccerballs
       for (let i = 1; i <= this.ruleset.soccerballs; i++) {
-        this.Fighters.push(new Soccerball(-i - 1, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
+        this.Fighters.push(new Soccerball(-i, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
       }
     }
 
     this.timer = 15;
     this.phase = GamePhase.Join;
-  }
-  /**
-   * @function checkWinCondition
-   * @summary Checks if any win conditions are met while in the battle game phase. Will also force a rotation in game phase if win is met.
-   * @param {Player} players List of players to read scores off of
-   * @returns {boolean} Returns true if a win occurred, false if conditions not met
-   */
-  public checkWinCondition(players: Player[]): boolean {
-    switch (this.phase) {
-      case GamePhase.Battle:
-      case GamePhase.Overtime:
-        this.winStatus = this.ruleset.checkWinCondition(players);
-        break;
-      default: // Nullify win status if it is not met
-        this.winStatus = null;
-    }
-    return (this.winStatus && this.winStatus.gameWon);
-  }
-  /**
-   * @function updateGameStatus
-   * @summary Updates the game phase based off of the timer or current win status--server only
-   * Will also broadcast to subscribers to RoundBegan and RoundEnded
-   */
-  public updateGameStatus() {
-    if (this.timer === 0 || (this.winStatus && this.winStatus.gameWon)) {
-      let newPhase: GamePhase;
-
-      // Figure out where to go next
-      switch (this.phase) {
-        case GamePhase.Join:
-          newPhase = GamePhase.Battle; break;
-
-        case GamePhase.Battle:
-          if (this.winStatus && this.winStatus.overtime) { // Induce overtime if necessary
-            this.timer = 0;
-            newPhase = GamePhase.Overtime;
-          } else {
-            newPhase = GamePhase.RoundFinish; // Otherwise run into finish
-          }
-          break;
-
-        case GamePhase.Overtime:
-          newPhase = GamePhase.RoundFinish; break;
-
-        case GamePhase.RoundFinish:
-          MessageBus.publish('RoundEnded', (this)); return; // Tells Clockwork to end the round and start a new one
-
-        default: // Default to freeplay
-          newPhase = GamePhase.Freeplay;
-      }
-
-      // Apply new game phase
-      this.phase = newPhase;
-      switch (newPhase) {
-        case GamePhase.Battle:
-          MessageBus.publish('RoundBegan', this); // Tells Clockwork to force-respawn everyone
-          MessageBus.publish('Title', '¡Luchen!'); // Displays title message for clients, imperative tense, "FIGHT" for multiple subjects
-          this.timer = this.ruleset.time;
-          if (this.ruleset.time === 0) this.timer = -1; // If ruleset time is zero, timer should be infinite
-          break;
-
-        case GamePhase.Overtime: // Timer counts up from zero during overtime
-          this.timer = 0;
-          break;
-
-        case GamePhase.Freeplay: // If freeplay was selected, do infinite freeplay
-          this.timer = -1;
-          break;
-
-        default: // Default timer for other phases is 10 seconds
-          this.timer = 10;
-      }
-    }
   }
 
 
