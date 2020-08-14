@@ -237,6 +237,7 @@ class Client {
       plr.setUsername(msg.players[i].username);
       plr.assignCharacterID(id);
       plr.setKills(msg.players[i].kills);
+      plr.setScore(msg.players[i].score);
       // TODO: Set max killstreak and/or current killstreak?
       plr.updatePing(msg.players[i].averagePing);
       plr.assignTeam(msg.players[i].team);
@@ -252,6 +253,9 @@ class Client {
         i--;
       }
     }
+
+    // Sort list
+    this.uiPlayerList.sort(UIPlayerInfo.SORT);
   }
   // Returns player for the corresponding character ID
   private getPlayerFromCharacterID(characterID: number): Player {

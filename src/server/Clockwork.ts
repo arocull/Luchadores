@@ -76,6 +76,7 @@ class Clockwork {
         // Then tick the world by the tick rate for this tick
         this.world.tick(this.tickRate / 1000);
         // Win-condition is server only
+        this.roundManager.tallyScores(this.tickRate / 1000);
         this.roundManager.checkWinCondition(this.connections);
         this.roundManager.updateGameStatus();
 
@@ -91,14 +92,14 @@ class Clockwork {
 
             kills.forEach((kill) => { // First, tally kills
               Logger.debug('Character IDs %j was killed by %j', kill.characterId, kill.killerId);
-              const killer = this.getPlayerWithcharacterID(kill.killerId);
+              const killer = this.getPlayerWithCharacterID(kill.killerId);
               if (killer) {
                 killer.earnKill();
                 if (killer.getCharacter()) killer.getCharacter().EarnKill();
               }
             });
             kills.forEach((kill) => { // Then tally deaths and clear characters
-              const died = this.getPlayerWithcharacterID(kill.characterId);
+              const died = this.getPlayerWithCharacterID(kill.characterId);
               if (died) {
                 died.earnDeath();
                 died.removeCharacter();
@@ -107,6 +108,9 @@ class Clockwork {
           }
 
           this.updatePlayerStates(); // Update player states (tell players how much HP they have)
+          this.updatePlayerList(); // Update all player kills, scores, pings
+          // should we do this every publish or find some other method of doing this? Unsure how expensive this is
+          // Or potentially would could broadcast world state, kills, and player lists all in one state (probably most ideal) once we decide what all really needs to be sent
         }
       }
 
@@ -169,6 +173,7 @@ class Clockwork {
         ownerId: this.connections[i].getCharacterID(),
         username: this.connections[i].getUsername(),
         kills: this.connections[i].getKills(),
+        score: this.connections[i].getScore(),
         averagePing: Math.floor(this.connections[i].getPing() + 0.5),
         team: this.connections[i].getTeam(),
       });
@@ -182,7 +187,7 @@ class Clockwork {
       });
     }
 
-    Logger.debug('Broadcasting player list, %i players left', list.length);
+    Logger.silly('Broadcasting player list, %i players left', list.length);
   }
 
   /**
@@ -209,7 +214,7 @@ class Clockwork {
     return available[0]; // Return first unused number
   }
 
-  public getPlayerWithcharacterID(id: number): Player {
+  private getPlayerWithCharacterID(id: number): Player {
     for (let i = 0; i < this.connections.length; i++) {
       if (this.connections[i].getCharacterID() === id) return this.connections[i];
     }
@@ -226,7 +231,7 @@ class Clockwork {
     if (this.world.phase !== GamePhase.Join) TeamManager.assignTeam(plr, this.connections, this.world.ruleset.teams);
 
     // Broadcast an state of all player names, scores, IDs, etc; also sends clients their character IDs
-    this.updatePlayerList();
+    // this.updatePlayerList(); // Replicated consistently
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
     if (!plr.getCharacter() || plr.getCharacter().HP <= 0) {
@@ -275,7 +280,7 @@ class Clockwork {
     // TODO: Update player pings
 
     // Finally, add player to the connections list because they are set up
-    Logger.info(`Connected player ${message.id} and assigned character ID ${player.getCharacterID()}`);
+    Logger.info(`Connected player ${message.id} and assigned character ID ${player.getCharacterID()}, %i players online`, this.connections.length + 1);
     this.connections.push(player);
   }
 
@@ -297,7 +302,7 @@ class Clockwork {
       player.getCharacter().HP = -100; // Character will automatically be cleaned up by world in the next update
     }
 
-    Logger.info(`Disconnected player ${message.id}`);
+    Logger.info(`Disconnected player ${message.id}, %i players left`, this.connections.length);
     this.updatePlayerList();
   }
 

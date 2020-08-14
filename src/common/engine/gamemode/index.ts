@@ -45,7 +45,7 @@ function MakeGamemode(preset: GamemodeType) {
     case GamemodeType.ZoneControl:
       return new Gamemode('Zone Control', 'One luchador must hold the zone for a total of 30 seconds', 30, 1, ScoreMethod.Zone, false, 180, 0);
     case GamemodeType.TeamZoneControl:
-      return new Gamemode('King of the Hill', 'One team must hold the zone for a total of 90 seconds', 90, 2, ScoreMethod.Zone, false, 300, 0);
+      return new Gamemode('King of the Hill', 'One team must hold the zone for a total of 90 seconds', 60, 2, ScoreMethod.Zone, false, 300, 0);
     case GamemodeType.Soccer:
       return new Gamemode('Luchador Ball', 'A lethal game of soccer, first team to 5 goals wins', 5, 2, ScoreMethod.Goals, false, 300, 1);
     case GamemodeType.Custom:

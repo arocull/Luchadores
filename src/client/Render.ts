@@ -1,7 +1,7 @@
 // Client only -- Renders stuff to the screen
 /* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
-import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality, getTeamColor } from '../common/engine/Enums';
+import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality, getTeamColor, ScoreMethod } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters';
 import Animator from './animation/Animator';
@@ -12,6 +12,9 @@ import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/inde
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import Map from '../common/engine/Map';
+import World from '../common/engine/World';
+import { TwoPi } from '../common/engine/math';
+import { Gamemode } from '../common/engine/gamemode';
 /* eslint-enable object-curly-newline */
 
 let ArenaBoundFrontPassIndex: number = 0;
@@ -108,17 +111,46 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
 }
 
 
+function getZoneColor(zone: Fighter[], teams: number): string {
+  let contested = false;
+  let controlNeutral = false;
+
+  if (teams > 1 && zone.length > 0) { // If there are teams, make sure there are no conflicting
+    const team = zone[0].Team; // Get team of first person in zone
+
+    for (let i = 1; i < zone.length && !contested; i++) { // Make sure nobody has a conflicting team
+      if (zone[i].Team !== team) { // If there is a team conflict, end loop and mark contested as true
+        contested = true;
+      }
+    }
+
+    if (!contested) return getTeamColor(team); // If no contesting, return the team's color
+  } else if (zone.length > 1) {
+    contested = true;
+  } else if (zone.length === 1) { // If there are no teams, then only score points when a single player is in the zone
+    controlNeutral = true;
+  }
+
+  if (contested) return '#590000'; // Dark red if it is being contested
+  if (controlNeutral) return '#117a3b'; // Satisfying green on success (potentially make red for opposing neutral players?)
+
+  return '#000000'; // Point appears gray otherwise
+}
+
+
 class Renderer {
   /* eslint-disable no-param-reassign */
   public static DrawScreen(
     canvas: CanvasRenderingContext2D,
     camera: Camera,
-    map: Map,
-    fighters: Fighter[],
-    projectiles: Projectile[],
+    world: World,
     particles: Particle[],
-    props: Prop[],
   ) {
+    const map = world.Map;
+    const fighters = world.Fighters;
+    const projectiles = world.Bullets;
+    const props = world.Props;
+
     switch (map.mapID) {
       case MapPreset.Grassy: canvas.fillStyle = '#0d542f'; break;
       default: canvas.fillStyle = '#e3a324'; break;
@@ -148,6 +180,19 @@ class Renderer {
         mapWidth * 1.5,
         mapHeight * 1.5,
       );
+    }
+
+    // Draw the zone--set color based off of who is in it
+    if (world.ruleset.scoreMethod === ScoreMethod.Zone && camera.InFrameWithRadius(world.zonePosition, world.zoneRadius)) {
+      const zonePos = camera.PositionOffset(world.zonePosition);
+
+      canvas.globalAlpha = 0.5;
+      canvas.fillStyle = getZoneColor(world.getZoneControllers(), world.ruleset.teams);
+
+      canvas.beginPath();
+      canvas.arc(zonePos.x, zonePos.y, world.zoneRadius * zoom, 0, TwoPi);
+      canvas.closePath();
+      canvas.fill();
     }
 
     // Draw arena floor and boundaries
@@ -346,7 +391,7 @@ class Renderer {
     }
   }
 
-  public static DrawPlayerList(canvas: CanvasRenderingContext2D, cam: Camera, data: string) {
+  public static DrawPlayerList(canvas: CanvasRenderingContext2D, cam: Camera, data: string, ruleset: Gamemode) {
     const startX = cam.Width * UIPlayerInfo.CORNERX_OFFSET;
     let startY = cam.Height * UIPlayerInfo.CORNERY_OFFSET;
     const width = cam.Width * UIPlayerInfo.LIST_WIDTH;
@@ -369,7 +414,7 @@ class Renderer {
 
     startY += (cam.Height * UIPlayerInfo.HEIGHT) / 2;
 
-    canvas.fillText('Kills', startX + width * 0.05, startY, width * 0.05);
+    canvas.fillText(ruleset.scoreMethod === ScoreMethod.Kills ? 'Kills' : 'Points', startX + width * 0.05, startY, width * 0.05);
     canvas.textAlign = 'center';
     canvas.fillText('Streak', startX + width * 0.125, startY, width * 0.05);
     canvas.textAlign = 'left';
@@ -529,8 +574,8 @@ class Renderer {
 
       startY += height / 2;
 
-      // Draw kills
-      canvas.fillText(card.getOwner().getKills().toString(), startX + width * 0.05, startY, width * 0.05);
+      // Draw kills / score
+      canvas.fillText(Math.floor(card.getOwner().getScore()).toString(), startX + width * 0.05, startY, width * 0.05);
       canvas.textAlign = 'center';
       canvas.fillText(card.getOwner().getKillstreak().toString(), startX + width * 0.125, startY, width * 0.05);
 
@@ -542,7 +587,7 @@ class Renderer {
       canvas.fillText(card.getOwner().getUsername(), startX + width * 0.2, startY, width * 0.3);
 
       // Ping
-      canvas.fillText(card.getOwner().getPing().toString(), startX + width * 0.9, startY, width * 0.1);
+      canvas.fillText(Math.round(card.getOwner().getPing()).toString(), startX + width * 0.9, startY, width * 0.1);
 
       canvas.lineWidth = 0.01 * cam.Zoom;
       canvas.lineCap = 'butt';

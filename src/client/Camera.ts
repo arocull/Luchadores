@@ -192,6 +192,17 @@ class Camera {
       && pos.y < this.Height * ClipBoundPlusOne
     );
   }
+  // Returns true of the position is "in frame" and should be drawn
+  public InFrameWithRadius(input: Vector, radius: number): boolean {
+    const pos = this.PositionOffset(input);
+
+    return (
+      pos.x + radius > this.Width * ClipBound
+      && pos.x - radius < this.Width * ClipBoundPlusOne
+      && pos.y + radius > this.Height * ClipBound
+      && pos.y - radius < this.Height * ClipBoundPlusOne
+    );
+  }
 }
 
 export { Camera as default };

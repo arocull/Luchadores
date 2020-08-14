@@ -110,7 +110,7 @@ class ClientGraphics {
     this.uiManager.updateRoundInfo(this.world.timer, this.world.phase, this.world.ruleset.name);
 
     // Draw screen
-    Render.DrawScreen(this.canvas, this.camera, this.world.Map, this.world.Fighters, this.world.Bullets, this.particles, this.world.Props);
+    Render.DrawScreen(this.canvas, this.camera, this.world, this.particles);
     // Do interface actions and draw interface
     this.uiManager.tick(DeltaTime, this.canvas, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning, this.clientState.input);
 
@@ -119,7 +119,7 @@ class ClientGraphics {
     const killfeed = this.clientState.getKillFeed();
 
     if ((this.uiManager.isPlayerListOpen() || this.world.phase === GamePhase.RoundFinish) && !this.uiManager.inGUIMode()) {
-      Render.DrawPlayerList(this.canvas, this.camera, 'Player List');
+      Render.DrawPlayerList(this.canvas, this.camera, 'Player List', this.world.ruleset);
       for (let i = 0; i < playerList.length; i++) {
         playerList[i].update();
         playerList[i].cornerY = UIPlayerInfo.CORNERY_OFFSET + (i + 1) * UIPlayerInfo.HEIGHT;

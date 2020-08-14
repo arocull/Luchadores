@@ -74,7 +74,7 @@ class Gamemode {
    * @param {number} points The amount of points to score (defaults to 1)
    */
   public scorePoint(team: Team, points: number = 1) {
-    if (team >= this._teams) return;
+    if (team > this._teams) return;
     this.teamScores[team - 1] += points;
   }
 
@@ -88,10 +88,10 @@ class Gamemode {
     const status = new WinStatus();
 
     // Check team victory conditions
-    if (this.teams > 1) {
+    if (this._teams > 1) {
       let scores: number[];
 
-      switch (this.scoreMethod) {
+      switch (this._scoreMethod) {
         case ScoreMethod.Kills: // Kills are tracked independently and separate from score
         default:
           scores = TeamManager.tallyKills(players);
@@ -103,7 +103,7 @@ class Gamemode {
           scores = this.teamScores;
       }
 
-      // Find team with highest score--look out for ties which may induce overtime
+      // Find team with highest score--look out for ties which may induce overtime--round score down to nearest second or point
       let maxScore = 0;
       let maxScoreIndex = 0;
       let matches = 0;
@@ -112,7 +112,7 @@ class Gamemode {
           maxScore = scores[i];
           maxScoreIndex = i;
           matches = 0; // New highest score found--reset the ties
-        } else if (scores[i] === maxScore) { // Count ties
+        } else if (Math.floor(scores[i]) === Math.floor(maxScore) && Math.floor(maxScore) > 0) { // Count ties (if max score is not zero)
           matches++;
         }
       }
@@ -121,6 +121,7 @@ class Gamemode {
       if (matches > 0) return new WinStatus(false, [], Team.Neutral, true);
 
       if (maxScore >= this._winScore && this._winScore > 0) {
+        status.gameWon = true;
         status.winTeam = maxScoreIndex + 1;
         for (let i = 0; i < players.length; i++) { // List all players on the winning team
           if (players[i].getTeam() === status.winTeam) {

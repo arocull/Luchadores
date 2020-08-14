@@ -8,7 +8,7 @@ import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
-import { FighterType, MapPreset, EntityType, GamePhase } from './Enums';
+import { FighterType, MapPreset, EntityType, GamePhase, ScoreMethod } from './Enums';
 import { Sheep, Deer, Flamingo, Soccerball } from './fighters';
 import { TypeEnum } from '../events';
 import { Gamemode, MakeGamemode, GamemodeType, WinStatus } from './gamemode';
@@ -132,6 +132,9 @@ class World {
   public ruleset: Gamemode;
   private winStatus: WinStatus;
 
+  public zonePosition: Vector;
+  public zoneRadius: number;
+
   constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
     if (loadTextures) this.Map.loadTexture(mapPreset);
@@ -228,6 +231,10 @@ class World {
         this.Fighters.push(new Soccerball(-i, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
       }
     }
+
+    this.zonePosition = new Vector(this.Map.Width / 2, this.Map.Height / 2, 0);
+    this.zoneRadius = -3; // Players are unable to be registered as "inside the zone" this way
+    if (newRuleset.scoreMethod === ScoreMethod.Zone) this.zoneRadius = 3; // Radius of three units
 
     this.timer = 15;
     this.phase = GamePhase.Join;
@@ -544,6 +551,36 @@ class World {
         }
       }
     }
+  }
+
+
+  // Score Tracking //
+  /**
+   * @function scoreZone
+   * @summary Returns all fighters within the zone that can score points
+   */
+  public getZoneControllers(): Fighter[] {
+    const inZone: Fighter[] = [];
+    for (let i = 0; i < this.Fighters.length; i++) {
+      if (
+        Vector.DistanceXY(this.Fighters[i].Position, this.zonePosition) <= this.zoneRadius
+        && this.Fighters[i].getOwnerID() > 0
+        && this.Fighters[i].HP > 0
+        && !this.Fighters[i].isFalling()
+      ) {
+        inZone.push(this.Fighters[i]);
+      }
+    }
+    return inZone;
+  }
+
+  /**
+   * @function getGoals
+   * @summary Returns all valid fighters with soccerballs currently in goals that are not their own
+   * @returns {Fighter[]} List of fighters that scored goals this tick
+   */
+  public getGoals(): Fighter[] {
+    return []; // No functionality yet
   }
 }
 

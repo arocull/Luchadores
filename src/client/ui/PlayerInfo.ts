@@ -29,8 +29,8 @@ class UIPlayerInfo extends UIFrame {
   }
 
   public static SORT(a: UIPlayerInfo, b: UIPlayerInfo): number {
-    if (a.getOwner().getKills() < b.getOwner().getKills()) return 1;
-    if (a.getOwner().getKills() > b.getOwner().getKills()) return -1;
+    if (a.getOwner().getScore() < b.getOwner().getScore()) return 1;
+    if (a.getOwner().getScore() > b.getOwner().getScore()) return -1;
     return 0;
   }
 }

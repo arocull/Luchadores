@@ -24,6 +24,7 @@ class Player {
     this.kills = 0;
     this.deaths = 0;
     this.maxStreak = 0;
+    this.score = 0;
     this.team = Team.Neutral;
 
     this.accountedFor = false;
