@@ -30,6 +30,10 @@ class Animator {
   protected bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
 
   public killEffectCountdown: number; // Ticks down until rose petals effects show after a kill
+  /** Counts to 1 based off of current speed of character, then generates a burst of particles--resets to zero on idle, subtracts 1 upon particle burst */
+  private moveTimer: number;
+  /** Whether or not to do movement particles this tick */
+  public doMoveParticle: boolean;
 
   constructor(protected owner: Fighter) {
     AssetPreloader.getImage(`Sprites/${fighterTypeToString(owner.getCharacter())}.png`).then((img) => {
@@ -50,6 +54,7 @@ class Animator {
     this.bulletTimer = 0;
 
     this.killEffectCountdown = -1;
+    this.moveTimer = 0;
   }
 
 
@@ -101,32 +106,45 @@ class Animator {
       case AnimationState.IdleUnique: // Unique idle
         this.frameIdleUnique();
         this.tickUniqueIdle();
+        this.moveTimer = 0;
         if (this.timer >= 1) this.inUniqueIdle = false; // Idle timeout
         break;
 
       case AnimationState.Falling: // Falling animation
         this.frameFalling();
+        this.moveTimer += DeltaTime * this.owner.Velocity.length();
         break;
 
       case AnimationState.Moving: // Move animation
         this.frameMove();
+        this.moveTimer += DeltaTime * this.owner.Velocity.length();
         break;
 
       case AnimationState.Attacking: // Attack
         this.frameAttack();
         this.tickAttacking();
+        this.moveTimer = 0;
         break;
 
       case AnimationState.AttackingMoving: // Attack while moving
         this.frameAttackMove();
         this.tickAttacking();
+        this.moveTimer += DeltaTime * this.owner.Velocity.length();
         break;
 
       default: // Idle animation
         this.frameIdle();
+        this.moveTimer = 0;
         if (this.timer > this.timeToUniqueIdle) {
           this.triggerUniqueIdle();
         }
+    }
+
+    if (this.moveTimer > 3) {
+      this.doMoveParticle = true;
+      this.moveTimer -= 3;
+    } else {
+      this.doMoveParticle = false;
     }
 
     if (this.killEffectCountdown > 0) {
