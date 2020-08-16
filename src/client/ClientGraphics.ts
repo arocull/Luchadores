@@ -2,7 +2,7 @@ import Client from './ClientState';
 import UIManager from './ui/UIManager';
 import Camera from './Camera';
 import {
-  Particle, PRosePetal, PSmashEffect, PConfetti,
+  Particle, PRosePetal, PSmashEffect, PConfetti, PMoveDash,
 } from './particles';
 import Render from './Render';
 import RenderSettings from './RenderSettings';
@@ -74,6 +74,16 @@ class ClientGraphics {
           a.Animator.Tick(DeltaTime);
           if (a.Animator.killEffectCountdown === 0) { // If a death effect is to occur, execute it
             PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 20 * RenderSettings.ParticleAmount);
+          }
+
+          if (a.Animator.doMoveParticle) {
+            PMoveDash.Burst(
+              this.particles,
+              Vector.Add(a.Position, new Vector(0, a.Height / 2, 0)),
+              a.Velocity.length() / 25,
+              Vector.UnitVector(Vector.Multiply(a.Velocity, -1)),
+              a.Radius,
+            );
           }
         }
 

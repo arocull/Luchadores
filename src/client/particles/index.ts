@@ -7,6 +7,7 @@ import PSmoke from './Smoke';
 import PLightning from './Lightning';
 import PBulletFire from './BulletFire';
 import PBulletShell from './BulletShell';
+import PMoveDash from './MoveDash';
 
 export {
   Particle,
@@ -18,4 +19,5 @@ export {
   PLightning,
   PBulletFire,
   PBulletShell,
+  PMoveDash,
 };
