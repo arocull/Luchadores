@@ -8,7 +8,7 @@ import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
-import { FighterType, MapPreset, EntityType, GamePhase, ScoreMethod } from './Enums';
+import { FighterType, MapPreset, EntityType, GamePhase, ScoreMethod, ColliderType } from './Enums';
 import { Sheep, Deer, Flamingo, Soccerball } from './fighters';
 import { TypeEnum } from '../events';
 import { Gamemode, MakeGamemode, GamemodeType, WinStatus } from './gamemode';
@@ -235,6 +235,18 @@ class World {
     this.zonePosition = new Vector(this.Map.Width / 2, this.Map.Height / 2, 0);
     this.zoneRadius = -3; // Players are unable to be registered as "inside the zone" this way
     if (newRuleset.scoreMethod === ScoreMethod.Zone) this.zoneRadius = 3; // Radius of three units
+    else if (newRuleset.scoreMethod === ScoreMethod.Goals) {
+      // Load in goals as physical props
+      const gr1 = new Prop(new Vector(this.Map.Width * 0.05, this.Map.Height * 0.5, 0), ColliderType.Prism, 0.1, 1.03, 2);
+      const gr2 = new Prop(new Vector(this.Map.Width * 0.05 + 0.5, this.Map.Height * 0.5, 1.08), ColliderType.Prism, 1, 0.1, 2);
+      const gr3 = new Prop(new Vector(this.Map.Width * 0.05 + 0.5, this.Map.Height * 0.5 - 1, 0), ColliderType.Prism, 1, 1.03, 0.1);
+      const gr4 = new Prop(new Vector(this.Map.Width * 0.05 + 0.5, this.Map.Height * 0.5 + 1, 0), ColliderType.Prism, 1, 1.03, 0.1);
+      gr2.SetTexture('Sprites/Soccer/GoalTop_Red.png');
+      gr3.SetTexture('Sprites/Soccer/GoalSide_Red.png');
+      gr4.SetTexture('Sprites/Soccer/GoalSide_Red.png');
+
+      this.Props.push(gr1, gr2, gr3, gr4);
+    }
 
     this.timer = 15;
     this.phase = GamePhase.Join;
