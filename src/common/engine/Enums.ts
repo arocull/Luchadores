@@ -96,7 +96,7 @@ function fighterTypeToString(type: FighterType) {
     case FighterType.Deer: return 'Deer';
     case FighterType.Flamingo: return 'Flamingo';
     case FighterType.Toad: return 'Toad';
-    case FighterType.Soccerball: return 'Soccerball';
+    case FighterType.Soccerball: return 'Soccer/Soccerball';
   }
 }
 
