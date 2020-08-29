@@ -319,7 +319,7 @@ class Renderer {
                 (-pos.x - a.Width * a.textureUpscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
                 (pos.y + pos.z) * zoom + offsetY,
                 2 * a.Width * a.textureUpscale * zoom, // 2 * Radius originally used in place of a.Height
-                -a.Height * a.textureUpscale * zoom + a.Depth * a.textureUpscale * zoom,
+                (-a.Height - a.Depth) * a.textureUpscale * zoom,
               );
               break;
           }

@@ -55,11 +55,11 @@ class Projectile extends Entity {
       return;
     }
 
-    const dif = Vector.Add(
+    this.DeltaPosition = Vector.Add(
       Vector.Multiply(this.Acceleration, (DeltaTime ** 2) / 2),
       Vector.Multiply(this.Velocity, DeltaTime),
     );
-    this.Position = Vector.Add(this.Position, dif);
+    this.Position = Vector.Add(this.Position, this.DeltaPosition);
 
     // Bounce
     if (this.Position.z <= 0) {

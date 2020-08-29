@@ -110,6 +110,10 @@ class Soccerball extends Fighter {
     this.storedMomentum = specialNum;
     this.frozen = specialBool;
   }
+
+  public getLastAttacker(): Fighter {
+    return this.lastAttacker;
+  }
 }
 
 export { Soccerball as default };

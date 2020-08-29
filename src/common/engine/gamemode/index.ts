@@ -1,6 +1,7 @@
 import Gamemode from './Gamemode';
 import TeamManager from './TeamManager';
 import WinStatus from './WinStatus';
+import ScoredGoal from './ScoredGoal';
 import { ScoreMethod } from '../Enums';
 
 /**
@@ -58,5 +59,6 @@ export {
   Gamemode,
   TeamManager,
   WinStatus,
+  ScoredGoal,
   MakeGamemode,
 };
