@@ -43,7 +43,16 @@ class AnimSoccerball extends Animator {
     this.timer += DeltaTime * (this.owner.getSpecialNumber() + this.owner.Velocity.length());
 
     // The soccerball has no animations, it only knows spin
-    // this.frame = Math.floor(this.timer * 5) % 5;
+    this.frame = Math.floor(this.timer * 7) % 20;
+
+    if (this.owner.getBulletCooldown() > 0) {
+      if (this.owner.getAim().x < 0) this.owner.Flipped = true;
+      else if (this.owner.getAim().x > 0) this.owner.Flipped = false;
+    } else {
+      // eslint-disable-next-line no-lonely-if
+      if (this.owner.Velocity.x < 0) this.owner.Flipped = true;
+      else if (this.owner.Velocity.x > 0) this.owner.Flipped = false;
+    }
 
     if (this.owner.getSpecialBoolean()) this.frameIdle(); // If frozen in place, leave a smoke trail
     else if (this.owner.Velocity.length() > 5) this.frameMove(); // If moving, leave a fire trail

@@ -2,6 +2,7 @@ import { Team, ScoreMethod } from '../Enums';
 import Player from '../Player';
 import WinStatus from './WinStatus';
 import TeamManager from './TeamManager';
+import Prop from '../props/Prop';
 
 /**
  * @class
@@ -11,6 +12,7 @@ import TeamManager from './TeamManager';
 class Gamemode {
   /** Array used to keep track of zone points or goal scores for each team in a global sense */
   private teamScores: number[];
+  public goals: Prop[];
 
   /**
    * @constructor
@@ -36,6 +38,7 @@ class Gamemode {
   ) {
     // Set up array to be dynamically sized with the number of teams there are
     this.teamScores = [];
+    this.goals = [];
     for (let i = 0; i < _teams; i++) {
       this.teamScores.push(0);
     }

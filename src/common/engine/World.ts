@@ -8,10 +8,10 @@ import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { MessageBus } from '../messaging/bus';
-import { FighterType, MapPreset, EntityType, GamePhase, ScoreMethod } from './Enums';
+import { FighterType, MapPreset, EntityType, GamePhase, ScoreMethod, ColliderType, Team } from './Enums';
 import { Sheep, Deer, Flamingo, Soccerball } from './fighters';
 import { TypeEnum } from '../events';
-import { Gamemode, MakeGamemode, GamemodeType, WinStatus } from './gamemode';
+import { Gamemode, MakeGamemode, GamemodeType, WinStatus, ScoredGoal } from './gamemode';
 /* eslint-enable object-curly-newline */
 
 
@@ -134,6 +134,7 @@ class World {
 
   public zonePosition: Vector;
   public zoneRadius: number;
+  private totalSoccerballs: number;
 
   constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
@@ -228,13 +229,73 @@ class World {
 
     if (this.ruleset.soccerballs > 0) { // Randomly place soccerballs
       for (let i = 1; i <= this.ruleset.soccerballs; i++) {
-        this.Fighters.push(new Soccerball(-i, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
+        this.totalSoccerballs++;
+        this.Fighters.push(new Soccerball(-this.totalSoccerballs, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
       }
     }
 
     this.zonePosition = new Vector(this.Map.Width / 2, this.Map.Height / 2, 0);
     this.zoneRadius = -3; // Players are unable to be registered as "inside the zone" this way
     if (newRuleset.scoreMethod === ScoreMethod.Zone) this.zoneRadius = 3; // Radius of three units
+    else if (newRuleset.scoreMethod === ScoreMethod.Goals) {
+      // BUILD RED GOAL
+      // Load in goals as physical props
+      const gr1 = new Prop(new Vector(this.Map.Width * 0.05 - 0.025, this.Map.Height * 0.5 - 1, 0), ColliderType.Prism, 0.05, 1.5, 2); // Back wall
+      // Top--Currently depth position of box is the very bottom--not sure why, will have to fix in the future
+      const gr2 = new Prop(new Vector(this.Map.Width * 0.05 + 0.5, this.Map.Height * 0.5 - 1, 1.5), ColliderType.Prism, 1, 0.05, 2);
+      // Goal sides
+      const gr3 = new Prop(new Vector(this.Map.Width * 0.05 + 0.5, this.Map.Height * 0.5 - 1.025, 0), ColliderType.Prism, 1, 1.5, 0.05);
+      const gr4 = new Prop(new Vector(this.Map.Width * 0.05 + 0.5, this.Map.Height * 0.5 + 1.025, 0), ColliderType.Prism, 1, 1.5, 0.05);
+      // Bounding box (scores happen here)
+      const grBounds = new Prop(new Vector(this.Map.Width * 0.05 + 0.5, this.Map.Height * 0.5 - 1, 0), ColliderType.Prism, 1, 1.5, 2);
+      gr1.BounceBack = 1.8; // Make sure things don't get stuck inside the goal (otherwise acts as a momentum black hole)
+      gr2.BounceBack = 1.8;
+      gr3.BounceBack = 1.8;
+      gr4.BounceBack = 1.8;
+      // Set textures (no back wall texture)
+      gr2.SetTexture('Sprites/Soccer/GoalTop_Red.png');
+      gr3.SetTexture('Sprites/Soccer/GoalSide_Red.png');
+      gr4.SetTexture('Sprites/Soccer/GoalSide_Red.png');
+
+      this.Props.push(gr1, gr2, gr3, gr4); // Add to world props
+      this.ruleset.goals.push(grBounds); // Add goal to ruleset for score keeping
+
+      // Time for Blue!
+      const gb1 = new Prop(new Vector(this.Map.Width * 0.95 + 0.025, this.Map.Height * 0.5 - 1, 0), ColliderType.Prism, 0.05, 1.5, 2); // Back wall
+      const gb2 = new Prop(new Vector(this.Map.Width * 0.95 - 0.5, this.Map.Height * 0.5 - 1, 1.5), ColliderType.Prism, 1, 0.05, 2); // Top
+      const gb3 = new Prop(new Vector(this.Map.Width * 0.95 - 0.5, this.Map.Height * 0.5 - 1.025, 0), ColliderType.Prism, 1, 1.5, 0.05); // Sides
+      const gb4 = new Prop(new Vector(this.Map.Width * 0.95 - 0.5, this.Map.Height * 0.5 + 1.025, 0), ColliderType.Prism, 1, 1.5, 0.05);
+      const gbBounds = new Prop(new Vector(this.Map.Width * 0.95 - 0.5, this.Map.Height * 0.5 - 1, 0), ColliderType.Prism, 1, 1.5, 2);
+      gb1.BounceBack = 1.8; // Bounceback
+      gb2.BounceBack = 1.8;
+      gb3.BounceBack = 1.8;
+      gb4.BounceBack = 1.8;
+      // Set textures (no back wall texture for Blue either)
+      gb2.SetTexture('Sprites/Soccer/GoalTop_Blue.png');
+      gb3.SetTexture('Sprites/Soccer/GoalSide_Blue.png');
+      gb4.SetTexture('Sprites/Soccer/GoalSide_Blue.png');
+      this.Props.push(gb1, gb2, gb3, gb4); // Add to world props
+      this.ruleset.goals.push(gbBounds); // Add goal to ruleset for score keeping
+
+      // 3+ teams with soccer is a WIP
+      if (newRuleset.teams > 2) { // Build green goal if there are more than 2 teams
+        const gg1 = new Prop(new Vector(this.Map.Height * 0.5 + 1, this.Map.Height * 0.95 - 0.025, 0), ColliderType.Prism, 2, 1.5, 0.05); // Back wall
+        const gg2 = new Prop(new Vector(this.Map.Width * 0.5, this.Map.Height * 0.95 - 1, 1.5), ColliderType.Prism, 2, 0.05, 1); // Top
+        const gg3 = new Prop(new Vector(this.Map.Width * 0.5 - 1.025, this.Map.Height * 0.95 - 1, 0), ColliderType.Prism, 0.05, 1.5, 1); // Sides
+        const gg4 = new Prop(new Vector(this.Map.Width * 0.5 + 1.025, this.Map.Height * 0.95 - 1, 0), ColliderType.Prism, 0.05, 1.5, 1);
+        const ggBounds = new Prop(new Vector(this.Map.Width * 0.5 - 1, this.Map.Height * 0.95 - 1, 0), ColliderType.Prism, 1, 1.5, 2);
+        gg1.BounceBack = 1.8;
+        gg2.BounceBack = 1.8;
+        gg3.BounceBack = 1.8;
+        gg4.BounceBack = 1.8;
+        gg1.SetTexture('Sprites/Soccer/GoalTop_Green.png');
+        gg2.SetTexture('Sprites/Soccer/GoalTop_Green.png');
+        gg3.SetTexture('Sprites/Soccer/GoalSide_Green.png');
+        gg4.SetTexture('Sprites/Soccer/GoalSide_Green.png');
+        this.Props.push(gg1, gg2, gg3, gg4); // Add to world props
+        this.ruleset.goals.push(ggBounds); // Add goal to ruleset for score keeping
+      }
+    }
 
     this.timer = 15;
     this.phase = GamePhase.Join;
@@ -511,6 +572,7 @@ class World {
       const b = this.Bullets[j];
 
       const ray = new Ray(Vector.Subtract(b.Position, b.DeltaPosition), b.Position);
+      console.log(ray.direction, ' trace dir, bullet dir ', b.Velocity);
 
       let closest = 10000; // How many units away the closest collision is
       let closestHit: TraceResult = null; // Fighter hit by this result
@@ -579,8 +641,35 @@ class World {
    * @summary Returns all valid fighters with soccerballs currently in goals that are not their own
    * @returns {Fighter[]} List of fighters that scored goals this tick
    */
-  public getGoals(): Fighter[] {
-    return []; // No functionality yet
+  public getGoals(): ScoredGoal[] {
+    const goals: ScoredGoal[] = [];
+    let destructs = 0;
+
+    for (let i = 0; i < this.Fighters.length; i++) {
+      if (this.Fighters[i].getCharacter() === FighterType.Soccerball) {
+        const ball = <Soccerball>(this.Fighters[i]); // First, grab the soccerball
+
+        for (let g = 0; g < this.ruleset.goals.length; g++) { // Check all exsting goals
+          const goalTeam: Team = g + 1; // Team who owns this goal
+          if (this.ruleset.goals[g].isPointInside(ball.Position, ball.Radius / 2)) { // Is the ball inside of the goal?
+            ball.HP = 0; // If so, destroy the ball
+            destructs++;
+
+            if (ball.getLastAttacker() && ball.getLastAttacker().Team !== goalTeam) { // Only count it as a goal if it wasn't scored on its own team
+              goals.push(new ScoredGoal(ball, ball.getLastAttacker(), ball.getLastAttacker().Team));
+            }
+          }
+        }
+      }
+    }
+
+    // Spawn new soccerballs for the ones we're losing
+    for (let i = 1; i <= destructs; i++) {
+      this.totalSoccerballs++;
+      this.Fighters.push(new Soccerball(-this.totalSoccerballs, new Vector(Math.random() * this.Map.Width, Math.random() * this.Map.Height, 0)));
+    }
+
+    return goals; // No functionality yet
   }
 }
 

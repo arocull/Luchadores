@@ -80,7 +80,7 @@ class RoundManager {
     else weights = [1]; // Stick to deathmatch if player is alone to let other players join (skirmish would cause instant win)
     */
 
-    const weights = [1, 0, 0, 0, 0, 0, 0];
+    const weights = [0, 0, 0, 0, 0, 0, 1];
 
     // Select a random gamemode, apply ruleset, and broadcast it
     const ruleset = MakeGamemode(Random.pickIndexFromWeights(weights, Math.random()));
@@ -232,7 +232,12 @@ class RoundManager {
    * @summary Scores points for all goals made by players
    */
   private scoreGoals() {
+    const goals = this.world.getGoals();
 
+    for (let i = 0; i < goals.length; i++) {
+      this.earnPlayerScore(goals[i].scorer.getOwnerID(), 1); // Individual player point
+      this.world.ruleset.scorePoint(goals[i].teamScored, 1); // Global team point
+    }
   }
 
   /**

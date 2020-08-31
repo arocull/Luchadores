@@ -1,7 +1,7 @@
 // Client only -- Renders stuff to the screen
 /* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
-import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality, getTeamColor, ScoreMethod } from '../common/engine/Enums';
+import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality, getTeamColor, ScoreMethod, ColliderType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters';
 import Animator from './animation/Animator';
@@ -303,13 +303,26 @@ class Renderer {
         if (a.texture) {
           const pos = camera.PositionOffsetBasic(a.Position);
           canvas.globalAlpha = 1;
-          canvas.drawImage(
-            a.texture,
-            (-pos.x - a.Radius * a.textureUpscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
-            (pos.y + pos.z) * zoom + offsetY,
-            2 * a.Radius * a.textureUpscale * zoom, // 2 * Radius originally used in place of a.Height
-            -a.Height * a.textureUpscale * zoom,
-          );
+          switch (a.shape) {
+            case ColliderType.Cylinder:
+              canvas.drawImage(
+                a.texture,
+                (-pos.x - a.Radius * a.textureUpscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
+                (pos.y + pos.z) * zoom + offsetY,
+                2 * a.Radius * a.textureUpscale * zoom, // 2 * Radius originally used in place of a.Height
+                -a.Height * a.textureUpscale * zoom,
+              );
+              break;
+            default:
+              canvas.drawImage(
+                a.texture,
+                (-pos.x - a.Width * a.textureUpscale) * zoom + offsetX, // Radius originally used in place of a.Height / 2
+                (pos.y + pos.z) * zoom + offsetY,
+                2 * a.Width * a.textureUpscale * zoom, // 2 * Radius originally used in place of a.Height
+                (-a.Height - a.Depth) * a.textureUpscale * zoom,
+              );
+              break;
+          }
         }
       } else if (toDraw[i].type === EntityType.Projectile) {
         const a = <Projectile>toDraw[i];

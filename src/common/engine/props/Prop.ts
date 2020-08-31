@@ -14,7 +14,9 @@ const normalBackward = new Vector(0, -1, 0);
 // Prop - Basic primitive collision box with potential to simulate physics
 class Prop extends Entity {
   public Radius: number;
-  public BounceBack: number; // If something collides with this, how much of the entities velocity is returned
+  /** If something collides with this, how much of the entities velocity is returned in the normal direction
+  * Defaults to 1 (0% return), 2 would be 100% return, 3 would be 200% return, etc */
+  public BounceBack: number;
 
   public onSurface: boolean; // If this object is resting on top of another object
 
@@ -77,7 +79,7 @@ class Prop extends Entity {
   public traceProp(ray: Ray, radiusBoost: number = 0, bulletTrace: boolean = false): TraceResult {
     switch (this.shape) {
       case ColliderType.Cylinder: return this.traceCylinder(ray, radiusBoost, bulletTrace);
-      default: return this.traceBox(ray, radiusBoost);
+      default: return this.traceBox(ray, radiusBoost, bulletTrace);
     }
   }
   // To call, use traceProp; Ray traces a cylinder
@@ -108,7 +110,7 @@ class Prop extends Entity {
     return new TraceResult(); // Returns if all other tests failed
   }
   // To call, use traceProp; Ray traces a box / rectangular prism
-  private traceBox(ray: Ray, radiusBoost: number = 0): TraceResult {
+  private traceBox(ray: Ray, radiusBoost: number = 0, bulletTrace: boolean): TraceResult {
     const minX = this.Position.x - radiusBoost;
     const maxX = this.Position.x + this.Width + radiusBoost;
     const minY = this.Position.y - radiusBoost;
@@ -116,7 +118,7 @@ class Prop extends Entity {
     const minZ = this.Position.z;
     const maxZ = this.Position.z + this.Height;
 
-    const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp);
+    const topTrace = ray.tracePlane(this.getTopPlaneCenter(), normalUp, bulletTrace);
     if (topTrace.collided // Aligned on Z axis, test X and Y
       && topTrace.Position.x >= minX
       && topTrace.Position.x <= maxX
@@ -126,7 +128,7 @@ class Prop extends Entity {
       topTrace.topFaceCollision = true; // Top surface collision
       return topTrace;
     }
-    const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown);
+    const botTrace = ray.tracePlane(this.getBottomPlaneCenter(), normalDown, bulletTrace);
     if (botTrace.collided // Aligned on Z axis, test X and Y
       && botTrace.Position.x >= minX
       && botTrace.Position.x <= maxX
@@ -140,7 +142,7 @@ class Prop extends Entity {
     // eslint-disable-next-line no-param-reassign
     ray.length += radiusBoost;
 
-    const rightTrace = ray.tracePlane(this.getRightPlaneCenter(), normalRight);
+    const rightTrace = ray.tracePlane(this.getRightPlaneCenter(), normalRight, bulletTrace);
     if (rightTrace.collided // We're tracing the X axis, so it should always be aligned on the X position; test Y and Z
       && rightTrace.Position.y >= minY
       && rightTrace.Position.y <= maxY
@@ -149,7 +151,7 @@ class Prop extends Entity {
     ) {
       return rightTrace;
     }
-    const leftTrace = ray.tracePlane(this.getLeftPlaneCenter(), normalLeft);
+    const leftTrace = ray.tracePlane(this.getLeftPlaneCenter(), normalLeft, bulletTrace);
     if (leftTrace.collided // We're tracing the X axis, so it should always be aligned on the X position; test Y and Z
       && leftTrace.Position.y >= minY
       && leftTrace.Position.y <= maxY
@@ -158,7 +160,7 @@ class Prop extends Entity {
     ) {
       return leftTrace;
     }
-    const forwardTrace = ray.tracePlane(this.getForwardPlaneCenter(), normalForward);
+    const forwardTrace = ray.tracePlane(this.getForwardPlaneCenter(), normalForward, bulletTrace);
     if (forwardTrace.collided // We're tracing the Y axis, so it should always be aligned on the Y position; test X and Z
       && forwardTrace.Position.x >= minX
       && forwardTrace.Position.x <= maxX
@@ -167,7 +169,7 @@ class Prop extends Entity {
     ) {
       return forwardTrace;
     }
-    const backwardTrace = ray.tracePlane(this.getBackwardPlaneCenter(), normalBackward);
+    const backwardTrace = ray.tracePlane(this.getBackwardPlaneCenter(), normalBackward, bulletTrace);
     if (backwardTrace.collided // We're tracing the Y axis, so it should always be aligned on the Y position; test X and Z
       && backwardTrace.Position.x >= minX
       && backwardTrace.Position.x <= maxX
@@ -218,7 +220,7 @@ class Prop extends Entity {
           Vector.Multiply(
             collision.Normal,
             // Amount of relation between vectors multiplied by length of vector
-            Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity)) * this.Velocity.lengthXY(),
+            Vector.DotProduct(collision.Normal, Vector.UnitVectorXY(this.Velocity)) * this.Velocity.lengthXY() * (this.BounceBack * b.BounceBack),
           ),
         );
       }
