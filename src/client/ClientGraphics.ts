@@ -34,6 +34,7 @@ class ClientGraphics {
 
     this.viewport = <HTMLCanvasElement>document.getElementById('render');
     this.canvas = this.viewport.getContext('2d');
+    Render.setContext(this.canvas); // Set drawing context for Render (since it won't be switching)
     this.fpsCounter = [];
 
     this.particles = [];
@@ -120,20 +121,20 @@ class ClientGraphics {
     this.uiManager.updateRoundInfo(this.world.timer, this.world.phase, this.world.ruleset.name);
 
     // Draw screen
-    Render.DrawScreen(this.canvas, this.camera, this.world, this.particles);
+    Render.DrawScreen(this.camera, this.world, this.particles);
     // Do interface actions and draw interface
-    this.uiManager.tick(DeltaTime, this.canvas, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning, this.clientState.input);
+    this.uiManager.tick(DeltaTime, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning, this.clientState.input);
 
     // Draw player list and kill feed
     const playerList = this.clientState.getPlayerList();
     const killfeed = this.clientState.getKillFeed();
 
     if ((this.uiManager.isPlayerListOpen() || this.world.phase === GamePhase.RoundFinish) && !this.uiManager.inGUIMode()) {
-      Render.DrawPlayerList(this.canvas, this.camera, 'Player List', this.world.ruleset);
+      Render.DrawPlayerList(this.camera, 'Player List', this.world.ruleset);
       for (let i = 0; i < playerList.length; i++) {
         playerList[i].update();
         playerList[i].cornerY = UIPlayerInfo.CORNERY_OFFSET + (i + 1) * UIPlayerInfo.HEIGHT;
-        Render.DrawUIFrame(this.canvas, this.camera, playerList[i]);
+        Render.DrawUIFrame(this.camera, playerList[i]);
       }
     }
     for (let i = 0; i < killfeed.length; i++) {
@@ -143,7 +144,7 @@ class ClientGraphics {
         i--;
       } else {
         killfeed[i].cornerY = i * UIDeathNotification.HEIGHT + UIDeathNotification.OFFSET;
-        Render.DrawUIFrame(this.canvas, this.camera, killfeed[i]);
+        Render.DrawUIFrame(this.camera, killfeed[i]);
       }
     }
 
@@ -158,7 +159,7 @@ class ClientGraphics {
       }
       avgDT /= this.fpsCounter.length;
 
-      Render.DrawFPS(this.canvas, this.camera, avgDT);
+      Render.DrawFPS(this.camera, avgDT);
     }
   }
 }

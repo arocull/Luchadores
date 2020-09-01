@@ -230,14 +230,13 @@ class UIManager {
 
   public tick(
     DeltaTime: number,
-    canvas: CanvasRenderingContext2D,
     cam: Camera,
     character: Fighter,
     connectionStatus: boolean, // If there is any question in the connection status, input false to have the info box drawn
     spawning: boolean, // Is the character spawning? (prevent killcam and such from drawing until player is assigned by server)
     InputState: any, // State of player inputs--used for mouse tracking in UI interaction
   ) {
-    if (this.inGUIMode()) Renderer.DrawUIFrame(canvas, cam, this.backdrop);
+    if (this.inGUIMode()) Renderer.DrawUIFrame(cam, this.backdrop);
 
 
     // Healthbar Management //
@@ -260,16 +259,16 @@ class UIManager {
     // Do not want healthbar to show when dead (unless healthbar is toppling), but do want to show even while waiting on spawn
     if (character || this.healthbar.collapsing || this.specialbar.collapsing || spawning) {
       this.healthbar.tick(DeltaTime);
-      Renderer.DrawUIFrame(canvas, cam, this.healthbar.base);
-      Renderer.DrawUIFrame(canvas, cam, this.healthbar.barBack);
-      Renderer.DrawUIFrame(canvas, cam, this.healthbar.bar);
+      Renderer.DrawUIFrame(cam, this.healthbar.base);
+      Renderer.DrawUIFrame(cam, this.healthbar.barBack);
+      Renderer.DrawUIFrame(cam, this.healthbar.bar);
       this.healthbar.checkReset();
 
       if (this.specialBarInUse) {
         this.specialbar.tick(DeltaTime);
-        Renderer.DrawUIFrame(canvas, cam, this.specialbar.base);
-        Renderer.DrawUIFrame(canvas, cam, this.specialbar.barBack);
-        Renderer.DrawUIFrame(canvas, cam, this.specialbar.bar);
+        Renderer.DrawUIFrame(cam, this.specialbar.base);
+        Renderer.DrawUIFrame(cam, this.specialbar.barBack);
+        Renderer.DrawUIFrame(cam, this.specialbar.bar);
         this.specialbar.checkReset();
       }
     }
@@ -279,7 +278,7 @@ class UIManager {
       if (connectionStatus) this.classSelect.addConfirmButton(); // Only allow luchadors to be selected if the connection is stable
       for (let i = 0; i < this.classSelect.frames.length; i++) {
         this.doFrameInteraction(InputState, cam, this.classSelect.frames[i]);
-        Renderer.DrawUIFrame(canvas, cam, this.classSelect.frames[i]);
+        Renderer.DrawUIFrame(cam, this.classSelect.frames[i]);
       }
     }
 
@@ -290,11 +289,11 @@ class UIManager {
       }
 
       // Adjust flashing cursor to be at the end of the line of text
-      this.usernameSelect.setCursorPosition(Renderer.GetTextWidth(canvas, cam, this.usernameSelect.getTextBox()));
+      this.usernameSelect.setCursorPosition(Renderer.GetTextWidth(cam, this.usernameSelect.getTextBox()));
       this.usernameSelect.tick(DeltaTime); // Tick effects like selection color
 
       for (let i = 0; i < this.usernameSelect.frames.length; i++) {
-        Renderer.DrawUIFrame(canvas, cam, this.usernameSelect.frames[i]);
+        Renderer.DrawUIFrame(cam, this.usernameSelect.frames[i]);
       }
     }
 
@@ -304,14 +303,14 @@ class UIManager {
       }
       this.settingsMenu.Tick(DeltaTime); // Tick effects like selection color
       for (let i = 0; i < this.settingsMenu.frames.length; i++) {
-        Renderer.DrawUIFrame(canvas, cam, this.settingsMenu.frames[i]);
+        Renderer.DrawUIFrame(cam, this.settingsMenu.frames[i]);
       }
     }
 
     // Options Gear Button and Game Info //
     if (!this.inGUIMode()) {
       this.doFrameInteraction(InputState, cam, this.settingsButton);
-      Renderer.DrawUIFrame(canvas, cam, this.settingsButton);
+      Renderer.DrawUIFrame(cam, this.settingsButton);
 
       // If title message was broadcasting the allotted amount of time, remove it
       if (this.roundTitleTimer > 0) {
@@ -322,19 +321,19 @@ class UIManager {
         }
       }
 
-      Renderer.DrawUIFrame(canvas, cam, this.roundTimer);
-      Renderer.DrawUIFrame(canvas, cam, this.roundPhase);
-      Renderer.DrawUIFrame(canvas, cam, this.roundTitle);
+      Renderer.DrawUIFrame(cam, this.roundTimer);
+      Renderer.DrawUIFrame(cam, this.roundPhase);
+      Renderer.DrawUIFrame(cam, this.roundTitle);
     }
 
     // Killcam - only draw if no character is present, character is not spawning, and select screens are not open
     // Basically only draw if player is confirmed dead and is not in frames between selecting Luchador and being spawned by server
     if (!character && !(this.classSelectOpen || this.usernameSelectOpen) && !spawning) {
-      Renderer.DrawUIFrame(canvas, cam, this.killcam);
+      Renderer.DrawUIFrame(cam, this.killcam);
     }
 
     // Connection Status - Only draw if connection is unstable
-    if (!connectionStatus) Renderer.DrawUIFrame(canvas, cam, this.connectionText);
+    if (!connectionStatus) Renderer.DrawUIFrame(cam, this.connectionText);
   }
 }
 
