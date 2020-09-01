@@ -11,6 +11,9 @@
                 font-family: 'Roboto', sans-serif;
                 font-family: 'Flamenco', cursive;
             }
+            canvas {
+                z-index: auto;
+            }
             body {
                 margin: 0;
                 padding: 0;
@@ -19,10 +22,39 @@
             @-o-viewport{
                 orientation: landscape;
             }
+
+            div.ui_title {
+                text-align: center;
+                text-anchor: middle;
+                font-family: 'Flamenco', cursive;
+                font-size: 36px;
+                color: #ffffff;
+                background: none;
+                margin-top: -5%;
+                height:8%;
+            }
+            div.ui_settings {
+                font-family: 'Roboto', cursive;
+                z-index: 1;
+                position: absolute;
+                top: 0;
+                left: 0;
+                padding: 0;
+                margin: 10%;
+                width: 80%;
+                height: 80%;
+                background-color: #737373;
+            }
         </style>
     </head>
     <body>
         <canvas id="render" width="1000" height="800"></canvas>
+
+        <div class="ui_settings" hidden="false">
+            <div class="ui_title"><p>Settings</p></div>
+            <p> test </p>
+        </div>
+
         <script src="client.js"></script>
     </body>
 </html>
