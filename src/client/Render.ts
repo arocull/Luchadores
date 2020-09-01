@@ -25,17 +25,6 @@ function DepthSort(a: Entity, b: Entity): number {
   if (a.Position.y > b.Position.y) return -1;
   return 0;
 }
-function SortByYNegative(a: Entity, b: Entity): number {
-  return -DepthSort(a, b);
-}
-function SortByXPositive(a: Entity, b: Entity): number {
-  if (a.Position.x < b.Position.x) return -1;
-  if (a.Position.x > b.Position.x) return 1;
-  return 0;
-}
-function SortByXNegative(a: Entity, b: Entity): number {
-  return -SortByXPositive(a, b);
-}
 
 
 function MeasureString(canvas: CanvasRenderingContext2D, str: string): number {
@@ -55,55 +44,101 @@ function GetKillMethod(fighter: FighterType): string {
 
 
 function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
-  const f: Fighter[] = fighters.slice();
   const corners: Vector[] = [camera.PositionOffset(new Vector(0, 0, 0))]; // camera.PositionOffset(new Vector(0, 0, 0))
 
   const center = camera.GetFocusPosition();
-  if (camera.InFrame(new Vector(center.x, 0, 0))) {
-    f.sort(SortByXPositive);
-    for (let i = 0; i < f.length; i++) {
-      const fi = f[i];
-      if (!fi.riding && fi.Position.y < 0) {
-        const pos = Vector.Clone(fi.Position);
-        corners.push(camera.PositionOffset(pos));
+
+  // Arena bottom
+  if (camera.InFrame(new Vector(center.x, 0, 0))) { // Only worry about deformation if bound is in frame
+    let furthest: Fighter = null;
+    let furthestPos: number = 0;
+
+    // Find fighter furthest out of arena--only they will cause deformation.
+    // Looks a little awkward when multiple players are out of bounds, but better than arena bound snapping to each one
+    for (let i = 0; i < fighters.length; i++) {
+      const pos = fighters[i].Position.y; // Position determined by X or Y position, do not include radius as this is the visual bottom of the character
+      if (((furthest && pos < furthestPos) || (!furthest && pos < 0)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
+        furthestPos = pos;
+        furthest = fighters[i];
       }
+    }
+
+    if (furthest) { // If there was a player who was outside of the bound, take their point
+      corners.push(camera.PositionOffset(furthest.Position));
     }
   }
   corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
-  ArenaBoundFrontPassIndex = corners.length - 1;
+  ArenaBoundFrontPassIndex = corners.length - 1; // Arena bottom always renders in front--separate from other bounds
+
+
+  // Right arena bound
   if (camera.InFrame(new Vector(map.Width, center.y, 0))) {
-    f.sort(SortByYNegative);
-    for (let i = 0; i < f.length; i++) {
-      const fi = fighters[i];
-      if (!fi.riding && fi.Position.x + fi.Radius > map.Width) {
-        const pos = Vector.Clone(fi.Position);
-        pos.x += fi.Radius;
-        corners.push(camera.PositionOffset(pos));
+    let furthest: Fighter = null;
+    let furthestPos: number = 0;
+
+    // Find fighter furthest out of arena--only they will cause deformation.
+    // Looks a little awkward when multiple players are out of bounds, but better than arena bound snapping to each one
+    for (let i = 0; i < fighters.length; i++) {
+      const pos = fighters[i].Position.x + fighters[i].Radius; // Position determined by X or Y position +/- radius
+      if (((furthest && pos > furthestPos) || (!furthest && pos > map.Width)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
+        furthestPos = pos;
+        furthest = fighters[i];
       }
     }
+
+    if (furthest) { // If there was a player who was outside of the bound, take their point
+      corners.push(camera.PositionOffset(Vector.Add(
+        furthest.Position,
+        new Vector(furthest.Radius, 0, 0),
+      )));
+    }
   }
+
+  // Top arena bound
   corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
   if (camera.InFrame(new Vector(center.x, map.Height, 0))) {
-    f.sort(SortByXNegative);
-    for (let i = 0; i < f.length; i++) {
-      const fi = fighters[i];
-      if (!fi.riding && fi.Position.y + fi.Radius > map.Height) {
-        const pos = Vector.Clone(fi.Position);
-        pos.y += fi.Radius;
-        corners.push(camera.PositionOffset(pos));
+    let furthest: Fighter = null;
+    let furthestPos: number = 0;
+
+    // Find fighter furthest out of arena--only they will cause deformation.
+    // Looks a little awkward when multiple players are out of bounds, but better than arena bound snapping to each one
+    for (let i = 0; i < fighters.length; i++) {
+      const pos = fighters[i].Position.y + fighters[i].Radius; // Position determined by X or Y position +/- radius
+      if (((furthest && pos > furthestPos) || (!furthest && pos > map.Height)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
+        furthestPos = pos;
+        furthest = fighters[i];
       }
     }
+
+    if (furthest) { // If there was a player who was outside of the bound, take their point
+      corners.push(camera.PositionOffset(Vector.Add(
+        furthest.Position,
+        new Vector(0, furthest.Radius, 0),
+      )));
+    }
   }
+
+  // Left arena bound
   corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
   if (camera.InFrame(new Vector(0, center.y, 0))) {
-    f.sort(DepthSort);
-    for (let i = 0; i < f.length; i++) {
-      const fi = fighters[i];
-      if (!fi.riding && fi.Position.x - fi.Radius < 0) {
-        const pos = Vector.Clone(fi.Position);
-        pos.x -= fi.Radius;
-        corners.push(camera.PositionOffset(pos));
+    let furthest: Fighter = null;
+    let furthestPos: number = 0;
+
+    // Find fighter furthest out of arena--only they will cause deformation.
+    // Looks a little awkward when multiple players are out of bounds, but better than arena bound snapping to each one
+    for (let i = 0; i < fighters.length; i++) {
+      const pos = fighters[i].Position.x - fighters[i].Radius; // Position determined by X or Y position +/- radius
+      if (((furthest && pos < furthestPos) || (!furthest && pos < 0)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
+        furthestPos = pos;
+        furthest = fighters[i];
       }
+    }
+
+    if (furthest) { // If there was a player who was outside of the bound, take their point
+      corners.push(camera.PositionOffset(Vector.Subtract(
+        furthest.Position,
+        new Vector(furthest.Radius, 0, 0),
+      )));
     }
   }
 
