@@ -60,10 +60,10 @@ class UIManager {
       else this.settingsButton.imageAlpha = 0.8;
     });
     this.settingsButton.onClick = (() => { // Function overrides are part of why I love JavaScript
-      this.settingsMenuOpen = true;
+      this.openSettingsMenu();
     });
     MessageBus.subscribe('UI_SettingsClose', () => {
-      this.settingsMenuOpen = false;
+      this.closeSettingsMenu();
     });
 
     this.healthbar = new UIHealthbar();
@@ -144,8 +144,10 @@ class UIManager {
   }
   public openSettingsMenu() {
     this.settingsMenuOpen = true;
+    this.settingsMenu.open();
   }
   public closeSettingsMenu() {
+    this.settingsMenu.close();
     this.settingsMenuOpen = false;
   }
   public togglePlayerList(toggle: boolean) {
@@ -228,16 +230,6 @@ class UIManager {
 
       for (let i = 0; i < this.usernameSelect.frames.length; i++) {
         Renderer.DrawUIFrame(cam, this.usernameSelect.frames[i]);
-      }
-    }
-
-    if (this.settingsMenuOpen) {
-      for (let i = 0; i < this.settingsMenu.frames.length; i++) {
-        this.doFrameInteraction(InputState, cam, this.settingsMenu.frames[i]);
-      }
-      this.settingsMenu.Tick(DeltaTime); // Tick effects like selection color
-      for (let i = 0; i < this.settingsMenu.frames.length; i++) {
-        Renderer.DrawUIFrame(cam, this.settingsMenu.frames[i]);
       }
     }
 
