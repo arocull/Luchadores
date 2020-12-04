@@ -35,6 +35,7 @@ class UIUsernameSelect {
 
   public open() {
     this.base.hidden = false;
+    this.display.focus();
   }
   public close() {
     this.base.hidden = true;
