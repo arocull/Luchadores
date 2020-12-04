@@ -56,6 +56,7 @@ function AnimationFrame(tick: number) {
 
   // TODO: Generate asset list at compile time and return them here
   AssetPreloader.getImages([
+    'Interface/Logo.png',
     'Interface/Gear.png',
     'Maps/Arena.jpg',
     'Maps/Grass.jpg',

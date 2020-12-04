@@ -33,9 +33,6 @@ class UIManager {
     this.backdrop = new UIFrame(0, 0, 1, 1, false);
     this.backdrop.alpha = 0.25;
     this.backdrop.renderStyle = '#000000';
-    this.backdrop.onClick = (() => {
-      this.usernameSelect.deselect(); // Deselect text box
-    });
 
     this.classSelectOpen = false;
     this.usernameSelectOpen = true; // Defaults to open
@@ -84,19 +81,17 @@ class UIManager {
     this.connectionText.textInnerWidth = 0.9875;
     this.connectionText.textAlignment = 'left';
     this.connectionText.textBase = 'middle';
+
+    this.openUsernameSelect();
   }
 
   // Inputs a key into the UI
-  public keyInput(key: string, shift: boolean = false) {
+  public keyInput(key: string) {
     if (this.usernameSelectOpen) {
       switch (key) {
-        case 'Enter': this.usernameSelect.enter(); break;
         case 'Backspace': this.usernameSelect.backspace(); break;
+        case 'Enter': this.usernameSelect.enter(); break;
         default:
-          if (key.length === 1) {
-            this.usernameSelect.shift(shift);
-            this.usernameSelect.typeCharacter(key);
-          }
       }
     } else if (this.classSelectOpen) {
       const num = parseInt(key, 10);
@@ -132,9 +127,11 @@ class UIManager {
   // Open and close functions for different menus (in case we want to add transitions later)
   public openUsernameSelect() {
     this.usernameSelectOpen = true;
+    this.usernameSelect.open();
   }
   public closeUsernameSelect() {
     this.usernameSelectOpen = false;
+    this.usernameSelect.close();
   }
   public openClassSelect() {
     this.classSelectOpen = true;
@@ -215,21 +212,6 @@ class UIManager {
       for (let i = 0; i < this.classSelect.frames.length; i++) {
         this.doFrameInteraction(InputState, cam, this.classSelect.frames[i]);
         Renderer.DrawUIFrame(cam, this.classSelect.frames[i]);
-      }
-    }
-
-    if (this.usernameSelectOpen) {
-      this.doFrameInteraction(InputState, cam, this.backdrop); // Enable clicking on backdrop to disable clicking
-      for (let i = 0; i < this.usernameSelect.frames.length; i++) {
-        this.doFrameInteraction(InputState, cam, this.usernameSelect.frames[i]);
-      }
-
-      // Adjust flashing cursor to be at the end of the line of text
-      this.usernameSelect.setCursorPosition(Renderer.GetTextWidth(cam, this.usernameSelect.getTextBox()));
-      this.usernameSelect.tick(DeltaTime); // Tick effects like selection color
-
-      for (let i = 0; i < this.usernameSelect.frames.length; i++) {
-        Renderer.DrawUIFrame(cam, this.usernameSelect.frames[i]);
       }
     }
 
