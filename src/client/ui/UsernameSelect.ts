@@ -2,6 +2,7 @@ import { MessageBus } from '../../common/messaging/bus';
 
 class UIUsernameSelect {
   private name: string;
+  private submitted: boolean = false;
 
   private display: HTMLInputElement;
   private error: HTMLElement;
@@ -25,7 +26,8 @@ class UIUsernameSelect {
     this.name = this.name.trimRight();
     this.display.value = this.name;
 
-    if (this.name.length > 2 && this.name.length <= 24) {
+    if (this.name.length > 2 && this.name.length <= 24 && !this.submitted) {
+      this.submitted = true;
       MessageBus.publish('PickUsername', this.name);
     } else { // Otherwise, show error
       this.error.hidden = false;

@@ -135,9 +135,11 @@ class UIManager {
   }
   public openClassSelect() {
     this.classSelectOpen = true;
+    this.classSelect.open();
   }
   public closeClassSelect() {
     this.classSelectOpen = false;
+    this.classSelect.close();
   }
   public openSettingsMenu() {
     this.settingsMenuOpen = true;
@@ -209,10 +211,6 @@ class UIManager {
     // Interact with and Draw Menus //
     if (this.classSelectOpen) {
       if (connectionStatus) this.classSelect.addConfirmButton(); // Only allow luchadors to be selected if the connection is stable
-      for (let i = 0; i < this.classSelect.frames.length; i++) {
-        this.doFrameInteraction(InputState, cam, this.classSelect.frames[i]);
-        Renderer.DrawUIFrame(cam, this.classSelect.frames[i]);
-      }
     }
 
     // Options Gear Button //
