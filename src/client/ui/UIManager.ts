@@ -5,7 +5,6 @@ import Renderer from '../Render';
 import { MessageBus } from '../../common/messaging/bus';
 import { Fighter } from '../../common/engine/fighters';
 import { FighterType } from '../../common/engine/Enums';
-import AssetPreloader from '../AssetPreloader';
 
 // UI Manager - Class used for UI management and settings
 class UIManager {
@@ -20,7 +19,7 @@ class UIManager {
   private usernameSelect: UIUsernameSelect;
 
   private settingsMenu: UISettingsMenu;
-  private settingsButton: UIFrame;
+  private settingsButton: HTMLImageElement;
 
   private healthbar: UIHealthbar;
   private specialbar: UIHealthbar;
@@ -43,20 +42,9 @@ class UIManager {
     this.usernameSelect = new UIUsernameSelect();
 
     this.settingsMenu = new UISettingsMenu();
-    this.settingsButton = new UIFrame(0, 0, 0.03, 0.03, true);
-    this.settingsButton.constrainAspect = true; // Force it to be a square
-    this.settingsButton.constrainAspectCenterX = false; // Make sure it stays in top-left corner of screen
-    this.settingsButton.constrainAspectCenterY = false;
-    AssetPreloader.getImage('Interface/Gear.png').then((img) => {
-      this.settingsButton.image = img;
-    });
-    this.settingsButton.alpha = 0;
-    this.settingsButton.imageAlpha = 0.8;
-    this.settingsButton.onHover = ((hovering) => {
-      if (hovering) this.settingsButton.imageAlpha = 1; // Change image transparency to let you know you're hovering over it
-      else this.settingsButton.imageAlpha = 0.8;
-    });
-    this.settingsButton.onClick = (() => { // Function overrides are part of why I love JavaScript
+
+    this.settingsButton = <HTMLImageElement>document.getElementById('settings_gear');
+    this.settingsButton.addEventListener('click', () => {
       this.openSettingsMenu();
     });
     MessageBus.subscribe('UI_SettingsClose', () => {
@@ -169,7 +157,6 @@ class UIManager {
     character: Fighter,
     connectionStatus: boolean, // If there is any question in the connection status, input false to have the info box drawn
     spawning: boolean, // Is the character spawning? (prevent killcam and such from drawing until player is assigned by server)
-    InputState: any, // State of player inputs--used for mouse tracking in UI interaction
   ) {
     if (this.inGUIMode()) Renderer.DrawUIFrame(cam, this.backdrop);
 
@@ -214,10 +201,7 @@ class UIManager {
     }
 
     // Options Gear Button //
-    if (!this.inGUIMode()) {
-      this.doFrameInteraction(InputState, cam, this.settingsButton);
-      Renderer.DrawUIFrame(cam, this.settingsButton);
-    }
+    this.settingsButton.parentElement.hidden = this.inGUIMode() || this.settingsMenuOpen;
 
     // Killcam - only draw if no character is present, character is not spawning, and select screens are not open
     // Basically only draw if player is confirmed dead and is not in frames between selecting Luchador and being spawned by server

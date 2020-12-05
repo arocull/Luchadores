@@ -118,7 +118,7 @@ class ClientGraphics {
     // Draw screen
     Render.DrawScreen(this.camera, this.world, this.particles);
     // Do interface actions and draw interface
-    this.uiManager.tick(DeltaTime, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning, this.clientState.input);
+    this.uiManager.tick(DeltaTime, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning);
 
     // Draw player list and kill feed
     const playerList = this.clientState.getPlayerList();

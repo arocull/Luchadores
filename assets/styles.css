@@ -303,3 +303,15 @@ button.settings_button {
 button.settings_button:hover {
     background-color: #999999;
 }
+img.settings_gear {
+    z-index: 10;
+    position: absolute;
+    display: inline-block;
+    background: none;
+    margin: 5px;
+    width: 3vmin;
+    height: 3vmin;
+}
+button.settings_gear:hover {
+    background-color: rgba(42, 255, 255, 0.5);
+}
