@@ -1,6 +1,8 @@
 import Vector from '../Vector';
 import Fighter from '../Fighter';
 import { FighterType } from '../Enums';
+import AOEBlast from '../combat/AOEBlast';
+import { MessageBus } from '../../messaging/bus';
 
 /* La Oveja Grande - A tanky character that deals damage primarily off of momentum exchange (running into people at high velocities)
 
@@ -18,10 +20,12 @@ Sheep's traits:
 - Low move acceleration
 - Little jump height
 - No air control
+- Shockwave attack on land
 
 */
 class Sheep extends Fighter {
-  private baseMoveAccel: number;
+  private baseMoveAccel: number; // Base movement acceleration (changes upon kill effect boost)
+  public landingVelocity: number; // Landing velocity of this/last frame (for shockwave particle)
 
   constructor(id: number, position: Vector) {
     super(200, 200, 7000, 0.6, 1.2, 8, 30, 0, FighterType.Sheep, id, position);
@@ -29,6 +33,8 @@ class Sheep extends Fighter {
 
     this.ranged = false;
     this.baseMoveAccel = this.MoveAcceleration;
+
+    this.BounceBack = 1.05;
   }
 
   public CollideWithFighter(hit: Fighter, momentum: number) {
@@ -37,6 +43,13 @@ class Sheep extends Fighter {
     if (momentum > this.MaxMomentum / 3) { // Stacking passengers adds to max momentum
       hit.TakeDamage((momentum / this.MaxMomentum) * 40, this);
     }
+  }
+
+  public Land(velocity: number = 0) {
+    super.Land(velocity);
+    this.landingVelocity = Math.min(Math.max(velocity / 9, 0), 2); // Clamp max radius to 1
+
+    MessageBus.publish('AOE_Blast', new AOEBlast(this.Position, this.landingVelocity, this.landingVelocity * 6, this, this.landingVelocity * 500, true, false));
   }
 
   public EarnKill() {

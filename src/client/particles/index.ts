@@ -8,6 +8,7 @@ import PLightning from './Lightning';
 import PBulletFire from './BulletFire';
 import PBulletShell from './BulletShell';
 import PMoveDash from './MoveDash';
+import PShockwave from './Shockwave';
 
 export {
   Particle,
@@ -20,4 +21,5 @@ export {
   PBulletFire,
   PBulletShell,
   PMoveDash,
+  PShockwave,
 };
