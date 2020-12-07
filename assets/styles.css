@@ -232,7 +232,7 @@ div.ui_title {
     text-align: center;
     text-anchor: top;
     font-family: 'Flamenco', cursive;
-    font-size: 48px;
+    font-size: 3.6vmax;
     color: #ffffff;
     background: none;
     width: 100%;
@@ -257,7 +257,7 @@ div.setting_title {
     text-align: left;
     text-anchor: middle;
     font-family: 'Roboto', sans-serif;
-    font-size: 36px;
+    font-size: 4vmin;
     color: #ffffff;
     margin-left: 8%;
     margin-right: 8%;
@@ -267,7 +267,7 @@ div.setting_info {
     text-align: left;
     text-anchor: middle;
     font-family: 'Roboto', sans-serif;
-    font-size: 24px;
+    font-size: 3vmin;
     color: #dfdfdf;
     margin-left: 8%;
     margin-right: 8%;
@@ -277,7 +277,7 @@ div.setting_info_misc {
     text-align: center;
     text-anchor: middle;
     font-family: 'Roboto', sans-serif;
-    font-size: 28px;
+    font-size: 3.2vmin;
     color: #ffffff;
     margin-left: 20%;
     margin-right: 20%;
@@ -292,7 +292,7 @@ table.settings_options {
 }
 button.settings_button {
     font-family: 'Roboto', sans-serif;
-    font-size: 24px;
+    font-size: 3vmin;
     background-color: #646464;
     color: #ffffff;
     margin-left: 20%;
