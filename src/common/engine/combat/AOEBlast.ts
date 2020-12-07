@@ -30,7 +30,7 @@ class AOEBlast {
         let falloff: number = 1;
 
         // Calculate falloff (distance apart divided by max radius)
-        if (this.doFalloff) falloff = Vector.Distance(this.position, fighters[i].Position) / (this.radius + fighters[i].Radius);
+        if (this.doFalloff) falloff = 1 - Vector.Distance(this.position, fighters[i].Position) / (this.radius + fighters[i].Radius);
 
         if (this.damage !== 0) fighters[i].TakeDamage(this.damage * falloff, this.owner); // Apply damage
 
