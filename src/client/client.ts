@@ -33,10 +33,12 @@ function AnimationFrame(tick: number) {
   viewport.width = window.innerWidth;
   viewport.height = window.innerHeight;
 
+  Render.setContext(canvas);
+
   const tempCam = new Camera(viewport.width, viewport.height, 1, 1);
   tempCam.Scale(viewport.width, viewport.height);
   for (let i = 0; i < uiLoadScreen.frames.length; i++) {
-    Render.DrawUIFrame(canvas, tempCam, uiLoadScreen.frames[i]);
+    Render.DrawUIFrame(tempCam, uiLoadScreen.frames[i]);
   }
 
   AssetPreloader.on('progress', (status) => {
@@ -48,12 +50,13 @@ function AnimationFrame(tick: number) {
 
     uiLoadScreen.update(status.progress);
     for (let i = 0; i < uiLoadScreen.frames.length; i++) {
-      Render.DrawUIFrame(canvas, tempCam, uiLoadScreen.frames[i]);
+      Render.DrawUIFrame(tempCam, uiLoadScreen.frames[i]);
     }
   });
 
   // TODO: Generate asset list at compile time and return them here
   AssetPreloader.getImages([
+    'Interface/Logo.png',
     'Interface/Gear.png',
     'Maps/Arena.jpg',
     'Maps/Grass.jpg',

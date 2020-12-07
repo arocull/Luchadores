@@ -5,7 +5,6 @@ import Renderer from '../Render';
 import { MessageBus } from '../../common/messaging/bus';
 import { Fighter } from '../../common/engine/fighters';
 import { FighterType } from '../../common/engine/Enums';
-import AssetPreloader from '../AssetPreloader';
 
 // UI Manager - Class used for UI management and settings
 class UIManager {
@@ -20,7 +19,7 @@ class UIManager {
   private usernameSelect: UIUsernameSelect;
 
   private settingsMenu: UISettingsMenu;
-  private settingsButton: UIFrame;
+  private settingsButton: HTMLImageElement;
 
   private healthbar: UIHealthbar;
   private specialbar: UIHealthbar;
@@ -33,9 +32,6 @@ class UIManager {
     this.backdrop = new UIFrame(0, 0, 1, 1, false);
     this.backdrop.alpha = 0.25;
     this.backdrop.renderStyle = '#000000';
-    this.backdrop.onClick = (() => {
-      this.usernameSelect.deselect(); // Deselect text box
-    });
 
     this.classSelectOpen = false;
     this.usernameSelectOpen = true; // Defaults to open
@@ -46,24 +42,13 @@ class UIManager {
     this.usernameSelect = new UIUsernameSelect();
 
     this.settingsMenu = new UISettingsMenu();
-    this.settingsButton = new UIFrame(0, 0, 0.03, 0.03, true);
-    this.settingsButton.constrainAspect = true; // Force it to be a square
-    this.settingsButton.constrainAspectCenterX = false; // Make sure it stays in top-left corner of screen
-    this.settingsButton.constrainAspectCenterY = false;
-    AssetPreloader.getImage('Interface/Gear.png').then((img) => {
-      this.settingsButton.image = img;
-    });
-    this.settingsButton.alpha = 0;
-    this.settingsButton.imageAlpha = 0.8;
-    this.settingsButton.onHover = ((hovering) => {
-      if (hovering) this.settingsButton.imageAlpha = 1; // Change image transparency to let you know you're hovering over it
-      else this.settingsButton.imageAlpha = 0.8;
-    });
-    this.settingsButton.onClick = (() => { // Function overrides are part of why I love JavaScript
-      this.settingsMenuOpen = true;
+
+    this.settingsButton = <HTMLImageElement>document.getElementById('settings_gear');
+    this.settingsButton.addEventListener('click', () => {
+      this.openSettingsMenu();
     });
     MessageBus.subscribe('UI_SettingsClose', () => {
-      this.settingsMenuOpen = false;
+      this.closeSettingsMenu();
     });
 
     this.healthbar = new UIHealthbar();
@@ -84,19 +69,17 @@ class UIManager {
     this.connectionText.textInnerWidth = 0.9875;
     this.connectionText.textAlignment = 'left';
     this.connectionText.textBase = 'middle';
+
+    this.openUsernameSelect();
   }
 
   // Inputs a key into the UI
-  public keyInput(key: string, shift: boolean = false) {
+  public keyInput(key: string) {
     if (this.usernameSelectOpen) {
       switch (key) {
-        case 'Enter': this.usernameSelect.enter(); break;
         case 'Backspace': this.usernameSelect.backspace(); break;
+        case 'Enter': this.usernameSelect.enter(); break;
         default:
-          if (key.length === 1) {
-            this.usernameSelect.shift(shift);
-            this.usernameSelect.typeCharacter(key);
-          }
       }
     } else if (this.classSelectOpen) {
       const num = parseInt(key, 10);
@@ -132,20 +115,26 @@ class UIManager {
   // Open and close functions for different menus (in case we want to add transitions later)
   public openUsernameSelect() {
     this.usernameSelectOpen = true;
+    this.usernameSelect.open();
   }
   public closeUsernameSelect() {
     this.usernameSelectOpen = false;
+    this.usernameSelect.close();
   }
   public openClassSelect() {
     this.classSelectOpen = true;
+    this.classSelect.open();
   }
   public closeClassSelect() {
     this.classSelectOpen = false;
+    this.classSelect.close();
   }
   public openSettingsMenu() {
     this.settingsMenuOpen = true;
+    this.settingsMenu.open();
   }
   public closeSettingsMenu() {
+    this.settingsMenu.close();
     this.settingsMenuOpen = false;
   }
   public togglePlayerList(toggle: boolean) {
@@ -164,14 +153,12 @@ class UIManager {
 
   public tick(
     DeltaTime: number,
-    canvas: CanvasRenderingContext2D,
     cam: Camera,
     character: Fighter,
     connectionStatus: boolean, // If there is any question in the connection status, input false to have the info box drawn
     spawning: boolean, // Is the character spawning? (prevent killcam and such from drawing until player is assigned by server)
-    InputState: any, // State of player inputs--used for mouse tracking in UI interaction
   ) {
-    if (this.inGUIMode()) Renderer.DrawUIFrame(canvas, cam, this.backdrop);
+    if (this.inGUIMode()) Renderer.DrawUIFrame(cam, this.backdrop);
 
 
     // Healthbar Management //
@@ -194,16 +181,16 @@ class UIManager {
     // Do not want healthbar to show when dead (unless healthbar is toppling), but do want to show even while waiting on spawn
     if (character || this.healthbar.collapsing || this.specialbar.collapsing || spawning) {
       this.healthbar.tick(DeltaTime);
-      Renderer.DrawUIFrame(canvas, cam, this.healthbar.base);
-      Renderer.DrawUIFrame(canvas, cam, this.healthbar.barBack);
-      Renderer.DrawUIFrame(canvas, cam, this.healthbar.bar);
+      Renderer.DrawUIFrame(cam, this.healthbar.base);
+      Renderer.DrawUIFrame(cam, this.healthbar.barBack);
+      Renderer.DrawUIFrame(cam, this.healthbar.bar);
       this.healthbar.checkReset();
 
       if (this.specialBarInUse) {
         this.specialbar.tick(DeltaTime);
-        Renderer.DrawUIFrame(canvas, cam, this.specialbar.base);
-        Renderer.DrawUIFrame(canvas, cam, this.specialbar.barBack);
-        Renderer.DrawUIFrame(canvas, cam, this.specialbar.bar);
+        Renderer.DrawUIFrame(cam, this.specialbar.base);
+        Renderer.DrawUIFrame(cam, this.specialbar.barBack);
+        Renderer.DrawUIFrame(cam, this.specialbar.bar);
         this.specialbar.checkReset();
       }
     }
@@ -211,51 +198,19 @@ class UIManager {
     // Interact with and Draw Menus //
     if (this.classSelectOpen) {
       if (connectionStatus) this.classSelect.addConfirmButton(); // Only allow luchadors to be selected if the connection is stable
-      for (let i = 0; i < this.classSelect.frames.length; i++) {
-        this.doFrameInteraction(InputState, cam, this.classSelect.frames[i]);
-        Renderer.DrawUIFrame(canvas, cam, this.classSelect.frames[i]);
-      }
-    }
-
-    if (this.usernameSelectOpen) {
-      this.doFrameInteraction(InputState, cam, this.backdrop); // Enable clicking on backdrop to disable clicking
-      for (let i = 0; i < this.usernameSelect.frames.length; i++) {
-        this.doFrameInteraction(InputState, cam, this.usernameSelect.frames[i]);
-      }
-
-      // Adjust flashing cursor to be at the end of the line of text
-      this.usernameSelect.setCursorPosition(Renderer.GetTextWidth(canvas, cam, this.usernameSelect.getTextBox()));
-      this.usernameSelect.tick(DeltaTime); // Tick effects like selection color
-
-      for (let i = 0; i < this.usernameSelect.frames.length; i++) {
-        Renderer.DrawUIFrame(canvas, cam, this.usernameSelect.frames[i]);
-      }
-    }
-
-    if (this.settingsMenuOpen) {
-      for (let i = 0; i < this.settingsMenu.frames.length; i++) {
-        this.doFrameInteraction(InputState, cam, this.settingsMenu.frames[i]);
-      }
-      this.settingsMenu.Tick(DeltaTime); // Tick effects like selection color
-      for (let i = 0; i < this.settingsMenu.frames.length; i++) {
-        Renderer.DrawUIFrame(canvas, cam, this.settingsMenu.frames[i]);
-      }
     }
 
     // Options Gear Button //
-    if (!this.inGUIMode()) {
-      this.doFrameInteraction(InputState, cam, this.settingsButton);
-      Renderer.DrawUIFrame(canvas, cam, this.settingsButton);
-    }
+    this.settingsButton.parentElement.hidden = this.inGUIMode() || this.settingsMenuOpen;
 
     // Killcam - only draw if no character is present, character is not spawning, and select screens are not open
     // Basically only draw if player is confirmed dead and is not in frames between selecting Luchador and being spawned by server
     if (!character && !(this.classSelectOpen || this.usernameSelectOpen) && !spawning) {
-      Renderer.DrawUIFrame(canvas, cam, this.killcam);
+      Renderer.DrawUIFrame(cam, this.killcam);
     }
 
     // Connection Status - Only draw if connection is unstable
-    if (!connectionStatus) Renderer.DrawUIFrame(canvas, cam, this.connectionText);
+    if (!connectionStatus) Renderer.DrawUIFrame(cam, this.connectionText);
   }
 }
 

@@ -6,23 +6,99 @@
         <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Flamenco&display=swap" rel="stylesheet">
 
-        <style>
-            * {
-                font-family: 'Roboto', sans-serif;
-                font-family: 'Flamenco', cursive;
-            }
-            body {
-                margin: 0;
-                padding: 0;
-                overflow: hidden;
-            }
-            @-o-viewport{
-                orientation: landscape;
-            }
-        </style>
+        <link href="styles.css" rel="stylesheet">
     </head>
     <body>
+        <div id="settings_gear_container" hidden><img class="settings_gear" id="settings_gear" src="Interface/Gear.png" alt="Settings"></div>
         <canvas id="render" width="1000" height="800"></canvas>
+
+
+        <div class="ui_usernameSelect" id="username_select" hidden>
+            <div class="logo_container">
+                <img class="logo" src="Interface/Logo.png" alt="LUCHADORES" width="1281" height="235"/>
+            </div>
+            <div class="ui_usernameInstructions">Please type in a username.<br>It will last for this session only.</div>
+            <input class="username" id="username_input" name="username" type="text" autofocus minlength="3" maxlength="24" size="30"/>
+            <div class="ui_usernameError" id="username_error" hidden>Usernames must be within 3 and 24 characters.</div>
+            <button class="confirm_button" id="username_confirm">Confirm</button>
+        </div>
+
+
+        <div class="ui_characterSelect" id="character_select" hidden>
+            <table class="character_list" id="character_list">
+                <!-- Table data is built upon play -->
+            </table>
+            <div class="character_info" id="character_info">
+                <div class="info_portrait_container"><img class="portrait" id="character_portrait" src="Portraits/Sheep.png"/></div>
+                <br>
+                <div class="info_characterName" id="character_name"></div>
+                <div class="info_characterFlavor" id="character_flavor"></div>
+                <br>
+                <div class="info_characterDescript" id="character_descript"></div>
+                <br>
+                <button class="confirm_character" id="character_confirm" hidden>Confirm</button>
+            </div>
+        </div>
+
+
+        <div class="ui_settings" id="settings_menu" hidden>
+            <div class="ui_title"><b>Settings</b></div>
+            <table class="settings_options">
+                <tr>
+                    <div class="setting_title">> Render Quality</div>
+                </tr>
+                <tr>
+                    <div class="setting_info">Determines drawing of certain special effects like arena bound stretching. Performance impact varies by platform.</div>
+                </tr>
+                <tr>
+                    <td><button class="settings_button" id="graphics_1">Fast</button></td>
+                    <td><button class="settings_button" id="graphics_2">Balanced</button></td>
+                    <td><button class="settings_button" id="graphics_3">Pretty</button></td>
+                </tr>
+            </table>
+
+            <hr>
+
+            <table class="settings_options">
+                <tr>
+                    <div class="setting_title">> Particles</div>
+                </tr>
+                <tr>
+                    <div class="setting_info">How many particles should be generated and simulated. The more particles the prettier, but the more processing power each frame takes.</div>
+                </tr>
+                <tr>
+                    <td><button class="settings_button" id="particles_1">Minimal</button></td>
+                    <td><button class="settings_button" id="particles_2">Medium</button></td>
+                    <td><button class="settings_button" id="particles_3">Excessive</button></td>
+                </tr>
+            </table>
+
+            <hr>
+
+            <table class="settings_options">
+                <tr>
+                    <div class="setting_title">> Extra Settings</div>
+                </tr>
+                <tr>
+                    <div class="setting_info">Quality of life settings. Because everyone is different. <3</div>
+                </tr>
+                <tr>
+                    <td><div class="setting_info_misc">FPS Counter</div></td>
+                    <td><div class="setting_info_misc">Camera Shake</div></td>
+                    <td><div class="setting_info_misc">Announcer</div></td>
+                </tr>
+                <tr>
+                    <td><button class="settings_button" id="fps_counter">Disabled</button></td>
+                    <td><button class="settings_button" id="camera_shake">Enabled</button></td>
+                    <td><button class="settings_button" id="announcer">Disabled</button></td>
+                </tr>
+            </table>
+
+            <br>
+            
+            <button class="settings_button" id="settings_close" style="width:10%; height:6%; margin-left:45%; position:absolute; bottom:-3%">Close</button>
+        </div>
+
         <script src="client.js"></script>
     </body>
 </html>

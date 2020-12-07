@@ -9,7 +9,7 @@ class RenderSettingsBase {
   public FPScounter: boolean;
 
   // Particle amount is actively used to tell how many particles to spawn--value should range between 0 and 5
-  constructor(public Quality: RenderQuality, public ParticleAmount: number, public EnableCameraShake: boolean) {
+  constructor(public Quality: RenderQuality, public ParticleAmount: number, public EnableCameraShake: boolean, public EnableAnnouncer: boolean = false) {
     this.particles = 0;
     this.FPScounter = false;
   }

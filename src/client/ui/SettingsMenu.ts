@@ -1,327 +1,156 @@
-import UIFrame from './UIFrame';
-import UITextBox from './UITextBox';
 import RenderSettings from '../RenderSettings';
 import { MessageBus } from '../../common/messaging/bus';
 import { RenderQuality } from '../../common/engine/Enums';
-import { Particle } from '../particles';
-
-const WIDTH = 0.75;
-const HEIGHT = 0.8;
-const TITLE_HEIGHT = 0.05;
-const CLOSE_BUTTON_WIDTH = 0.125;
-const BUTTON_OFFSET = (WIDTH / 4) / 4;
-const BUTTON_SPACING = BUTTON_OFFSET + (WIDTH / 4);
-const BASECOLOR = '#737373';
-const BASEBORDER = '#454545';
-const HOVERCOLOR = '#646464';
-const HOVERBORDER = '#373737';
-const BORDERTHICKNESS_SELECTED = 0.05;
-const BORDERTHICKNESS_DEFAULT = 0.01;
 
 class UISettingsMenu {
-  public frames: UIFrame[];
-  private time: number = 0;
+  private qualityLow: HTMLElement;
+  private qualityMedium: HTMLElement;
+  private qualityHigh: HTMLElement;
+  private particleLow: HTMLElement;
+  private particleMedium: HTMLElement;
+  private particleHigh: HTMLElement;
 
-  private qualityLow: UIFrame;
-  private qualityMedium: UIFrame;
-  private qualityHigh: UIFrame;
-  private particleLow: UIFrame;
-  private particleMedium: UIFrame;
-  private particleHigh: UIFrame;
+  private base: HTMLElement = document.getElementById('settings_menu');
 
   constructor() {
-    const base = new UIFrame(
-      (1 - WIDTH) / 2, // Center X
-      (1 - HEIGHT) / 2, // Center Y
-      WIDTH,
-      HEIGHT,
-      false,
-    );
-    base.color = BASECOLOR;
-    base.borderColor = BASEBORDER;
-    base.renderStyle = base.color; base.borderRenderStyle = base.borderColor;
-    base.borderThickness = 0.1;
-
-    const title = new UITextBox(
-      base.cornerX,
-      base.cornerY - TITLE_HEIGHT,
-      WIDTH,
-      TITLE_HEIGHT,
-      false,
-      'Settings',
-    );
-    title.textFont = 'flamenco';
-    title.textFontSize = 24;
-    title.textStyle = '#ffffff';
-    title.alpha = 0;
-
-    const close = new UITextBox(
-      base.cornerX + WIDTH / 2 - (WIDTH * CLOSE_BUTTON_WIDTH) / 2,
-      base.cornerY + HEIGHT,
-      WIDTH * CLOSE_BUTTON_WIDTH,
-      HEIGHT * 0.05,
-      true,
-      'Close',
-    );
-    this.MakeButton(close);
-    close.borderThickness = 0;
-    close.onClick = (() => {
+    const close: HTMLElement = document.getElementById('settings_close');
+    close.addEventListener('click', () => {
       MessageBus.publish('UI_SettingsClose', null);
     });
 
+    MessageBus.subscribe('UI_SettingsUpdate', () => { // Utilize message bus so we can use this. methods
+      this.update();
+    });
 
     // Render Quality Settings
-    const qualityText = new UITextBox(
-      base.cornerX + WIDTH * 0.05,
-      base.cornerY + HEIGHT * 0.05,
-      WIDTH,
-      HEIGHT * 0.05,
-      false,
-      'Render Quality',
-    );
-    qualityText.textFontSize = 24;
-    qualityText.textStyle = '#ffffff';
-    qualityText.alpha = 0;
-    qualityText.textAlignment = 'left';
+    this.qualityLow = document.getElementById('graphics_1');
+    this.qualityMedium = document.getElementById('graphics_2');
+    this.qualityHigh = document.getElementById('graphics_3');
 
-    const qualityDescript = new UITextBox(
-      base.cornerX + WIDTH * 0.025,
-      base.cornerY + HEIGHT * 0.1,
-      WIDTH * 0.95,
-      HEIGHT * 0.05,
-      false,
-      'Determines drawing of certain special effects like arena bound stretching and rotations. Performance impact varies by platform.',
-    );
-    qualityDescript.textFontSize = 18;
-    qualityDescript.textStyle = '#ffffff';
-    qualityDescript.alpha = 0;
-    qualityDescript.textAlignment = 'left';
-    qualityDescript.textWrapping = true;
-
-    const qualityLow = new UITextBox(
-      base.cornerX + BUTTON_OFFSET,
-      base.cornerY + HEIGHT * 0.15,
-      WIDTH / 4,
-      HEIGHT * 0.075,
-      true, 'Fast',
-    );
-    const qualityMedium = new UITextBox(
-      base.cornerX + BUTTON_OFFSET + BUTTON_SPACING,
-      qualityLow.cornerY, qualityLow.width, qualityLow.height, true, 'Balanced',
-    );
-    const qualityHigh = new UITextBox(
-      base.cornerX + BUTTON_OFFSET + 2 * BUTTON_SPACING,
-      qualityLow.cornerY, qualityLow.width, qualityLow.height, true, 'Pretty',
-    );
-    this.MakeButton(qualityLow);
-    this.MakeButton(qualityMedium);
-    this.MakeButton(qualityHigh);
-    qualityLow.onClick = (() => {
-      RenderSettings.Quality = RenderQuality.Low;
+    this.qualityLow.addEventListener('click', () => {
+      RenderSettings.Quality = RenderQuality.Low; // Set quality level
+      MessageBus.publish('UI_SettingsUpdate', null); // Update HTML visuals
     });
-    qualityMedium.onClick = (() => {
+    this.qualityMedium.addEventListener('click', () => {
       RenderSettings.Quality = RenderQuality.Medium;
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
-    qualityHigh.onClick = (() => {
+    this.qualityHigh.addEventListener('click', () => {
       RenderSettings.Quality = RenderQuality.High;
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
 
 
     // Particle Amount Settings
-    const particleText = new UITextBox(
-      base.cornerX + WIDTH * 0.05,
-      base.cornerY + HEIGHT * 0.3,
-      WIDTH,
-      HEIGHT * 0.05,
-      false,
-      'Particles',
-    );
-    particleText.textFontSize = 24;
-    particleText.textStyle = '#ffffff';
-    particleText.alpha = 0;
-    particleText.textAlignment = 'left';
+    this.particleLow = document.getElementById('particles_1');
+    this.particleMedium = document.getElementById('particles_2');
+    this.particleHigh = document.getElementById('particles_3');
 
-    const particleDescript = new UITextBox(
-      base.cornerX + WIDTH * 0.025,
-      base.cornerY + HEIGHT * 0.35,
-      WIDTH * 0.95,
-      HEIGHT * 0.05,
-      false,
-      'How many particles should be simulated. The more particles the prettier the game, but the more processing power each frame takes.',
-    );
-    particleDescript.textWrapping = true;
-    particleDescript.textFontSize = 18;
-    particleDescript.textStyle = '#ffffff';
-    particleDescript.alpha = 0;
-    particleDescript.textAlignment = 'left';
-
-    const particleLow = new UITextBox(
-      base.cornerX + BUTTON_OFFSET,
-      base.cornerY + HEIGHT * 0.4,
-      WIDTH / 4,
-      HEIGHT * 0.075,
-      true, 'Minimal',
-    );
-    const particleMedium = new UITextBox(
-      base.cornerX + BUTTON_OFFSET + BUTTON_SPACING,
-      particleLow.cornerY, particleLow.width, particleLow.height, true, 'Medium',
-    );
-    const particleHigh = new UITextBox(
-      base.cornerX + BUTTON_OFFSET + 2 * BUTTON_SPACING,
-      particleLow.cornerY, particleLow.width, particleLow.height, true, 'Excessive',
-    );
-    this.MakeButton(particleLow);
-    this.MakeButton(particleMedium);
-    this.MakeButton(particleHigh);
-    particleLow.onClick = (() => {
+    this.particleLow.addEventListener('click', () => {
       RenderSettings.ParticleAmount = 1;
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
-    particleMedium.onClick = (() => {
+    this.particleMedium.addEventListener('click', () => {
       RenderSettings.ParticleAmount = 3;
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
-    particleHigh.onClick = (() => {
+    this.particleHigh.addEventListener('click', () => {
       RenderSettings.ParticleAmount = 5;
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
 
-    this.qualityLow = qualityLow;
-    this.qualityMedium = qualityMedium;
-    this.qualityHigh = qualityHigh;
-    this.particleLow = particleLow;
-    this.particleMedium = particleMedium;
-    this.particleHigh = particleHigh;
 
     // Booleans
-    const cameraShakeText = new UITextBox(
-      base.cornerX + WIDTH * 0.05,
-      base.cornerY + HEIGHT * 0.6,
-      WIDTH,
-      HEIGHT * 0.05,
-      false,
-      'Camera Shake',
-    );
-    cameraShakeText.textFontSize = 24;
-    cameraShakeText.textStyle = '#ffffff';
-    cameraShakeText.alpha = 0;
-    cameraShakeText.textAlignment = 'left';
-
-    const cameraShake = new UITextBox(
-      base.cornerX + BUTTON_OFFSET,
-      base.cornerY + HEIGHT * 0.65,
-      WIDTH / 4,
-      HEIGHT * 0.075,
-      true, 'Enabled',
-    );
-    this.MakeButton(cameraShake);
-    cameraShake.onClick = (() => {
-      RenderSettings.EnableCameraShake = !RenderSettings.EnableCameraShake;
-      if (RenderSettings.EnableCameraShake) {
-        cameraShake.text = 'Enabled';
-      } else {
-        cameraShake.text = 'Disabled';
-      }
-    });
-
-    const fpsCounterText = new UITextBox(
-      base.cornerX + WIDTH * 0.05 + 2 * BUTTON_SPACING,
-      base.cornerY + HEIGHT * 0.6,
-      WIDTH,
-      HEIGHT * 0.05,
-      false,
-      'FPS Counter',
-    );
-    fpsCounterText.textFontSize = 24;
-    fpsCounterText.textStyle = '#ffffff';
-    fpsCounterText.alpha = 0;
-    fpsCounterText.textAlignment = 'left';
-
-    const fpsCounter = new UITextBox(
-      base.cornerX + BUTTON_OFFSET + 2 * BUTTON_SPACING,
-      base.cornerY + HEIGHT * 0.65,
-      WIDTH / 4,
-      HEIGHT * 0.075,
-      true, 'Disabled',
-    );
-    this.MakeButton(fpsCounter);
-    fpsCounter.onClick = (() => {
+    const fpsCounter = document.getElementById('fps_counter');
+    fpsCounter.addEventListener('click', () => {
       RenderSettings.FPScounter = !RenderSettings.FPScounter;
       if (RenderSettings.FPScounter) {
-        fpsCounter.text = 'Enabled';
+        fpsCounter.innerText = 'Enabled';
       } else {
-        fpsCounter.text = 'Disabled';
+        fpsCounter.innerText = 'Disabled';
       }
     });
 
-    this.frames = [base, title, close, qualityText, qualityDescript, qualityLow, qualityMedium, qualityHigh, particleText, particleDescript, particleLow, particleMedium, particleHigh, cameraShakeText, cameraShake, fpsCounterText, fpsCounter];
+    const cameraShake = document.getElementById('camera_shake');
+    cameraShake.addEventListener('click', () => {
+      RenderSettings.EnableCameraShake = !RenderSettings.EnableCameraShake;
+      if (RenderSettings.EnableCameraShake) {
+        cameraShake.innerText = 'Enabled';
+      } else {
+        cameraShake.innerText = 'Disabled';
+      }
+    });
+
+    const announcer = document.getElementById('announcer');
+    announcer.addEventListener('click', () => {
+      RenderSettings.EnableAnnouncer = !RenderSettings.EnableAnnouncer;
+      if (RenderSettings.EnableAnnouncer) {
+        announcer.innerText = 'Enabled';
+      } else {
+        announcer.innerText = 'Disabled';
+      }
+    });
   }
 
   /* eslint-disable no-param-reassign */
-  private MakeButton(button: UITextBox) {
-    button.textFont = 'roboto';
-    button.textFontSize = 16;
-    button.textStyle = '#ffffff';
-    button.color = BASECOLOR;
-    button.borderColor = BASEBORDER;
-    button.colorHover = HOVERCOLOR;
-    button.borderColorHover = HOVERBORDER;
-    button.renderStyle = button.color; button.borderRenderStyle = button.borderColor;
-    button.borderThickness = BORDERTHICKNESS_DEFAULT;
-  }
-
-  private SetBorder(button: UIFrame, selected: boolean) {
+  private SetSelection(button: HTMLElement, selected: boolean) {
     if (selected) {
-      button.borderColor = Particle.RGBToHex(75, 200, 100 + 50 * (Math.sin(Math.PI * this.time) + 1)); // 1 to 2
-      button.borderColorHover = button.borderColor;
-      button.borderThickness = BORDERTHICKNESS_SELECTED;
+      button.style.color = '#55ddff';
     } else {
-      button.borderColor = BASEBORDER;
-      button.borderColorHover = HOVERBORDER;
-      button.borderThickness = BORDERTHICKNESS_DEFAULT;
+      button.style.color = '#ffffff';
     }
   }
   /* eslint-enable no-param-reassign */
 
-  public Tick(DeltaTime: number) {
-    this.time += DeltaTime;
-
+  public update() {
     switch (RenderSettings.Quality) {
       case RenderQuality.Low:
-        this.SetBorder(this.qualityLow, true);
-        this.SetBorder(this.qualityMedium, false);
-        this.SetBorder(this.qualityHigh, false);
+        this.SetSelection(this.qualityLow, true);
+        this.SetSelection(this.qualityMedium, false);
+        this.SetSelection(this.qualityHigh, false);
         break;
       case RenderQuality.Medium:
-        this.SetBorder(this.qualityLow, false);
-        this.SetBorder(this.qualityMedium, true);
-        this.SetBorder(this.qualityHigh, false);
+        this.SetSelection(this.qualityLow, false);
+        this.SetSelection(this.qualityMedium, true);
+        this.SetSelection(this.qualityHigh, false);
         break;
       case RenderQuality.High:
       default:
-        this.SetBorder(this.qualityLow, false);
-        this.SetBorder(this.qualityMedium, false);
-        this.SetBorder(this.qualityHigh, true);
+        this.SetSelection(this.qualityLow, false);
+        this.SetSelection(this.qualityMedium, false);
+        this.SetSelection(this.qualityHigh, true);
         break;
     }
 
     switch (RenderSettings.ParticleAmount) {
       case 1:
-        this.SetBorder(this.particleLow, true);
-        this.SetBorder(this.particleMedium, false);
-        this.SetBorder(this.particleHigh, false);
+        this.SetSelection(this.particleLow, true);
+        this.SetSelection(this.particleMedium, false);
+        this.SetSelection(this.particleHigh, false);
         break;
       case 2:
       case 3:
-        this.SetBorder(this.particleLow, false);
-        this.SetBorder(this.particleMedium, true);
-        this.SetBorder(this.particleHigh, false);
+        this.SetSelection(this.particleLow, false);
+        this.SetSelection(this.particleMedium, true);
+        this.SetSelection(this.particleHigh, false);
         break;
       case 4:
       case 5:
       default:
-        this.SetBorder(this.particleLow, false);
-        this.SetBorder(this.particleMedium, false);
-        this.SetBorder(this.particleHigh, true);
+        this.SetSelection(this.particleLow, false);
+        this.SetSelection(this.particleMedium, false);
+        this.SetSelection(this.particleHigh, true);
         break;
     }
+  }
+
+  public open() {
+    this.update(); // Update visuals before display
+    this.base.hidden = false;
+  }
+
+  public close() {
+    this.base.hidden = true;
   }
 }
 
