@@ -34,6 +34,8 @@ class FightObserver {
    * @param {number} limit Maximum number of fighters to return
    * @param {number} t Time in seconds for future estimations, must be greater than 0
    * @returns {Fighter[]} Returns a Fighter array of 'limit' length
+   *
+   * @todo Should we have it return an array of objects instead, structured {fighter: Fighter, threat: number} ?
    */
   public GetThreateningFighters(player: Fighter, fighters: Fighter[] = this.world.Fighters, limit: number = 3, t: number = timeFrame): Fighter[] {
     const futurePos = this.estimatePosition(player, t); // Calculate player's estimated position ahead of time
@@ -108,11 +110,11 @@ class FightObserver {
 
     // If the enemy is firing bullets
     if (b.Firing) {
-      threat += Math.max(Vector.DotProduct(b.getAim(), dir), -0.5) * 3; // Bullets are fairly dangerous when fired in general direction
+      threat += Math.max(Vector.DotProduct(b.getAim(), dir), -0.5) * 3.5; // Bullets are fairly dangerous when fired in general direction
     }
 
     // How much higher is their momentum, proportional to mine?
-    const momentumThreat = (Math.max(b.Velocity.lengthXY() * b.Mass, 1) / Math.max(a.Velocity.lengthXY() * a.Mass, 1)) / a.MaxMomentum;
+    const momentumThreat = 0.9 * ((Math.max(b.Velocity.lengthXY() * b.Mass, 1) / Math.max(a.Velocity.lengthXY() * a.Mass, 1)) / a.MaxMomentum);
     // Again, directionally-correlated, less of a threat if not aimed toward the player
     threat += Vector.DotProduct(Vector.UnitVectorXY(b.Velocity), dir) * momentumThreat;
 
