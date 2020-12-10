@@ -173,8 +173,18 @@ class Fighter extends Prop {
   }
 
   // Called when the fighter has just landed after spending time in the air, can be overriden for special functionality
-  public Land() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public Land(velocity: number = 0) {
     this.JustLanded = true;
+  }
+
+  // Applies a momentum to the given fighter
+  public ApplyMomentum(momentum: Vector) {
+    this.Velocity = Vector.Add(this.Velocity, Vector.Divide(momentum, this.Mass)); // Add momentum to fighter
+
+    if (this.Velocity.length() * this.Mass > this.MaxMomentum) { // Check to see if we went over the maximum momnentum
+      this.Velocity.clamp(0, this.MaxMomentum / this.Mass); // Clamp the momentum
+    }
   }
 
   // Returns true if the fighter is falling or not

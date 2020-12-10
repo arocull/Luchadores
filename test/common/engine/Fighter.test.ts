@@ -90,6 +90,42 @@ test('fighter riding test', () => {
   // expect(c.riding).toBeTruthy();
 });
 
+test('sheep landing-shockwave test', () => {
+  Random.setSeed(1); // Set random seed for consistency
+  const world = new World();
+  const sheep = new Sheep(1, new Vector(20, 20, 0));
+  const flam = new Flamingo(2, new Vector(30, 30, 0));
+  world.Fighters.push(sheep, flam);
+
+
+  expect(world.aoeAttacks.length).toBe(0); // There should be no AOE attacks in existence currently
+
+  sheep.Land(10); // Sheep lands with a downward velocity of 10 units
+  expect(world.aoeAttacks.length).toBe(1); // Should expect only 1 AOE attack here
+  world.tick(0.01);
+
+  expect(world.aoeAttacks.length).toBe(0); // AOE attack should have been applied and removed
+  expect(sheep.HP).toBe(sheep.MaxHP); // Sheep should not have taken any damage (no friendly-fire enabled on shockwave)
+
+  const flamX = sheep.Position.x + sheep.Radius + flam.Radius;
+  flam.Position.x = flamX; // Put flamingo immeadiately to the right of sheep
+  flam.Position.y = sheep.Position.y;
+
+
+  // Make sure jump cooldown is disabled, let physics settle
+  for (let i = 0; i < 5; i++) {
+    world.tick(0.2);
+  }
+  sheep.Jump(); // Have sheep jump
+  for (let i = 0; i < 90; i++) { // Process for about 90 frames
+    world.tick(0.03);
+  }
+  expect(flam.HP).toBeLessThan(flam.MaxHP); // Flamingo should have taken damage
+  expect(flam.Position.x).toBeGreaterThan(flamX); // Flamingo should have gotten pushed rightward by the AOE attack
+  expect(flam.HP).toBeGreaterThan(0); // Flamingo shouldn't have died though (make sure AOE didn't stack excessively)
+  expect(world.aoeAttacks.length).toBe(0); // Should not have anymore AOE attacks
+});
+
 test('flamingo jetpack test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World();

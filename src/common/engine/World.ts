@@ -3,6 +3,7 @@ import Player from './Player';
 import Entity from './Entity';
 import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
+import AOEBlast from './combat/AOEBlast';
 import Prop from './props/Prop';
 import Map from './Map';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
@@ -118,6 +119,7 @@ class World {
 
   public Fighters: Fighter[];
   public Bullets: Projectile[];
+  public aoeAttacks: AOEBlast[];
   public Props: Prop[];
   public Map: Map;
 
@@ -130,6 +132,7 @@ class World {
 
     this.Fighters = [];
     this.Bullets = [];
+    this.aoeAttacks = [];
     if (loadProps) {
       this.Props = this.Map.getProps(mapPreset, loadTextures);
     } else {
@@ -141,6 +144,9 @@ class World {
 
     MessageBus.subscribe('NewProjectile', (message) => {
       this.Bullets.push(message as Projectile);
+    });
+    MessageBus.subscribe('AOE_Blast', (message) => {
+      this.aoeAttacks.push(message as AOEBlast);
     });
   }
 
@@ -238,6 +244,12 @@ class World {
         this.Fighters.splice(i, 1);
         i--;
       }
+    }
+
+    // Move through all AOE's until array length hits zero (do not index through and reset array in case more are added during run time)
+    while (this.aoeAttacks.length > 0) {
+      const aoe = this.aoeAttacks.pop(); // Pop out item from array
+      if (aoe) aoe.apply(this.Fighters); // Apply AOE damage
     }
   }
 
@@ -363,8 +375,8 @@ class World {
 
       if (obj.Position.z < 0) {
         obj.Position.z = 0;
+        obj.Land(-obj.Velocity.z);
         obj.Velocity.z = 0;
-        obj.Land();
       }
 
       // Clear ridership for current frame--if they sink into whoever they're riding, they'll collide and this will be reset

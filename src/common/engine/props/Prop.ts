@@ -245,7 +245,8 @@ class Prop extends Entity {
   }
 
 
-  public Land() {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public Land(velocity: number = 0) {}
 
 
   public SetTexture(src: string, upscale: number = 1) {
