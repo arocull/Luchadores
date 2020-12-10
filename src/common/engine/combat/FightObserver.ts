@@ -2,9 +2,12 @@ import Entity from '../Entity';
 import { Vector } from '../math';
 import { Fighter } from '../fighters';
 import { EntityType } from '../Enums';
+import ProjectileGroup from './ProjectileGroup';
 import World from '../World';
+import { Projectile } from '../projectiles';
 
 const timeFrame = 0.1; // Ahead-of-time window for guesstimation of positioning and movement
+const maxProjectileGroupRadius = 1.25; // Maximum projectile group grouping
 
 /**
  * @class
@@ -13,9 +16,10 @@ const timeFrame = 0.1; // Ahead-of-time window for guesstimation of positioning 
  * @summary Used to quickly pull data from the battlefield
  *
  * @description The FightObserver is a class used to observer fights going on. Features include:
- * - Getting nearest incoming fighters
+ * - Getting the most threatening fighters
  * - Detecting high-density bullet areas
- * - Determining the intensity of a battle
+ * - Making movement predictions of dangerous objects
+ * - Determining the 'intensity' of a battle
  */
 class FightObserver {
   /**
@@ -26,6 +30,7 @@ class FightObserver {
 
   }
 
+  // FIGHTERS //
   /**
    * @function GetThreateningFighters
    * @summary Returns a list of fighters that are potentially threatening the player (attacking nearby)
@@ -155,6 +160,100 @@ class FightObserver {
         Vector.Multiply(a.Velocity, t),
       ),
     );
+  }
+
+
+  // BULLETS //
+  /**
+   * @function formProjectileGroups
+   * @summary Forms a rough list of most clustered projectiles within the given area
+   *
+   * @description Compares distances between bullets and attempts to group them according to proximity.
+   * Returns an array of the grouped projectiles with calculations made
+   *
+   * @param {Vector} topLeftLimit Top left corner of rectangle to form projectile groups in
+   * @param {Vector} bottomRightLimit Bottom right corner of rectangle to form projectile groups in
+   * @returns {ProjectileGroup[]} Returns a list of projectile groups within the given area
+   */
+  public formProjectileGroups(topLeftLimit: Vector, bottomRightLimit: Vector): ProjectileGroup[] {
+    const groups: ProjectileGroup[] = []; // List to return
+
+    const bullets: Projectile[] = []; // All valid projectiles within screen area
+
+    // First find all bullets within the given range
+    for (let i = 0; i < this.world.Bullets.length; i++) {
+      if (this.world.Bullets[i]) {
+        const pos = this.world.Bullets[i].Position;
+
+        // Make sure bullet position falls within bounds
+        if (pos.x > topLeftLimit.x && pos.x < bottomRightLimit.x && pos.y < topLeftLimit.y && pos.y > bottomRightLimit.y) {
+          bullets.push(this.world.Bullets[i]);
+        }
+      }
+    }
+
+    // Group clusters of 3 bullets, or add remaining bullets to existing clusters
+    for (let x = 0; x < bullets.length; x++) {
+      let foundPairing = false;
+      for (let y = x + 1; y < bullets.length; y++) { // Don't iterate anywhere below X (already been iterated)
+        for (let z = y + 1; z < bullets.length; z++) { // Don't iterate anywhere below Y (already been iterated)
+          const center = Vector.Divide(Vector.Add(Vector.Add(bullets[x].Position, bullets[y].Position), bullets[z].Position), 3);
+          if ( // Check if all bullets are within a valid distance from each other
+            Vector.Distance(center, bullets[x].Position) < maxProjectileGroupRadius
+            && Vector.Distance(center, bullets[y].Position) < maxProjectileGroupRadius
+            && Vector.Distance(center, bullets[z].Position) < maxProjectileGroupRadius
+          ) { // If all bullets are within a valid distance, add them to the groups
+            const group: ProjectileGroup = new ProjectileGroup();
+            group.projectiles.push(bullets[x], bullets[y], bullets[z]);
+
+            bullets.splice(x, 1);
+            bullets.splice(y, 1);
+            bullets.splice(z, 1);
+            x--; y--; z--;
+
+            group.getAveragePosition();
+
+            groups.push(group);
+            foundPairing = true;
+            break; // Continue ahead since these 3 bullets are now already in groups (close groups are paired later on)
+          }
+        }
+        if (foundPairing) break;
+      }
+    }
+
+    // Push remaining bullets into nearby groups (if possible)
+    for (let x = 0; x < bullets.length; x++) {
+      for (let y = 0; y < groups.length; y++) {
+        if (Vector.Distance(groups[y].position, bullets[x].Position) <= maxProjectileGroupRadius) {
+          groups[y].projectiles.push(bullets[x]);
+          groups[y].getAveragePosition(); // Update average position
+
+          // Remove bullet so it is not counted again
+          bullets.splice(x, 1);
+          x--;
+          break;
+        }
+      }
+    }
+
+    // Merge close groups
+    for (let x = 0; x < groups.length; x++) {
+      for (let y = x + 1; y < groups.length; y++) {
+        if (Vector.Distance(groups[x].position, groups[y].position) < maxProjectileGroupRadius * (2 / 3)) {
+          groups[y].merge(groups[x]);
+          groups.splice(y, 1);
+          y--;
+        }
+      }
+    }
+
+    // Finally, perform calculations for final groups
+    for (let i = 0; i < groups.length; i++) {
+      groups[i].calculate(timeFrame);
+    }
+
+    return groups;
   }
 }
 

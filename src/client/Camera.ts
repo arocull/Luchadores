@@ -22,10 +22,10 @@ class Camera {
   private lerping: boolean;
 
   constructor(
-    public Width: number,
-    public Height: number,
-    public MaxDrawWidth: number,
-    public MaxDrawHeight: number,
+    public Width: number, // Width of scene in pixels
+    public Height: number, // Height of scene in pixels
+    public MaxDrawWidth: number, // Maximum width of scene in world units
+    public MaxDrawHeight: number, // Maximum height of scene in world units
   ) {
     this.Focus = null;
     this.FocusPosition = new Vector(0, 0, 0);
@@ -149,6 +149,23 @@ class Camera {
       && pos.y > this.Height * ClipBound
       && pos.y < this.Height * ClipBoundPlusOne
     );
+  }
+
+  // Takes a 2D screen position and converts it into an engine-readable coordinate (XY only)
+  public ScreenToWorld(inputX: number, inputY: number): Vector {
+    return new Vector(
+      this.FocusPosition.x - ((inputX - this.OffsetX) / (-this.Zoom)),
+      this.FocusPosition.y - ((inputY - this.OffsetY) / this.Zoom),
+      0,
+    );
+  }
+  // Returns scene width of Camera in pixels
+  public getScreenWidth(): number {
+    return this.Width;
+  }
+  // Returns scene height of Camera in pixels
+  public getScreenHeight(): number {
+    return this.Height;
   }
 }
 
