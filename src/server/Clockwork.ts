@@ -36,7 +36,7 @@ class Clockwork {
   private lastPublish: number = 0;
 
   constructor() {
-    this.world = new World(MapPreset.Sandy, true);
+    this.world = new World(MapPreset.Snowy, true);
     this.world.doReaping = true;
 
     this.actions = {};

@@ -14,10 +14,26 @@ class RenderSettingsBase {
     this.FPScounter = false;
   }
 
+  /**
+   * @function nextParticle
+   * @summary Returns true if the next particle should be spawned, false otherwise
+   * @description Iterates a counter that is compared against the player's render settings.
+   * If the modulus of the counter is less than or equal to the particle amount setting, this function returns true.
+   * @returns {boolean} If true, spawn the given particle
+   */
   public nextParticle(): boolean {
     this.particles++;
 
     return (this.particles % 5) <= this.ParticleAmount;
+  }
+
+  /**
+   * @function getParticleRatio
+   * @summary Returns the percentage of all particles that should actually be spawned
+   * @returns {number} Percentage of particles that should spawn
+   */
+  public getParticleRatio(): number {
+    return this.ParticleAmount / 5;
   }
 }
 

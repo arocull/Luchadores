@@ -309,6 +309,8 @@ class Renderer {
 
     switch (map.mapID) {
       case MapPreset.Grassy: canvas.fillStyle = '#0d542f'; break;
+      case MapPreset.Snowy: canvas.fillStyle = '#eefcfc'; break;
+      case MapPreset.Sandy:
       default: canvas.fillStyle = '#e3a324'; break;
     }
     canvas.fillRect(0, 0, camera.Width, camera.Height);

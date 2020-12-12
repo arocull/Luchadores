@@ -2,7 +2,7 @@ import Client from './ClientState';
 import UIManager from './ui/UIManager';
 import Camera from './Camera';
 import {
-  Particle, PRosePetal, PSmashEffect, PConfetti, PMoveDash,
+  Particle, PRosePetal, PSmashEffect, PConfetti, PMoveDash, PSnowfall,
 } from './particles';
 import Render from './Render';
 import RenderSettings from './RenderSettings';
@@ -12,6 +12,7 @@ import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
 import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
+import { RenderQuality } from '../common/engine/Enums';
 
 class ClientGraphics {
   public uiManager: UIManager;
@@ -23,6 +24,8 @@ class ClientGraphics {
   public fpsCounter: number[];
 
   public particles: Particle[];
+
+  public weatherParticleTimer: number; // Used for keeping track of the next weather particle spawn
 
   constructor(private clientState: Client) {
     this.uiManager = new UIManager();
@@ -38,11 +41,13 @@ class ClientGraphics {
 
     this.particles = [];
 
+    this.weatherParticleTimer = 0;
+
     MessageBus.subscribe('Effect_NewParticle', (msg) => {
       this.particles.push(msg as Particle);
     });
     MessageBus.subscribe('Effect_PlayerDied', (msg) => {
-      PConfetti.Burst(this.particles, msg as Vector, 0.2, 4, 50 * RenderSettings.ParticleAmount); // Burst into confetti!
+      PConfetti.Burst(this.particles, msg as Vector, 0.2, 4, 250); // Burst into confetti!
     });
     MessageBus.subscribe('LoadAsset_Prop', (msg) => {
       AssetPreloader.getImage(msg.texture).then((img) => {
@@ -71,7 +76,7 @@ class ClientGraphics {
         else if (a.Animator) {
           a.Animator.Tick(DeltaTime);
           if (a.Animator.killEffectCountdown === 0) { // If a death effect is to occur, execute it
-            PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 20 * RenderSettings.ParticleAmount);
+            PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 100);
           }
 
           if (a.Animator.doMoveParticle) {
@@ -100,6 +105,20 @@ class ClientGraphics {
         }
       }
     }
+
+
+    // Weather Effects
+    if (RenderSettings.Quality === RenderQuality.High) {
+      this.weatherParticleTimer += 200 * DeltaTime;
+
+      // TODO: Derive corners from camera bounds + anticipated position?
+      const topLeftCorner = new Vector(-10, -10, 10);
+      const bottomRightCorner = new Vector(this.world.Map.Width + 10, this.world.Map.Height + 10, 12);
+      PSnowfall.Spawn(this.particles, topLeftCorner, bottomRightCorner, Math.floor(this.weatherParticleTimer), 1);
+
+      this.weatherParticleTimer -= Math.floor(this.weatherParticleTimer);
+    }
+
 
     // Tick and prune particles
     for (let i = 0; i < this.particles.length; i++) {

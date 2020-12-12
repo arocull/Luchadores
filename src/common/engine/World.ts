@@ -128,7 +128,7 @@ class World {
 
   constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
     this.Map = new Map(40, 40, 23, 10000, mapPreset);
-    if (loadTextures) this.Map.loadTexture();
+    if (loadTextures) this.Map.loadTexture(mapPreset);
 
     this.Fighters = [];
     this.Bullets = [];

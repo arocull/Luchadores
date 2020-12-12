@@ -20,7 +20,7 @@ class Map {
     this.Texture = null;
   }
 
-  public loadTexture(mapID: MapPreset = MapPreset.Sandy, customTexture: string = '') {
+  public loadTexture(mapID: MapPreset = this.mapID, customTexture: string = '') {
     let textureSrc;
 
     if (customTexture !== '') {
@@ -28,6 +28,8 @@ class Map {
     } else {
       switch (mapID) {
         case MapPreset.Grassy: textureSrc = 'Maps/Grass.jpg'; break;
+        case MapPreset.Snowy: textureSrc = 'Maps/Snowy.jpg'; break;
+        case MapPreset.Sandy:
         default: textureSrc = 'Maps/Arena.jpg';
       }
     }
