@@ -1,11 +1,13 @@
+import { EntityType } from '../Enums';
 import { Vector } from '../math';
+import Entity from '../Entity';
 import { Projectile } from '../projectiles';
 
 /**
  * @class ProjectileGroup
  * @summary An struct that contains information about a particular group of projectiles.
  */
-class ProjectileGroup {
+class ProjectileGroup extends Entity {
   public projectiles: Projectile[];
 
   public position: Vector; // Average position of group
@@ -22,6 +24,7 @@ class ProjectileGroup {
   public expectedDensity: number; // Expected density of the bullet group after T seconds
 
   constructor() {
+    super(EntityType.Group, new Vector(0, 0, 0), new Vector(0, 0, 0), new Vector(0, 0, 0));
     this.projectiles = [];
   }
 
@@ -31,14 +34,14 @@ class ProjectileGroup {
    * @returns {Vector} Returns an updated average position of the projectile group
    */
   public getAveragePosition(): Vector {
-    this.position = new Vector();
+    this.Position = new Vector();
 
     for (let i = 0; i < this.projectiles.length; i++) {
-      this.position = Vector.Add(this.position, this.projectiles[i].Position);
+      this.Position = Vector.Add(this.Position, this.projectiles[i].Position);
     }
 
-    this.position = Vector.Divide(this.position, this.projectiles.length);
-    return this.position;
+    this.Position = Vector.Divide(this.Position, this.projectiles.length);
+    return this.Position;
   }
 
 
@@ -48,28 +51,28 @@ class ProjectileGroup {
    * @param {number} t Time in seconds in the future to predict bullet positions (must be greater than zero)
    */
   public calculate(t: number = 0.1) {
-    this.position = new Vector();
-    this.velocity = new Vector();
-    this.acceleration = new Vector();
+    this.Position = new Vector();
+    this.Velocity = new Vector();
+    this.Acceleration = new Vector();
     this.damage = 0;
 
     // Tally up values
     for (let i = 0; i < this.projectiles.length; i++) {
-      this.position = Vector.Add(this.position, this.projectiles[i].Position);
-      this.velocity = Vector.Add(this.velocity, this.projectiles[i].Velocity);
-      this.acceleration = Vector.Add(this.acceleration, this.projectiles[i].Acceleration);
+      this.Position = Vector.Add(this.Position, this.projectiles[i].Position);
+      this.Velocity = Vector.Add(this.Velocity, this.projectiles[i].Velocity);
+      this.Acceleration = Vector.Add(this.Acceleration, this.projectiles[i].Acceleration);
       this.damage += this.projectiles[i].Damage;
     }
     // Perform averaging
-    this.position = Vector.Divide(this.position, this.projectiles.length);
-    this.velocity = Vector.Divide(this.velocity, this.projectiles.length);
-    this.acceleration = Vector.Divide(this.acceleration, this.projectiles.length);
+    this.Position = Vector.Divide(this.Position, this.projectiles.length);
+    this.Velocity = Vector.Divide(this.Velocity, this.projectiles.length);
+    this.Acceleration = Vector.Divide(this.Acceleration, this.projectiles.length);
     this.damage /= this.projectiles.length;
 
-    this.expectedPosition = this.getExpectedPosition(this.position, this.velocity, this.acceleration, t);
+    this.expectedPosition = this.getExpectedPosition(this.Position, this.Velocity, this.Acceleration, t);
 
     // Average radius and spread
-    const baseDir = Vector.UnitVector(this.velocity);
+    const baseDir = Vector.UnitVector(this.Velocity);
     this.radius = 0;
     this.spread = 0;
     let expectedRadius = 0;
@@ -77,7 +80,7 @@ class ProjectileGroup {
       const proj = this.projectiles[i];
 
       this.spread += Vector.DotProduct(Vector.UnitVector(proj.Velocity), baseDir);
-      this.radius += Vector.Distance(proj.Position, this.position);
+      this.radius += Vector.Distance(proj.Position, this.Position);
       expectedRadius += Vector.Distance(
         this.getExpectedPosition(proj.Position, proj.Velocity, proj.Acceleration, t),
         this.expectedPosition,

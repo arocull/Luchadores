@@ -10,6 +10,17 @@ const timeFrame = 0.1; // Ahead-of-time window for guesstimation of positioning 
 const maxProjectileGroupRadius = 1.25; // Maximum projectile group grouping
 
 /**
+ * @interface ThreatObject
+ * @summary Interface that carries an entity and its associated threat level
+ * @property {Entity} object Object the threat is attached to
+ * @property {number} threat Calculated threat that object poses
+ */
+export interface ThreatObject {
+  object: Entity;
+  threat: number;
+}
+
+/**
  * @class
  * @name FightObserver
  *
@@ -42,17 +53,17 @@ class FightObserver {
    *
    * @todo Should we have it return an array of objects instead, structured {fighter: Fighter, threat: number} ?
    */
-  public GetThreateningFighters(player: Fighter, fighters: Fighter[] = this.world.Fighters, limit: number = 3, t: number = timeFrame): Fighter[] {
+  public GetThreateningFighters(player: Fighter, fighters: Fighter[] = this.world.Fighters, limit: number = 3, t: number = timeFrame): ThreatObject[] {
     const futurePos = this.estimatePosition(player, t); // Calculate player's estimated position ahead of time
     const threats: any[] = [];
 
     // First, create a list of fighters and corresponding threats
     for (let i = 0; i < fighters.length; i++) {
       if (fighters[i] && fighters[i] !== player) {
-        const obj: any = {};
-        obj.fighter = fighters[i]; // Fighter to look at
-        obj.threat = this.determineFighterThreat(player, fighters[i], futurePos, t); // Fighter's threat level
-        threats.push(obj); // Add it to the array
+        threats.push({ // Create threat object structure to push outward
+          object: fighters[i], // Fighter to look at
+          threat: this.determineFighterThreat(player, fighters[i], futurePos, t), // Fighter's threat level
+        } as ThreatObject); // Add it to the array
       }
     }
 
@@ -63,12 +74,7 @@ class FightObserver {
       return 0;
     });
 
-    const results: Fighter[] = []; // Pick top results
-    for (let i = 0; i < limit && i < threats.length; i++) {
-      results.push(threats[i].fighter);
-    }
-
-    return results;
+    return threats.splice(1, limit);
   }
 
   /**
