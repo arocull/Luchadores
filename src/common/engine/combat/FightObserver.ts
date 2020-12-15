@@ -6,8 +6,8 @@ import ProjectileGroup from './ProjectileGroup';
 import World from '../World';
 import { Projectile } from '../projectiles';
 
-const timeFrame = 0.1; // Ahead-of-time window for guesstimation of positioning and movement
-const maxProjectileGroupRadius = 1.25; // Maximum projectile group grouping
+const timeFrame = 0.12; // Ahead-of-time window for guesstimation of positioning and movement
+const maxProjectileGroupRadius = 1.7; // Maximum projectile group grouping radius
 
 /**
  * @interface ThreatObject
