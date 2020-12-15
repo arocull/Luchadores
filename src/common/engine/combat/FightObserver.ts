@@ -1,5 +1,5 @@
 import Entity from '../Entity';
-import { Vector } from '../math';
+import { Ray, Vector } from '../math';
 import { Fighter } from '../fighters';
 import { EntityType } from '../Enums';
 import ProjectileGroup from './ProjectileGroup';
@@ -49,9 +49,7 @@ class FightObserver {
    * @param {Fighter[]} fighters Fighters to evaluate as threats
    * @param {number} limit Maximum number of fighters to return
    * @param {number} t Time in seconds for future estimations, must be greater than 0
-   * @returns {Fighter[]} Returns a Fighter array of 'limit' length
-   *
-   * @todo Should we have it return an array of objects instead, structured {fighter: Fighter, threat: number} ?
+   * @returns {ThreatObject[]} Returns a ThreatObject array of limit length
    */
   public GetThreateningFighters(player: Fighter, fighters: Fighter[] = this.world.Fighters, limit: number = 3, t: number = timeFrame): ThreatObject[] {
     const futurePos = this.estimatePosition(player, t); // Calculate player's estimated position ahead of time
@@ -231,7 +229,7 @@ class FightObserver {
     // Push remaining bullets into nearby groups (if possible)
     for (let x = 0; x < bullets.length; x++) {
       for (let y = 0; y < groups.length; y++) {
-        if (Vector.Distance(groups[y].position, bullets[x].Position) <= maxProjectileGroupRadius) {
+        if (Vector.Distance(groups[y].Position, bullets[x].Position) <= maxProjectileGroupRadius) {
           groups[y].projectiles.push(bullets[x]);
           groups[y].getAveragePosition(); // Update average position
 
@@ -246,7 +244,7 @@ class FightObserver {
     // Merge close groups
     for (let x = 0; x < groups.length; x++) {
       for (let y = x + 1; y < groups.length; y++) {
-        if (Vector.Distance(groups[x].position, groups[y].position) < maxProjectileGroupRadius * (2 / 3)) {
+        if (Vector.Distance(groups[x].Position, groups[y].Position) < maxProjectileGroupRadius * (2 / 3)) {
           groups[y].merge(groups[x]);
           groups.splice(y, 1);
           y--;
@@ -260,6 +258,67 @@ class FightObserver {
     }
 
     return groups;
+  }
+
+
+  /**
+   * @function GetThreateningProjectileGroups
+   * @summary Returns a given number of the most threatening projectile groups
+   * @param {Fighter} player Player to detect approaching fighters for
+   * @param {ProjectileGroup[]} groups Bullet groups to evaluate as threats
+   * @param {number} limit Maximum number of fighters to return
+   * @param {number} t Time in seconds for future estimations, must be greater than 0
+   * @returns {ThreatObject[]} Returns a ThreatObject array of 'limit' length
+   */
+  public GetThreateningProjectileGroups(player: Fighter, groups: ProjectileGroup[], limit: number = 3, t: number = timeFrame): ThreatObject[] {
+    const threats: any[] = [];
+
+    // First, create a list of groups and corresponding threats
+    for (let i = 0; i < groups.length; i++) {
+      if (groups[i]) {
+        threats.push({ // Create threat object structure to push outward
+          object: groups[i], // Group to look at
+          threat: this.determineProjectileGroupThreat(player, groups[i], t), // Group's threat level
+        } as ThreatObject); // Add it to the array
+      }
+    }
+
+    // Sort threats from most threatening to least threatening
+    threats.sort((a: any, b: any) => {
+      if (a.threat > b.threat) return 1;
+      if (a.threat < b.threat) return -1;
+      return 0;
+    });
+
+    return threats.splice(0, limit); // Return limit amount
+  }
+
+  /**
+   * @function determineProjectileGroupThreat
+   * @summary Determines the numerical threat of a projectile group
+   * @param {Fighter} a Fighter to observe from
+   * @param {ProjectileGroup} b Projectile group to determine threat for
+   * @param {number} t Time in seconds
+   * @returns {number} Estimated numerical threat level of the given projectile group
+   */
+  public determineProjectileGroupThreat(a: Fighter, b: ProjectileGroup, t: number = timeFrame): number {
+    const bFuture = this.estimatePosition(b, t); // B's estimated future position
+    const dir = Vector.UnitVectorXY(Vector.Subtract(a.Position, b.Position)); // Direction from B to A
+
+    const trace: Ray = new Ray(b.Position, bFuture);
+    const radius = a.Radius + b.radius;
+
+    // Threat scales from 1 (object is in trace's way perfectly) to 0 (object is 2 * radius away from trace)
+    let threat = Math.max(1 - trace.pointDistance(a.Position) / (2 * radius), 1);
+
+    // Object should also be in front of bullet trace (minimizes threat to 0 if object is behind bullets)
+    threat *= Math.max(Vector.DotProduct(trace.direction, dir), 0);
+
+    // Sum current and expected density, subtract off the spread (as spread approaches zero, bullets are flying in opposite directions)
+    // Then finally factor in damage (average damage * density should provide total damage of grouping)
+    threat *= (b.density + b.expectedDensity - (1 - b.spread)) * b.damage;
+
+    return threat;
   }
 }
 
