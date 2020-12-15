@@ -14,6 +14,7 @@ import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
 import { FightObserver, ThreatObject } from '../common/engine/combat/FightObserver';
 import Fighter from '../common/engine/Fighter';
+import ProjectileGroup from '../common/engine/combat/ProjectileGroup';
 
 const ObservationRate = 0.1; // How many seconds until next observation from the FightObserver
 
@@ -30,7 +31,8 @@ class ClientGraphics {
   public particles: Particle[];
 
   private observationTimer: number;
-  private observedFighterThreats: ThreatObject[];
+  private observedFighters: ThreatObject[];
+  private observedBulletGroups: ThreatObject[];
 
   constructor(private clientState: Client) {
     this.uiManager = new UIManager();
@@ -48,7 +50,8 @@ class ClientGraphics {
     this.particles = [];
 
     this.observationTimer = ObservationRate;
-    this.observedFighterThreats = [];
+    this.observedFighters = [];
+    this.observedBulletGroups = [];
 
     MessageBus.subscribe('Effect_NewParticle', (msg) => {
       this.particles.push(msg as Particle);
@@ -140,13 +143,35 @@ class ClientGraphics {
       if (this.observationTimer <= 0) {
         this.observationTimer = ObservationRate;
 
-        this.observedFighterThreats = this.observer.GetThreateningFighters(this.clientState.character, this.world.Fighters, 2, ObservationRate);
+        // Get 3 most threatening fighters
+        this.observedFighters = this.observer.GetThreateningFighters(this.clientState.character, this.world.Fighters, 3, ObservationRate);
+
+        // Get all threatening bullet groups (so we can see all existing ones, not just a few)
+        const leeway = Math.max(this.camera.getScreenWidth(), this.camera.getScreenHeight()) * 0.1;
+        const topLeft = this.camera.ScreenToWorld(-leeway, -leeway);
+        const botRight = this.camera.ScreenToWorld(this.camera.getScreenWidth() + leeway, this.camera.getScreenHeight() + leeway);
+        const groups = this.observer.formProjectileGroups(topLeft, botRight);
+        this.observedBulletGroups = this.observer.GetThreateningProjectileGroups(this.clientState.character, groups, groups.length, ObservationRate);
 
         // const groups: ThreatObject[] = this.observer.GetThreateningProjectileGroups(this.clientState.character);
       }
 
-      for (let i = 0; i < this.observedFighterThreats.length; i++) {
-        Render.drawCollision(<Fighter> this.observedFighterThreats[i].object, Particle.RGBToHex((this.observedFighterThreats[i].threat / 7) * 255, 128, 50), this.camera);
+      for (let i = 0; i < this.observedFighters.length; i++) {
+        Render.drawCollision(
+          <Fighter> this.observedFighters[i].object,
+          Particle.RGBToHex((this.observedFighters[i].threat / 7) * 255, 128, 50),
+          this.camera,
+        );
+      }
+      for (let i = 0; i < this.observedBulletGroups.length; i++) {
+        const bgroup = <ProjectileGroup> this.observedBulletGroups[i].object;
+        bgroup.purge();
+
+        Render.drawBoundingBox(
+          bgroup.projectiles,
+          Particle.RGBToHex((this.observedBulletGroups[i].threat / 6) * 255, 128, 50),
+          this.camera,
+        );
       }
     }
 

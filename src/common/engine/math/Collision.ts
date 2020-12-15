@@ -40,14 +40,15 @@ function CollisionTrace(a: Prop, b: Prop, ray: Ray): TraceResult {
  * @summary Simple collision test and trace for bullets
  * @description Tests the object to see if it is in the path of the bullet's trajectory, and then performs a collision test on the the given prop
  *
- * @param {Prop}  a   The object to test the bullet trajectory against for collisions
- * @param {Ray}   ray The bullet trajectory used for collision testing and detection
+ * @param {Prop}   a   The object to test the bullet trajectory against for collisions
+ * @param {Ray}    ray The bullet trajectory used for collision testing and detection
+ * @param {number} bulletRadius Bullet range boost (in case bullet has an increased collision radius)
  *
  * @returns {TraceResult} Returns a bullet trace result, or null if the initial test failed
  */
-function CollisionTraceBullet(a: Prop, ray: Ray): TraceResult {
-  if (ray.pointDistanceXY(a.Position) < a.Radius) { // Make sure point of projectile is along a trajectory that faces the prop
-    return a.traceProp(ray, 0, true); // If so, trace prop--could potentially increase bullet thickness using the radius boost
+function CollisionTraceBullet(a: Prop, ray: Ray, bulletRadius: number = 0): TraceResult {
+  if (ray.pointDistanceXY(a.Position) < a.Radius + bulletRadius) { // Make sure point of projectile is along a trajectory that faces the prop
+    return a.traceProp(ray, bulletRadius, true); // If so, trace prop--could potentially increase bullet thickness using the radius boost
   }
 
   return null; // Return null if simple point distance test failed
