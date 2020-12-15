@@ -16,7 +16,7 @@ import { FightObserver, ThreatObject } from '../common/engine/combat/FightObserv
 import Fighter from '../common/engine/Fighter';
 import ProjectileGroup from '../common/engine/combat/ProjectileGroup';
 
-const ObservationRate = 0.1; // How many seconds until next observation from the FightObserver
+const ObservationRate = 0.12; // How many seconds until next observation from the FightObserver
 
 class ClientGraphics {
   public uiManager: UIManager;
@@ -147,7 +147,7 @@ class ClientGraphics {
         this.observedFighters = this.observer.GetThreateningFighters(this.clientState.character, this.world.Fighters, 3, ObservationRate);
 
         // Get all threatening bullet groups (so we can see all existing ones, not just a few)
-        const leeway = Math.max(this.camera.getScreenWidth(), this.camera.getScreenHeight()) * 0.1;
+        const leeway = Math.max(this.camera.getScreenWidth(), this.camera.getScreenHeight()) * 0.05;
         const topLeft = this.camera.ScreenToWorld(-leeway, -leeway);
         const botRight = this.camera.ScreenToWorld(this.camera.getScreenWidth() + leeway, this.camera.getScreenHeight() + leeway);
         const groups = this.observer.formProjectileGroups(topLeft, botRight);
@@ -166,6 +166,7 @@ class ClientGraphics {
       for (let i = 0; i < this.observedBulletGroups.length; i++) {
         const bgroup = <ProjectileGroup> this.observedBulletGroups[i].object;
         bgroup.purge();
+        bgroup.calculate(ObservationRate);
 
         Render.drawBoundingBox(
           bgroup.projectiles,
