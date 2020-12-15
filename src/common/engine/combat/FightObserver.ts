@@ -74,7 +74,7 @@ class FightObserver {
       return 0;
     });
 
-    return threats.splice(1, limit);
+    return threats.splice(0, limit);
   }
 
   /**
@@ -263,4 +263,4 @@ class FightObserver {
   }
 }
 
-export { FightObserver as default };
+export { FightObserver };

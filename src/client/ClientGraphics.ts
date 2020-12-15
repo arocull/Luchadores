@@ -12,11 +12,16 @@ import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
 import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
+import { FightObserver, ThreatObject } from '../common/engine/combat/FightObserver';
+import Fighter from '../common/engine/Fighter';
+
+const ObservationRate = 0.1; // How many seconds until next observation from the FightObserver
 
 class ClientGraphics {
   public uiManager: UIManager;
   private camera: Camera;
   private world: World;
+  private observer: FightObserver;
 
   public viewport: HTMLCanvasElement;
   public canvas: CanvasRenderingContext2D;
@@ -24,12 +29,16 @@ class ClientGraphics {
 
   public particles: Particle[];
 
+  private observationTimer: number;
+  private observedFighterThreats: ThreatObject[];
+
   constructor(private clientState: Client) {
     this.uiManager = new UIManager();
     this.camera = this.clientState.camera;
     this.world = this.clientState.getWorld();
 
     this.clientState.uiManager = this.uiManager;
+    this.observer = new FightObserver(this.world);
 
     this.viewport = <HTMLCanvasElement>document.getElementById('render');
     this.canvas = this.viewport.getContext('2d');
@@ -37,6 +46,9 @@ class ClientGraphics {
     this.fpsCounter = [];
 
     this.particles = [];
+
+    this.observationTimer = ObservationRate;
+    this.observedFighterThreats = [];
 
     MessageBus.subscribe('Effect_NewParticle', (msg) => {
       this.particles.push(msg as Particle);
@@ -117,6 +129,28 @@ class ClientGraphics {
 
     // Draw screen
     Render.DrawScreen(this.camera, this.world, this.particles);
+
+
+    // DEBUG //
+    // Currently this acts as a debug, but announcer ticking would look similar to this (though would be separated into its own class)
+    if (RenderSettings.EnableAnnouncer && this.clientState.character) {
+      Render.drawCollision(this.clientState.character, Particle.RGBToHex(0, 128, 250), this.camera);
+
+      this.observationTimer -= DeltaTime;
+      if (this.observationTimer <= 0) {
+        this.observationTimer = ObservationRate;
+
+        this.observedFighterThreats = this.observer.GetThreateningFighters(this.clientState.character, this.world.Fighters, 2, ObservationRate);
+
+        // const groups: ThreatObject[] = this.observer.GetThreateningProjectileGroups(this.clientState.character);
+      }
+
+      for (let i = 0; i < this.observedFighterThreats.length; i++) {
+        Render.drawCollision(<Fighter> this.observedFighterThreats[i].object, Particle.RGBToHex((this.observedFighterThreats[i].threat / 7) * 255, 128, 50), this.camera);
+      }
+    }
+
+
     // Do interface actions and draw interface
     this.uiManager.tick(DeltaTime, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning);
 
