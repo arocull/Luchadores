@@ -67,8 +67,13 @@ class FightObserver {
 
     // Sort threats from most threatening to least threatening
     threats.sort((a: any, b: any) => {
+<<<<<<< HEAD
       if (a.threat > b.threat) return -1;
       if (a.threat < b.threat) return 1;
+=======
+      if (a.threat > b.threat) return 1;
+      if (a.threat < b.threat) return -1;
+>>>>>>> 99815038985656fd85bd61383a5ec1655227173b
       return 0;
     });
 
@@ -125,7 +130,11 @@ class FightObserver {
     // How much higher is their momentum, proportional to mine?
     const momentumThreat = 0.9 * ((Math.max(b.Velocity.lengthXY() * b.Mass, 1) / Math.max(a.Velocity.lengthXY() * a.Mass, 1)) / a.MaxMomentum);
     // Again, directionally-correlated, less of a threat if not aimed toward the player
+<<<<<<< HEAD
     threat += (Vector.DotProduct(Vector.UnitVectorXY(b.Velocity), dir) + 0.1) * momentumThreat;
+=======
+    threat += Vector.DotProduct(Vector.UnitVectorXY(b.Velocity), dir) * momentumThreat;
+>>>>>>> 99815038985656fd85bd61383a5ec1655227173b
 
     return threat;
   }
@@ -285,8 +294,13 @@ class FightObserver {
 
     // Sort threats from most threatening to least threatening
     threats.sort((a: any, b: any) => {
+<<<<<<< HEAD
       if (a.threat > b.threat) return -1;
       if (a.threat < b.threat) return 1;
+=======
+      if (a.threat > b.threat) return 1;
+      if (a.threat < b.threat) return -1;
+>>>>>>> 99815038985656fd85bd61383a5ec1655227173b
       return 0;
     });
 
