@@ -137,43 +137,7 @@ class ClientGraphics {
     // DEBUG //
     // Currently this acts as a debug, but announcer ticking would look similar to this (though would be separated into its own class)
     if (RenderSettings.EnableAnnouncer && this.clientState.character) {
-      Render.drawCollision(this.clientState.character, Particle.RGBToHex(0, 128, 250), this.camera);
-
-      this.observationTimer -= DeltaTime;
-      if (this.observationTimer <= 0) {
-        this.observationTimer = ObservationRate;
-
-        // Get 3 most threatening fighters
-        this.observedFighters = this.observer.GetThreateningFighters(this.clientState.character, this.world.Fighters, 3, ObservationRate);
-
-        // Get all threatening bullet groups (so we can see all existing ones, not just a few)
-        const leeway = Math.max(this.camera.getScreenWidth(), this.camera.getScreenHeight()) * 0.05;
-        const topLeft = this.camera.ScreenToWorld(-leeway, -leeway);
-        const botRight = this.camera.ScreenToWorld(this.camera.getScreenWidth() + leeway, this.camera.getScreenHeight() + leeway);
-        const groups = this.observer.formProjectileGroups(topLeft, botRight);
-        this.observedBulletGroups = this.observer.GetThreateningProjectileGroups(this.clientState.character, groups, groups.length, ObservationRate);
-
-        // const groups: ThreatObject[] = this.observer.GetThreateningProjectileGroups(this.clientState.character);
-      }
-
-      for (let i = 0; i < this.observedFighters.length; i++) {
-        Render.drawCollision(
-          <Fighter> this.observedFighters[i].object,
-          Particle.RGBToHex((this.observedFighters[i].threat / 7) * 255, 128, 50),
-          this.camera,
-        );
-      }
-      for (let i = 0; i < this.observedBulletGroups.length; i++) {
-        const bgroup = <ProjectileGroup> this.observedBulletGroups[i].object;
-        bgroup.purge();
-        bgroup.calculate(ObservationRate);
-
-        Render.drawBoundingBox(
-          bgroup.projectiles,
-          Particle.RGBToHex((this.observedBulletGroups[i].threat / 6) * 255, 128, 50),
-          this.camera,
-        );
-      }
+      this.debugObserver(DeltaTime);
     }
 
 
@@ -215,6 +179,54 @@ class ClientGraphics {
       avgDT /= this.fpsCounter.length;
 
       Render.DrawFPS(this.camera, avgDT);
+    }
+  }
+
+  /**
+   * @function debugObserver
+   * @summary Draws information gathered using the Fight Observer
+   * @description Draws a blue collision box around the player,
+   * blue-to-green-to-orange collision boxes around enemies (based off of threat level),
+   * and bounding boxes for bullet groups and their corresponding threat level.
+   * @param {number} DeltaTime Change in time (in seconds) since last frame
+   */
+  protected debugObserver(DeltaTime: number) {
+    Render.drawCollision(this.clientState.character, Particle.RGBToHex(0, 128, 250), this.camera);
+
+    this.observationTimer -= DeltaTime;
+    if (this.observationTimer <= 0) {
+      this.observationTimer = ObservationRate;
+
+      // Get 3 most threatening fighters
+      this.observedFighters = this.observer.GetThreateningFighters(this.clientState.character, this.world.Fighters, 3, ObservationRate);
+
+      // Get all threatening bullet groups (so we can see all existing ones, not just a few)
+      const leeway = Math.max(this.camera.getScreenWidth(), this.camera.getScreenHeight()) * 0.05;
+      const topLeft = this.camera.ScreenToWorld(-leeway, -leeway);
+      const botRight = this.camera.ScreenToWorld(this.camera.getScreenWidth() + leeway, this.camera.getScreenHeight() + leeway);
+      const groups = this.observer.formProjectileGroups(topLeft, botRight);
+      this.observedBulletGroups = this.observer.GetThreateningProjectileGroups(this.clientState.character, groups, groups.length, ObservationRate);
+
+      // const groups: ThreatObject[] = this.observer.GetThreateningProjectileGroups(this.clientState.character);
+    }
+
+    for (let i = 0; i < this.observedFighters.length; i++) {
+      Render.drawCollision(
+        <Fighter> this.observedFighters[i].object,
+        Particle.RGBToHex((this.observedFighters[i].threat / 7) * 255, 128, 50),
+        this.camera,
+      );
+    }
+    for (let i = 0; i < this.observedBulletGroups.length; i++) {
+      const bgroup = <ProjectileGroup> this.observedBulletGroups[i].object;
+      bgroup.purge();
+      bgroup.calculate(ObservationRate);
+
+      Render.drawBoundingBox(
+        bgroup.projectiles,
+        Particle.RGBToHex((this.observedBulletGroups[i].threat / 6) * 255, 128, 50),
+        this.camera,
+      );
     }
   }
 }
