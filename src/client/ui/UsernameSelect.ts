@@ -23,7 +23,7 @@ class UIUsernameSelect {
     this.base.hidden = true;
 
     this.name = this.display.value;
-    this.name = this.name.trimRight();
+    this.name = this.name.trim();
     this.display.value = this.name;
 
     if (this.name.length > 2 && this.name.length <= 24 && !this.submitted) {
