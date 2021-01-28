@@ -12,7 +12,7 @@ import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
 import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
-import { RenderQuality } from '../common/engine/Enums';
+import { MapPreset, RenderQuality } from '../common/engine/Enums';
 
 class ClientGraphics {
   public uiManager: UIManager;
@@ -109,14 +109,7 @@ class ClientGraphics {
 
     // Weather Effects
     if (RenderSettings.Quality === RenderQuality.High) {
-      this.weatherParticleTimer += 200 * DeltaTime;
-
-      // TODO: Derive corners from camera bounds + anticipated position?
-      const topLeftCorner = new Vector(-10, -10, 10);
-      const bottomRightCorner = new Vector(this.world.Map.Width + 10, this.world.Map.Height + 10, 12);
-      PSnowfall.Spawn(this.particles, topLeftCorner, bottomRightCorner, Math.floor(this.weatherParticleTimer), 1);
-
-      this.weatherParticleTimer -= Math.floor(this.weatherParticleTimer);
+      this.weatherParticles(DeltaTime, this.world.Map.mapID);
     }
 
 
@@ -175,6 +168,32 @@ class ClientGraphics {
 
       Render.DrawFPS(this.camera, avgDT);
     }
+  }
+
+  /**
+   * @function weatherParticles
+   * @summary Spawns weather particles
+   * @param {number} DeltaTime Change in time (in seconds) since last frame
+   * @param {MaPreset} mapID The map that is being played
+   * @todo Derive corners from camera bounds and anticipated position (possible with FightObserver branch)
+   */
+  private weatherParticles(DeltaTime: number, mapID: MapPreset) {
+    // TODO: Derive corners from camera bounds + anticipated position?
+    // Note: This is doable in the FightObserver branch (Camera.ScreenToWorld)
+    // Branch needs to be merged before this feature can be used
+    const topLeftCorner = new Vector(-10, -10, 10);
+    const bottomRightCorner = new Vector(this.world.Map.Width + 10, this.world.Map.Height + 10, 12);
+
+    switch (mapID) {
+      case MapPreset.Snowy:
+        this.weatherParticleTimer += 200 * DeltaTime; // Spawn around 200 particles per second
+        PSnowfall.Spawn(this.particles, topLeftCorner, bottomRightCorner, Math.floor(this.weatherParticleTimer), 1); // Spawn integer amount
+        break;
+      default:
+        return;
+    }
+
+    this.weatherParticleTimer -= Math.floor(this.weatherParticleTimer); // Subtract integer amount spawned
   }
 }
 
