@@ -170,11 +170,11 @@ class Clockwork {
   public verifyUsername(username: String): boolean {
     for (let i = 0; i < this.connections.length; i++) {
       if (this.connections[i].getUsername() === username) {
-        return true; // Return true immeadietly if there is a match
+        return false; // Return false immeadietly if there is a match
       }
     }
 
-    return false; // Return false otherwise
+    return true; // Return true otherwise
   }
 
   // Player Interaction Hooks

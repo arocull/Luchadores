@@ -7,12 +7,14 @@ class UIUsernameSelect {
 
   private display: HTMLInputElement;
   private error: HTMLElement;
+  private denied: HTMLElement;
 
   private base: HTMLElement = document.getElementById('username_select');
 
   constructor() {
     this.display = <HTMLInputElement>document.getElementById('username_input');
     this.error = document.getElementById('username_error');
+    this.denied = document.getElementById('username_denied');
 
     const confirm = document.getElementById('username_confirm');
     confirm.addEventListener('click', () => {
@@ -29,6 +31,7 @@ class UIUsernameSelect {
 
     if (this.name.length > 2 && this.name.length <= 24 && !this.submitted) {
       this.submitted = true;
+      this.display.disabled = true;
       MessageBus.publish('PickUsername', this.name);
     } else { // Otherwise, show error
       this.error.hidden = false;
@@ -53,6 +56,18 @@ class UIUsernameSelect {
   }
   public enter() { // Only submit response if UI is
     if (!this.base.hidden) this.submitResponse();
+  }
+  public approveUsername(approval: boolean) {
+    this.verified = approval;
+
+    if (!approval) {
+      this.denied.hidden = false;
+      this.display.disabled = false;
+      this.submitted = false; // Allow changes again
+      this.base.hidden = false;
+    } else {
+      MessageBus.publish('PickUsernameSuccess', this.name);
+    }
   }
 }
 

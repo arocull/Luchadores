@@ -95,13 +95,14 @@ class Client {
 
     // Set up message bus events
     MessageBus.subscribe('PickUsername', (name: string) => {
-      this.player.setUsername(name);
-
       MessageBus.publish(this.topics.ClientNetworkToServer, <IPlayerConnect>{
         type: TypeEnum.PlayerConnect,
         ownerId: -1, // We don't know this on this client yet - server will decide
         username: name,
       });
+    });
+    MessageBus.subscribe('PickUsernameSuccess', (name: string) => {
+      this.player.setUsername(name); // Username was confirmed, this is a GO
 
       if (this.uiManager) {
         this.uiManager.closeUsernameSelect();
@@ -166,6 +167,9 @@ class Client {
                 break;
               case TypeEnum.PlayerDied:
                 this.onDeath(msg.characterId, msg.killerId);
+                break;
+              case TypeEnum.PlayerNameApproval:
+                if (this.uiManager) this.uiManager.approveUsername(msg.approved);
                 break;
               default: // None
             }

@@ -111,6 +111,10 @@ class UIManager {
   public setConnectionText(text: string = '') {
     this.connectionText.text = text;
   }
+  // Approves / Disapproves the clients selected username
+  public approveUsername(approval: boolean) {
+    this.usernameSelect.approveUsername(approval);
+  }
 
   // Open and close functions for different menus (in case we want to add transitions later)
   public openUsernameSelect() {
