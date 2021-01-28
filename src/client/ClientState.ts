@@ -375,8 +375,12 @@ class Client {
     this.parseKeys(inp);
     this.parseMouse(inp);
 
-    // Do not send input updates if the player is fiddling with UI
-    if (this.uiManager && (this.uiManager.inGUIMode() || !this.character)) return;
+    // Disable inputs if in GUI mode to prevent constant firing and movement while in menus
+    if (this.uiManager && (this.uiManager.inGUIMode() || !this.character)) {
+      this.input.Jump = false;
+      this.input.MouseDown = false;
+      this.input.MoveDirection = new Vector(0, 0, 0);
+    }
 
     MessageBus.publish(this.topics.ClientNetworkToServer, {
       type: TypeEnum.PlayerInputState,
