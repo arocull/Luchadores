@@ -3,6 +3,7 @@ import { MessageBus } from '../../common/messaging/bus';
 class UIUsernameSelect {
   private name: string;
   private submitted: boolean = false;
+  private verified: boolean = false; // Verified by server, final step of process
 
   private display: HTMLInputElement;
   private error: HTMLElement;

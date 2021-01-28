@@ -17,6 +17,7 @@ import {
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
 import { MapPreset } from '../common/engine/Enums';
+import { IPlayerNameApproval } from '../common/events/events';
 
 interface Action {
   player: Player;
@@ -160,8 +161,33 @@ class Clockwork {
     return null;
   }
 
+  /**
+   * @function verifyUsername
+   * @summary Checks to make sure the given username is not already used on the server
+   * @param {String} username Username to check against
+   * @returns {boolean} Returns true if username is not already in use, or false otherwise
+   */
+  public verifyUsername(username: String): boolean {
+    for (let i = 0; i < this.connections.length; i++) {
+      if (this.connections[i].getUsername() === username) {
+        return true; // Return true immeadietly if there is a match
+      }
+    }
+
+    return false; // Return false otherwise
+  }
+
   // Player Interaction Hooks
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
+    const valid = this.verifyUsername(message.username);
+
+    MessageBus.publish(plr.getTopicSend(), <IPlayerNameApproval>{
+      type: TypeEnum.PlayerNameApproval,
+      approved: valid,
+    });
+
+    if (!valid) return; // If the username was invalid, do not let them in
+
     plr.setUsername(message.username);
 
     // Broadcast an state of all player names, scores, IDs, etc; also sends clients their character IDs

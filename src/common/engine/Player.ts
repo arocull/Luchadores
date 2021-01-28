@@ -17,7 +17,7 @@ class Player {
   private topicReceive: string;
 
   constructor(private id: string) {
-    this.username = 'Player';
+    this.username = 'Connecting Player';
     this.kills = 0;
     this.deaths = 0;
     this.maxStreak = 0;

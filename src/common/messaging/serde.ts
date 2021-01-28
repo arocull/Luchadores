@@ -35,6 +35,8 @@ function getProtobufType(object: IEvent): ProtobufTypeSerde {
       return events.PlayerState;
     case TypeEnum.PlayerDisconnect:
       return events.PlayerDisconnect;
+    case TypeEnum.PlayerNameApproval:
+      return events.PlayerNameApproval;
     case TypeEnum.Ping:
     case TypeEnum.Pong: // Falls thru - same struct
       return events.PingPong;
