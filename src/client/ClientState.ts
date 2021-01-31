@@ -377,9 +377,7 @@ class Client {
 
     // Disable inputs if in GUI mode to prevent constant firing and movement while in menus
     if (this.uiManager && (this.uiManager.inGUIMode() || !this.character)) {
-      this.input.Jump = false;
-      this.input.MouseDown = false;
-      this.input.MoveDirection = new Vector(0, 0, 0);
+      this.clearInput();
     }
 
     MessageBus.publish(this.topics.ClientNetworkToServer, {
@@ -389,6 +387,15 @@ class Client {
       mouseDirection: this.input.MouseDirection,
       moveDirection: this.input.MoveDirection,
     });
+  }
+  /**
+   * @function clearInput
+   * @summary Clears jump, mouse down, and move direction inputs
+   */
+  private clearInput() {
+    this.input.Jump = false;
+    this.input.MouseDown = false;
+    this.input.MoveDirection = new Vector(0, 0, 0);
   }
 
 
