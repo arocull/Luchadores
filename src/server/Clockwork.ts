@@ -16,8 +16,9 @@ import {
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
-import { MapPreset } from '../common/engine/Enums';
-import { IPlayerNameApproval } from '../common/events/events';
+import { MapPreset, ConnectResponseType } from '../common/engine/Enums';
+import { IPlayerConnectResponse } from '../common/events/events';
+
 
 interface Action {
   player: Player;
@@ -181,12 +182,19 @@ class Clockwork {
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
     const valid = this.verifyUsername(message.username);
 
-    MessageBus.publish(plr.getTopicSend(), <IPlayerNameApproval>{
-      type: TypeEnum.PlayerNameApproval,
-      approved: valid,
-    });
+    if (!valid) {
+      MessageBus.publish(plr.getTopicSend(), <IPlayerConnectResponse>{
+        type: TypeEnum.PlayerConnectResponse,
+        response: ConnectResponseType.DuplicateUsername,
+      });
 
-    if (!valid) return; // If the username was invalid, do not let them in
+      return; // If the username was invalid, do not let them in
+    }
+
+    MessageBus.publish(plr.getTopicSend(), <IPlayerConnectResponse>{
+      type: TypeEnum.PlayerConnectResponse,
+      response: ConnectResponseType.Success,
+    });
 
     plr.setUsername(message.username);
 

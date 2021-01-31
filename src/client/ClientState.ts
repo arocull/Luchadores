@@ -13,7 +13,7 @@ import Player from '../common/engine/Player';
 import Fighter from '../common/engine/Fighter';
 import Random from '../common/engine/Random';
 import Camera from './Camera';
-import { FighterType } from '../common/engine/Enums';
+import { FighterType, ConnectResponseType } from '../common/engine/Enums';
 import { UIDeathNotification, UIPlayerInfo } from './ui';
 import UIManager from './ui/UIManager';
 import { Vector } from '../common/engine/math';
@@ -168,8 +168,16 @@ class Client {
               case TypeEnum.PlayerDied:
                 this.onDeath(msg.characterId, msg.killerId);
                 break;
-              case TypeEnum.PlayerNameApproval:
-                if (this.uiManager) this.uiManager.approveUsername(msg.approved);
+              case TypeEnum.PlayerConnectResponse:
+                switch (msg.response) {
+                  case ConnectResponseType.Success:
+                    if (this.uiManager) this.uiManager.approveUsername(true);
+                    break;
+                  case ConnectResponseType.DuplicateUsername:
+                    if (this.uiManager) this.uiManager.approveUsername(false);
+                    break;
+                  default:
+                }
                 break;
               default: // None
             }

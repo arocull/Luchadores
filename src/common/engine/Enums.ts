@@ -55,6 +55,11 @@ enum RenderQuality {
   High = 3,
 }
 
+enum ConnectResponseType {
+  Success = 0,
+  DuplicateUsername = 1,
+}
+
 const FighterTypeStrings = [
   'Sheep',
   'Deer',
@@ -75,5 +80,6 @@ export {
   MapPreset,
   UIFrameType,
   RenderQuality,
+  ConnectResponseType,
   fighterTypeToString,
 };

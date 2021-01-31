@@ -62,8 +62,8 @@ export interface IPlayerDisconnect extends events.IPlayerDisconnect {
   type: TypeEnum.PlayerDisconnect,
 }
 
-export interface IPlayerNameApproval extends events.IPlayerNameApproval {
-  type: TypeEnum.PlayerNameApproval,
+export interface IPlayerConnectResponse extends events.IPlayerConnectResponse {
+  type: TypeEnum.PlayerConnectResponse,
 }
 
 export interface IWorldState extends events.IWorldState {
@@ -87,7 +87,7 @@ export type IEvent =
   | IPlayerDied
   | IPlayerState
   | IPlayerDisconnect
-  | IPlayerNameApproval
+  | IPlayerConnectResponse
   | IPing
   | IPong
   | IWorldState
