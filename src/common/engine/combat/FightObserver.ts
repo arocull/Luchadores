@@ -179,7 +179,7 @@ class FightObserver {
    * @param {Vector} bottomRightLimit Bottom right corner of rectangle to form projectile groups in
    * @returns {ProjectileGroup[]} Returns a list of projectile groups within the given area
    */
-  public formProjectileGroups(topLeftLimit: Vector, bottomRightLimit: Vector): ProjectileGroup[] {
+  public formProjectileGroups(bottomLeft: Vector, topRight: Vector): ProjectileGroup[] {
     const groups: ProjectileGroup[] = []; // List to return
 
     const bullets: Projectile[] = []; // All valid projectiles within screen area
@@ -187,10 +187,8 @@ class FightObserver {
     // First find all bullets within the given range
     for (let i = 0; i < this.world.Bullets.length; i++) {
       if (this.world.Bullets[i]) {
-        const pos = this.world.Bullets[i].Position;
-
         // Make sure bullet position falls within bounds
-        if (pos.x > topLeftLimit.x && pos.x < bottomRightLimit.x && pos.y < topLeftLimit.y && pos.y > bottomRightLimit.y) {
+        if (this.world.Bullets[i].inRegionXY(bottomLeft, topRight)) {
           bullets.push(this.world.Bullets[i]);
         }
       }
@@ -202,10 +200,11 @@ class FightObserver {
       for (let y = x + 1; y < bullets.length; y++) { // Don't iterate anywhere below X (already been iterated)
         for (let z = y + 1; z < bullets.length; z++) { // Don't iterate anywhere below Y (already been iterated)
           const center = Vector.Divide(Vector.Add(Vector.Add(bullets[x].Position, bullets[y].Position), bullets[z].Position), 3);
+
           if ( // Check if all bullets are within a valid distance from each other
-            Vector.Distance(center, bullets[x].Position) < maxProjectileGroupRadius
-            && Vector.Distance(center, bullets[y].Position) < maxProjectileGroupRadius
-            && Vector.Distance(center, bullets[z].Position) < maxProjectileGroupRadius
+            this.isGroupable(bullets[x], center)
+            && this.isGroupable(bullets[y], center)
+            && this.isGroupable(bullets[z], center)
           ) { // If all bullets are within a valid distance, add them to the groups
             const group: ProjectileGroup = new ProjectileGroup();
             group.projectiles.push(bullets[x], bullets[y], bullets[z]);
@@ -319,6 +318,17 @@ class FightObserver {
     threat *= (b.density + b.expectedDensity - (1 - b.spread)) * b.damage;
 
     return threat;
+  }
+
+  /**
+   * @function isGroupable
+   * @summary Determines if the projectile is groupable or not
+   * @param {Entity} projectile Projectile entity to investigate
+   * @param {Vector} groupPosition Central position of the bullet group
+   * @returns {boolean} Returns true if the projectile can be grouped
+   */
+  private isGroupable(projectile: Entity, groupPosition: Vector): boolean {
+    return Vector.Distance(groupPosition, projectile.Position) < maxProjectileGroupRadius;
   }
 }
 

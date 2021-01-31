@@ -202,9 +202,16 @@ class ClientGraphics {
 
       // Get all threatening bullet groups (so we can see all existing ones, not just a few)
       const leeway = Math.max(this.camera.getScreenWidth(), this.camera.getScreenHeight()) * 0.05;
-      const topLeft = this.camera.ScreenToWorld(-leeway, -leeway);
-      const botRight = this.camera.ScreenToWorld(this.camera.getScreenWidth() + leeway, this.camera.getScreenHeight() + leeway);
-      const groups = this.observer.formProjectileGroups(topLeft, botRight);
+
+      const botLeft = this.camera.ScreenToWorld(-leeway, -leeway);
+      const topRight = this.camera.ScreenToWorld(this.camera.getScreenWidth() + leeway, this.camera.getScreenHeight() + leeway);
+
+      // Vertical positions need to be flipped (upward is +Y)
+      const flipY = botLeft.y;
+      botLeft.y = topRight.y;
+      topRight.y = flipY;
+
+      const groups = this.observer.formProjectileGroups(botLeft, topRight);
       this.observedBulletGroups = this.observer.GetThreateningProjectileGroups(this.clientState.character, groups, groups.length, ObservationRate);
 
       // const groups: ThreatObject[] = this.observer.GetThreateningProjectileGroups(this.clientState.character);

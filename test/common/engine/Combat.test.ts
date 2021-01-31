@@ -138,7 +138,7 @@ test('FightObserver projectile threat test', () => {
     // if (newGroups.length > groups.length) groups = newGroups;
   }
 
-  groups = observer.formProjectileGroups(new Vector(0, 40, 0), new Vector(40, 0, 10));
+  groups = observer.formProjectileGroups(new Vector(0, 0, 0), new Vector(40, 40, 10));
   threats = observer.GetThreateningProjectileGroups(sheep, groups, 3, timeConstant);
 
   // Some bullet groups should be present now
