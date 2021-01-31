@@ -82,6 +82,7 @@ class Ray {
   public pointDistance(point: Vector): number {
     return Vector.Cross(this.direction, Vector.Subtract(point, this.start)).length();
   }
+  // Returns the distance of a point to this ray
   public pointDistanceXY(point: Vector): number {
     const cross = Vector.Subtract(point, this.start);
     cross.z = 0;

@@ -3,6 +3,7 @@ enum EntityType {
   Projectile = 1,
   Particle = 2,
   Prop = 3,
+  Group = 4,
 }
 
 enum FighterType {

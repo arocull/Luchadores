@@ -13,6 +13,7 @@ import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import World from '../common/engine/World';
 import Map from '../common/engine/Map';
+import { TwoPi } from '../common/engine/math';
 /* eslint-enable object-curly-newline */
 
 let ArenaBoundFrontPassIndex: number = 0;
@@ -420,6 +421,83 @@ class Renderer {
     }
   }
 
+
+  // ENGINE DEBUG //
+  /**
+   * @function drawBoundingBox
+   * @summary Draws a bounding box around an array of entities
+   * @param {Entity[]} entities Entities to bound
+   * @param {string} color Color of the bounding box
+   * @param {Camera} cam Camera for projection
+   */
+  public static drawBoundingBox(entities: Entity[], color: string, cam: Camera) {
+    const minPos = Vector.Clone(entities[0].Position);
+    const maxPos = Vector.Clone(entities[0].Position);
+
+    // Get bounding box
+    for (let i = 1; i < entities.length; i++) {
+      minPos.x = Math.min(minPos.x, entities[i].Position.x);
+      minPos.y = Math.min(minPos.y, entities[i].Position.y);
+      minPos.z = Math.min(minPos.z, entities[i].Position.z);
+      maxPos.x = Math.max(maxPos.x, entities[i].Position.x);
+      maxPos.y = Math.max(maxPos.y, entities[i].Position.y);
+      // maxPos.z = Math.max(maxPos.z, entities[i].Position.z);
+    }
+    maxPos.z = minPos.z; // We won't worry about Z so the box appears on the same level as the bottom-most projectile to avoid confusion
+
+    // No fancy camera zoom on line thickness since this is debug
+    canvas.strokeStyle = color;
+    canvas.lineWidth = 5;
+
+    const corner1 = cam.PositionOffset(minPos);
+    const corner2 = cam.PositionOffset(maxPos);
+    canvas.strokeRect(corner1.x, corner1.y, corner2.x - corner1.x, corner2.y - corner1.y);
+  }
+  /**
+   * @function drawCollision
+   * @summary Draws the collision box/cylinder of the given object
+   * @param {Prop} prop Prop to draw collision box for
+   * @param {string} color Color of collision box
+   * @param {Camera} cam Camera for projection
+   * @todo TODO: Add variant for box/prism collisions
+   */
+  public static drawCollision(prop: Prop, color: string, cam: Camera) {
+    canvas.globalAlpha = 1;
+    canvas.strokeStyle = color;
+    canvas.lineWidth = 5;
+
+    const topPos = Vector.Clone(prop.Position);
+    topPos.z += prop.Height;
+    const center = cam.PositionOffset(prop.Position);
+    const centerTop = cam.PositionOffset(topPos);
+    const leftX = center.x - prop.Radius * cam.Zoom;
+    const rightX = center.x + prop.Radius * cam.Zoom;
+
+    // Draw base
+    canvas.beginPath();
+    canvas.arc(center.x, center.y, prop.Radius * cam.Zoom, 0, TwoPi);
+    canvas.stroke();
+
+    // Draw sides
+    canvas.globalAlpha = 0.5;
+    canvas.beginPath();
+    canvas.moveTo(leftX, center.y);
+    canvas.lineTo(leftX, centerTop.y);
+    canvas.stroke();
+    canvas.beginPath();
+    canvas.moveTo(rightX, center.y);
+    canvas.lineTo(rightX, centerTop.y);
+    canvas.stroke();
+
+    // Draw top
+    canvas.globalAlpha = 0.75;
+    canvas.beginPath();
+    canvas.arc(centerTop.x, centerTop.y, prop.Radius * cam.Zoom, 0, TwoPi);
+    canvas.stroke();
+  }
+
+
+  // USER INTERFACE //
   public static DrawPlayerList(cam: Camera, data: string) {
     const startX = cam.Width * UIPlayerInfo.CORNERX_OFFSET;
     let startY = cam.Height * UIPlayerInfo.CORNERY_OFFSET;
