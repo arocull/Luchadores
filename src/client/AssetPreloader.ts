@@ -8,6 +8,7 @@ import { EventEmitter } from 'events';
 class AssetPreloaderImpl extends EventEmitter {
   private loadedCount = 0;
   private preloads: Record<string, Promise<HTMLImageElement>>;
+  private audioQueue: Record<string, Promise<HTMLAudioElement>>;
 
   constructor(resources: string[]) {
     super();
@@ -16,14 +17,8 @@ class AssetPreloaderImpl extends EventEmitter {
       acc[src] = this.loadImage(src);
       return acc;
     }, {} as Record<string, Promise<HTMLImageElement>>);
+    this.audioQueue = ({} as Record<string, Promise<HTMLAudioElement>>);
   }
-
-  // /**
-  //  * @deprecated unnecessary. Use `getImages`
-  //  */
-  // public preload() : Promise<HTMLImageElement[]> {
-  //   return Promise.all(Object.values(this.preloads));
-  // }
 
   private loadImage(source : string) : Promise<HTMLImageElement> {
     return new Promise<HTMLImageElement>((resolve) => {
@@ -40,8 +35,30 @@ class AssetPreloaderImpl extends EventEmitter {
     });
   }
 
+  private loadAudio(source : string) : Promise<HTMLAudioElement> {
+    return new Promise<HTMLAudioElement>((resolve) => {
+      const audio = new Audio(source);
+
+      // CanPlayThrough event indicates that enough of the audio is downloaded
+      // that it can play without any suspected interruptions
+      audio.addEventListener('canplaythrough', () => {
+        // this.loadedCount++;
+        // this.emit('progress', { progress: this.getProgress(), file: source });
+        // TODO: Garbage collect these?
+        console.log('Audio ', source, ' loaded');
+        resolve(audio);
+      });
+
+      audio.src = source;
+    });
+  }
+
   public getImages(imgSrc: string[]): Promise<HTMLImageElement[]> {
     const promises = imgSrc.map((src) => this.getImage(src));
+    return Promise.all(promises);
+  }
+  public getAudioList(audioSrc: string[]): Promise<HTMLAudioElement[]> {
+    const promises = audioSrc.map((src) => this.getAudio(src));
     return Promise.all(promises);
   }
 
@@ -50,6 +67,14 @@ class AssetPreloaderImpl extends EventEmitter {
     if (!promise) {
       promise = this.loadImage(imgSrc);
       this.preloads[imgSrc] = promise;
+    }
+    return promise;
+  }
+  public getAudio(audioSrc: string): Promise<HTMLAudioElement> {
+    let promise = this.audioQueue[audioSrc];
+    if (!promise) {
+      promise = this.loadAudio(audioSrc);
+      this.audioQueue[audioSrc] = promise;
     }
     return promise;
   }

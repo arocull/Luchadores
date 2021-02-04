@@ -1,4 +1,5 @@
 import AssetPreloader from './AssetPreloader';
+import SoundManager from './audio/SoundManager';
 import ClientState from './ClientState';
 import ClientGraphics from './ClientGraphics';
 // Load screen imports
@@ -70,6 +71,7 @@ function AnimationFrame(tick: number) {
   ]).then(() => {
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
+    SoundManager.initialize(); // Start load in of audio (should move later)
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);
   });
