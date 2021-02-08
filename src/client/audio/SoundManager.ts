@@ -35,8 +35,8 @@ class SoundManagerInit {
    */
   private addLibrarySounds(sfxNames: string[]) {
     sfxNames.forEach((name: string) => {
-      const noNumbers: string = name.replace('.mp3', '').replace(/[0-9]/, '');
-      AssetPreloader.getAudio(`Audio/${name}`).then((sfx) => {
+      const noNumbers: string = name.replace(/[0-9]/, '');
+      AssetPreloader.getAudio(`Audio/${name}.mp3`).then((sfx) => {
         this.addLibrarySound(noNumbers, sfx);
       });
     });
@@ -52,19 +52,55 @@ class SoundManagerInit {
    *
    * However, announcer lines should not be downloaded unless the
    * announcer is enabled.
+   * @todo Figure out mp3 + ogg alternates
    */
   public initialize() {
     if (this.enabled) return;
     this.enabled = true;
 
     this.addLibrarySounds([
-      'Luchadores1.mp3',
-      'FighterName/Sheep1.mp3',
-      'FighterName/Sheep2.mp3',
-      'FighterName/Deer1.mp3',
-      'FighterName/Deer2.mp3',
-      'FighterName/Flamingo1.mp3',
-      'FighterName/Flamingo2.mp3',
+      'BulletWhizz1',
+      'BulletWhizz2',
+      'BulletWhizz3',
+      'BulletWhizz4',
+
+      /* Hurt Sounds */
+      'Sheep/Hurt1',
+      'Sheep/Hurt2',
+      'Sheep/Hurt3',
+      'Deer/Hurt1',
+      'Flamingo/Hurt1',
+      'Flamingo/Hurt2',
+      'Flamingo/Hurt3',
+
+      /* Sheep Audio */
+
+      /* Deer Audio */
+      'Deer/Gunshot1',
+      'Deer/Gunshot2',
+      'Deer/Gunshot3',
+      'Deer/Gunshot4',
+      'Deer/Gunshot5',
+      'Deer/Gunshot6',
+      'Deer/Gunshot7',
+      'Deer/Gunshot8',
+      'Deer/Gunshot9',
+      'Deer/Gunshot10',
+      'Deer/Gunshot11',
+      'Deer/Gunshot12',
+
+      /* Flamingo Audio */
+      'Flamingo/Inhale1',
+      'Flamingo/Inhale2',
+      'Flamingo/Inhale3',
+      'Flamingo/Scream1',
+      'Flamingo/Scream2',
+      'Flamingo/Scream3',
+      'Flamingo/Scream4',
+      'Flamingo/Scream5',
+      'Flamingo/Squawk1',
+      'Flamingo/Squawk2',
+      'Flamingo/Squawk3',
     ]);
   }
 
@@ -78,9 +114,25 @@ class SoundManagerInit {
     if (!this.enabled) return null;
 
     const sfxList = this.lib[sfxName]; // Get list of audio (multiple variants)
+    if (!sfxList) {
+      console.log('Sound effect ', sfxName, ' not found!');
+      return null;
+    }
     const sfx = sfxList[Math.floor(sfxList.length * Math.random())]; // Pick random audio from list
     sfx.play();
     return sfx;
+  }
+
+  public enableAnnouncer() {
+    this.addLibrarySounds([
+      'Announcer/Luchadores1',
+      'Announcer/FighterName/Sheep1',
+      'Announcer/FighterName/Sheep2',
+      'Announcer/FighterName/Deer1',
+      'Announcer/FighterName/Deer2',
+      'Announcer/FighterName/Flamingo1',
+      'Announcer/FighterName/Flamingo2',
+    ]);
   }
 }
 

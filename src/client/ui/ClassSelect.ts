@@ -1,6 +1,6 @@
 import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import { MessageBus } from '../../common/messaging/bus';
-import SoundManager from '../audio/SoundManager';
+// import SoundManager from '../audio/SoundManager';
 
 class UIClassSelect {
   private selected: FighterType;
@@ -42,7 +42,7 @@ class UIClassSelect {
       portrait.src = `Portraits/${fighterTypeToString(this.selected)}.png`;
       portrait.alt = fighterTypeToString(this.selected);
 
-      SoundManager.playSound(`FighterName/${fighterTypeToString(this.selected)}`);
+      // SoundManager.playSound(`FighterName/${fighterTypeToString(this.selected)}`);
 
       switch (clickedLuchador) {
         default:
