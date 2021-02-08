@@ -31,6 +31,7 @@ class Client {
   // Respawn info
   public respawnTimer: number;
   public respawning: boolean;
+  public lastHP: number;
 
   // Networking
   public connected: boolean;
@@ -487,6 +488,16 @@ class Client {
       this.character.Move(this.input.MoveDirection);
       this.character.aim(this.input.MouseDirection);
       this.character.Firing = this.input.MouseDown;
+
+      // Send out a message if the player took damage
+      const dmgTaken = this.lastHP - this.character.HP;
+      if (dmgTaken !== 0) {
+        MessageBus.publish('Audio_DamageTaken', {
+          dmg: dmgTaken / this.character.MaxHP, // Percentage of maximum health that changed
+          fighterType: this.character.getCharacter(), // Fighter type (for audio)
+        });
+      }
+      this.lastHP = this.character.HP;
 
       if (this.respawning) { // If they are respawning (newly assigned character), lerp camera focus to them and close class select if open
         this.respawning = false;
