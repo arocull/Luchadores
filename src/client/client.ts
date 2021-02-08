@@ -2,6 +2,7 @@ import AssetPreloader from './AssetPreloader';
 import SoundManager from './audio/SoundManager';
 import ClientState from './ClientState';
 import ClientGraphics from './ClientGraphics';
+import ClientAudio from './audio/ClientAudio';
 // Load screen imports
 import { UILoadScreen } from './ui';
 import Camera from './Camera';
@@ -9,6 +10,7 @@ import Render from './Render';
 
 let client: ClientState;
 let graphics: ClientGraphics;
+let audio: ClientAudio;
 
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
@@ -25,6 +27,7 @@ function AnimationFrame(tick: number) {
 
   if (client) client.tick(DeltaTime);
   if (graphics) graphics.tick(DeltaTime);
+  if (audio) audio.tick(DeltaTime);
 
   return window.requestAnimationFrame(AnimationFrame);
 }
@@ -71,6 +74,7 @@ function AnimationFrame(tick: number) {
   ]).then(() => {
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
+    audio = new ClientAudio(client);
     SoundManager.initialize(); // Start load in of audio (should move later)
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);

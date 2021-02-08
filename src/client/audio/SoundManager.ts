@@ -1,5 +1,50 @@
 import AssetPreloader from '../AssetPreloader';
 
+const libraryNames = [
+  'BulletWhizz1',
+  'BulletWhizz2',
+  'BulletWhizz3',
+  'BulletWhizz4',
+
+  /* Hurt Sounds */
+  'Sheep/Hurt1',
+  'Sheep/Hurt2',
+  'Sheep/Hurt3',
+  'Deer/Hurt1',
+  'Flamingo/Hurt1',
+  'Flamingo/Hurt2',
+  'Flamingo/Hurt3',
+
+  /* Sheep Audio */
+
+  /* Deer Audio */
+  'Deer/Gunshot1',
+  'Deer/Gunshot2',
+  'Deer/Gunshot3',
+  'Deer/Gunshot4',
+  'Deer/Gunshot5',
+  'Deer/Gunshot6',
+  'Deer/Gunshot7',
+  'Deer/Gunshot8',
+  'Deer/Gunshot9',
+  'Deer/Gunshot10',
+  'Deer/Gunshot11',
+  'Deer/Gunshot12',
+
+  /* Flamingo Audio */
+  'Flamingo/Inhale1',
+  'Flamingo/Inhale2',
+  'Flamingo/Inhale3',
+  'Flamingo/Scream1',
+  'Flamingo/Scream2',
+  'Flamingo/Scream3',
+  'Flamingo/Scream4',
+  'Flamingo/Scream5',
+  'Flamingo/Squawk1',
+  'Flamingo/Squawk2',
+  'Flamingo/Squawk3',
+];
+
 /**
  * @class SoundManager
  * @summary Handles loading and playback of audio
@@ -42,6 +87,16 @@ class SoundManagerInit {
     });
   }
 
+  public getLibrarySources(): string[] {
+    const sources: string[] = [];
+
+    libraryNames.forEach((name: string) => {
+      sources.push(`Audio/${name}.mp3`);
+    });
+
+    return sources;
+  }
+
   /**
    * @function initialize
    * @summary Initializes SoundManager and begins downloading audio
@@ -58,50 +113,7 @@ class SoundManagerInit {
     if (this.enabled) return;
     this.enabled = true;
 
-    this.addLibrarySounds([
-      'BulletWhizz1',
-      'BulletWhizz2',
-      'BulletWhizz3',
-      'BulletWhizz4',
-
-      /* Hurt Sounds */
-      'Sheep/Hurt1',
-      'Sheep/Hurt2',
-      'Sheep/Hurt3',
-      'Deer/Hurt1',
-      'Flamingo/Hurt1',
-      'Flamingo/Hurt2',
-      'Flamingo/Hurt3',
-
-      /* Sheep Audio */
-
-      /* Deer Audio */
-      'Deer/Gunshot1',
-      'Deer/Gunshot2',
-      'Deer/Gunshot3',
-      'Deer/Gunshot4',
-      'Deer/Gunshot5',
-      'Deer/Gunshot6',
-      'Deer/Gunshot7',
-      'Deer/Gunshot8',
-      'Deer/Gunshot9',
-      'Deer/Gunshot10',
-      'Deer/Gunshot11',
-      'Deer/Gunshot12',
-
-      /* Flamingo Audio */
-      'Flamingo/Inhale1',
-      'Flamingo/Inhale2',
-      'Flamingo/Inhale3',
-      'Flamingo/Scream1',
-      'Flamingo/Scream2',
-      'Flamingo/Scream3',
-      'Flamingo/Scream4',
-      'Flamingo/Scream5',
-      'Flamingo/Squawk1',
-      'Flamingo/Squawk2',
-      'Flamingo/Squawk3',
-    ]);
+    this.addLibrarySounds(libraryNames);
   }
 
   /**

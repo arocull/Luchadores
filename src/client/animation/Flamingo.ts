@@ -5,6 +5,15 @@ import Animator from './Animator';
 import { PFire, PSmoke } from '../particles';
 
 class AnimFlamingo extends Animator {
+  protected triggerUniqueIdle() {
+    super.triggerUniqueIdle();
+    MessageBus.publish('Audio_General', {
+      sfxName: 'Flamingo/Squawk',
+      pos: this.owner.Position,
+      vol: 0.5,
+    });
+  }
+
   protected frameFalling() {
     this.frame = 6;
     this.row = 1;

@@ -27,6 +27,12 @@ class AnimDeer extends Animator {
   }
 
   private firedBullet(bullet: BBullet) {
+    MessageBus.publish('Audio_General', {
+      sfxName: 'Deer/Gunshot',
+      pos: bullet.Position,
+      vol: 0.4,
+    });
+
     if (!RenderSettings.nextParticle()) return;
     const dir = Vector.Multiply(Vector.UnitVector(bullet.Velocity), -1);
     MessageBus.publish('Effect_NewParticle', new PBulletShell(

@@ -10,14 +10,17 @@ class AssetPreloaderImpl extends EventEmitter {
   private preloads: Record<string, Promise<HTMLImageElement>>;
   private audioQueue: Record<string, Promise<HTMLAudioElement>>;
 
-  constructor(resources: string[]) {
+  constructor(resources: string[], audioSources: string[]) {
     super();
 
     this.preloads = resources.reduce((acc, src) => {
       acc[src] = this.loadImage(src);
       return acc;
     }, {} as Record<string, Promise<HTMLImageElement>>);
-    this.audioQueue = ({} as Record<string, Promise<HTMLAudioElement>>);
+    this.audioQueue = audioSources.reduce((acc, src) => {
+      acc[src] = this.loadAudio(src);
+      return acc;
+    }, {} as Record<string, Promise<HTMLAudioElement>>);
   }
 
   private loadImage(source : string) : Promise<HTMLImageElement> {
@@ -42,8 +45,8 @@ class AssetPreloaderImpl extends EventEmitter {
       // CanPlayThrough event indicates that enough of the audio is downloaded
       // that it can play without any suspected interruptions
       audio.addEventListener('canplaythrough', () => {
-        // this.loadedCount++;
-        // this.emit('progress', { progress: this.getProgress(), file: source });
+        this.loadedCount++;
+        this.emit('progress', { progress: this.getProgress(), file: source });
         // TODO: Garbage collect these?
         console.log('Audio ', source, ' loaded');
         resolve(audio);
@@ -80,11 +83,11 @@ class AssetPreloaderImpl extends EventEmitter {
   }
 
   public getProgress() {
-    return this.loadedCount / Object.keys(this.preloads).length;
+    return this.loadedCount / (Object.keys(this.preloads).length + Object.keys(this.audioQueue).length);
   }
 }
 
 // Singleton
-const AssetPreloader = new AssetPreloaderImpl([]);
+const AssetPreloader = new AssetPreloaderImpl([], []);
 
 export { AssetPreloader as default };

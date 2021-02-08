@@ -12,10 +12,12 @@ class ClientAudio {
   private dropoffPlusOne: number;
   private dropoffLN: number; // Logarithm of dropoff + 1
 
-  private lastHurtSound: number; // Time since last hurt sound
+  private lastHurtSound: number = 0; // Time since last hurt sound
 
   constructor(private clientState: Client) {
     this.camera = clientState.camera;
+
+    this.setDropOff(20);
 
     // Play sound when damage is taken
     MessageBus.subscribe('Audio_DamageTaken', (audioEvent: any) => {
@@ -24,6 +26,11 @@ class ClientAudio {
         sfx.volume = 0.3;
         this.lastHurtSound = 0;
       }
+    });
+
+    // Play a given sound at a given position
+    MessageBus.subscribe('Audio_General', (obj: any) => {
+      this.playSound(obj.sfxName, obj.pos, obj.vol);
     });
   }
 
@@ -49,14 +56,17 @@ class ClientAudio {
    * Linear Volume Formula: 1 - x / dropoff
    * Logarithmic Volume Formula: ln(-x + dropoff + 1) / 3.045
    * @param {string} sfxName Name of the sound to play
+   * @param {Vector} position Position of the sound to play
+   * @param {number} volume Base volume of the audio
    */
-  public playSound(sfxName: string, position: Vector) {
+  public playSound(sfxName: string, position: Vector, volume: number) {
     const dist = Vector.DistanceXY(position, this.camera.GetFocusPosition());
     if (dist >= this.dropoff) return; // Sound happened too far away, don't bother playing
 
     const sfx = SoundManager.playSound(sfxName);
     if (sfx) {
-      sfx.volume = Math.log(-dist + this.dropoffPlusOne) / this.dropoffLN;
+      // Math.log(-dist + this.dropoffPlusOne) / this.dropoffLN
+      sfx.volume = Math.max(Math.min((1 - dist / this.dropoff) * volume, 1), 0);
     }
   }
 
