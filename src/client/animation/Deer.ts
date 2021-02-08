@@ -5,6 +5,7 @@ import { Fighter } from '../../common/engine/fighters';
 import Animator from './Animator';
 import { PBulletShell, PBulletFire } from '../particles';
 import { BBullet } from '../../common/engine/projectiles';
+import ClientAudio from '../audio/ClientAudio';
 
 class AnimDeer extends Animator {
   private bulletChannel: string;
@@ -27,11 +28,7 @@ class AnimDeer extends Animator {
   }
 
   private firedBullet(bullet: BBullet) {
-    MessageBus.publish('Audio_General', {
-      sfxName: 'Deer/Gunshot',
-      pos: bullet.Position,
-      vol: 0.4,
-    });
+    ClientAudio.playSound('Deer/Gunshot', bullet.Position, 0.2);
 
     if (!RenderSettings.nextParticle()) return;
     const dir = Vector.Multiply(Vector.UnitVector(bullet.Velocity), -1);

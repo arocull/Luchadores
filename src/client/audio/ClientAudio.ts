@@ -1,11 +1,12 @@
-import { MessageBus } from '../../common/messaging/bus';
-import { fighterTypeToString } from '../../common/engine/Enums';
+import { SubscriberContainer } from '../../common/messaging/container';
+import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import Vector from '../../common/engine/Vector';
 import SoundManager from './SoundManager';
 import Client from '../ClientState';
 import Camera from '../Camera';
 
-class ClientAudio {
+class ClientAudioInit {
+  private clientState: Client;
   private camera: Camera;
 
   private dropoff: number; // Maximum distance a sound can be heard from
@@ -14,13 +15,18 @@ class ClientAudio {
 
   private lastHurtSound: number = 0; // Time since last hurt sound
 
-  constructor(private clientState: Client) {
-    this.camera = clientState.camera;
+  private subscriptions: SubscriberContainer;
+
+  // Character watching
+  private lastSpecialBoolean: boolean;
+
+  constructor() {
+    this.subscriptions = new SubscriberContainer();
 
     this.setDropOff(20);
 
     // Play sound when damage is taken
-    MessageBus.subscribe('Audio_DamageTaken', (audioEvent: any) => {
+    this.subscriptions.attach('Audio_DamageTaken', (audioEvent: any) => {
       if (audioEvent.dmg > 0.03 && this.lastHurtSound > 1) {
         const sfx = SoundManager.playSound(`${fighterTypeToString(audioEvent.fighterType)}/Hurt`);
         sfx.volume = 0.3;
@@ -29,9 +35,14 @@ class ClientAudio {
     });
 
     // Play a given sound at a given position
-    MessageBus.subscribe('Audio_General', (obj: any) => {
+    this.subscriptions.attach('Audio_General', (obj: any) => {
       this.playSound(obj.sfxName, obj.pos, obj.vol);
     });
+  }
+
+  public setClientState(owningState: Client) {
+    this.clientState = owningState;
+    this.camera = owningState.camera;
   }
 
   /**
@@ -58,16 +69,19 @@ class ClientAudio {
    * @param {string} sfxName Name of the sound to play
    * @param {Vector} position Position of the sound to play
    * @param {number} volume Base volume of the audio
+   * @returns {HTMLAudioElement} Returns the sound element that was played
    */
-  public playSound(sfxName: string, position: Vector, volume: number) {
+  public playSound(sfxName: string, position: Vector, volume: number): HTMLAudioElement {
     const dist = Vector.DistanceXY(position, this.camera.GetFocusPosition());
-    if (dist >= this.dropoff) return; // Sound happened too far away, don't bother playing
+    if (dist >= this.dropoff) return null; // Sound happened too far away, don't bother playing
 
     const sfx = SoundManager.playSound(sfxName);
     if (sfx) {
       // Math.log(-dist + this.dropoffPlusOne) / this.dropoffLN
       sfx.volume = Math.max(Math.min((1 - dist / this.dropoff) * volume, 1), 0);
     }
+
+    return sfx;
   }
 
   /**
@@ -77,7 +91,21 @@ class ClientAudio {
    */
   public tick(DeltaTime: number) {
     this.lastHurtSound += DeltaTime;
+
+    // eslint-disable-next-line prefer-destructuring
+    const character = this.clientState.character;
+    if (character) {
+      if (character.getSpecialBoolean() !== this.lastSpecialBoolean) {
+        this.lastSpecialBoolean = character.getSpecialBoolean();
+
+        // If flamingo switched from true to false, they stopped breathing and their attack has recharged
+        if (character.getCharacter() === FighterType.Flamingo && this.lastSpecialBoolean === false) {
+          SoundManager.playSound('Flamingo/Inhale');
+        }
+      }
+    }
   }
 }
 
+const ClientAudio = new ClientAudioInit();
 export { ClientAudio as default };

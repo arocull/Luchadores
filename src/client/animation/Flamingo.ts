@@ -3,15 +3,31 @@ import { MessageBus } from '../../common/messaging/bus';
 import Vector from '../../common/engine/Vector';
 import Animator from './Animator';
 import { PFire, PSmoke } from '../particles';
+import AnimationState from './AnimationState';
+import ClientAudio from '../audio/ClientAudio';
 
 class AnimFlamingo extends Animator {
+  private screamAudio: HTMLAudioElement = null;
+  private playingAudio: boolean = false;
+
+  public Tick(DeltaTime: number) {
+    super.Tick(DeltaTime);
+
+    const attacking: boolean = (this.realState === AnimationState.Attacking || this.realState === AnimationState.AttackingMoving);
+    if (attacking && !this.playingAudio) {
+      this.screamAudio = ClientAudio.playSound('Flamingo/Scream', this.owner.Position, 0.3);
+      this.playingAudio = true;
+    } else if (!attacking && this.screamAudio) {
+      this.screamAudio.pause();
+      this.screamAudio.currentTime = 0;
+      this.playingAudio = false;
+    }
+  }
+
   protected triggerUniqueIdle() {
     super.triggerUniqueIdle();
-    MessageBus.publish('Audio_General', {
-      sfxName: 'Flamingo/Squawk',
-      pos: this.owner.Position,
-      vol: 0.5,
-    });
+
+    ClientAudio.playSound('Flamingo/Squawk', this.owner.Position, 0.4);
   }
 
   protected frameFalling() {

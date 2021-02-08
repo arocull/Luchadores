@@ -1,15 +1,7 @@
 import Fighter from '../../common/engine/Fighter';
 import { fighterTypeToString } from '../../common/engine/Enums';
 import AssetPreloader from '../AssetPreloader';
-
-enum AnimationState {
-  Idle = 0,
-  IdleUnique = 1,
-  Falling = 2,
-  Moving = 3,
-  Attacking = 4,
-  AttackingMoving = 5,
-}
+import AnimationState from './AnimationState';
 
 
 class Animator {
@@ -25,6 +17,7 @@ class Animator {
   public timer: number;
   public timerTick: number;
   public lastState: AnimationState;
+  protected realState: AnimationState;
   private timeToUniqueIdle: number;
   private inUniqueIdle: boolean;
   protected bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
@@ -174,6 +167,8 @@ class Animator {
       if (state === 3) state = AnimationState.AttackingMoving; // If moving, do a moving attack animation
       else state = AnimationState.Attacking; // Otherwise, do a standard attack
     }
+
+    this.realState = state;
 
     return state;
   }

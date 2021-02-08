@@ -10,7 +10,6 @@ import Render from './Render';
 
 let client: ClientState;
 let graphics: ClientGraphics;
-let audio: ClientAudio;
 
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
@@ -27,7 +26,7 @@ function AnimationFrame(tick: number) {
 
   if (client) client.tick(DeltaTime);
   if (graphics) graphics.tick(DeltaTime);
-  if (audio) audio.tick(DeltaTime);
+  ClientAudio.tick(DeltaTime);
 
   return window.requestAnimationFrame(AnimationFrame);
 }
@@ -79,7 +78,7 @@ function AnimationFrame(tick: number) {
   Promise.all(assetPromises).then(() => {
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
-    audio = new ClientAudio(client);
+    ClientAudio.setClientState(client);
 
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);
