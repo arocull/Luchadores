@@ -71,11 +71,19 @@ function AnimationFrame(tick: number) {
     'Sprites/Deer.png',
     'Sprites/Flamingo.png',
     'Sprites/Barrel.png',
-  ]).then(() => {
+  ]);
+
+  SoundManager.initialize(); // Start load in of audio (should move later)
+
+  const assetPromises: Promise<any>[] = []
+    .concat(AssetPreloader.getImageQueue())
+    .concat(AssetPreloader.getAudioQueue());
+
+  Promise.all(assetPromises).then(() => {
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
     audio = new ClientAudio(client);
-    SoundManager.initialize(); // Start load in of audio (should move later)
+
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);
   });

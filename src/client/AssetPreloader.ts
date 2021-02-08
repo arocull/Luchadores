@@ -7,16 +7,17 @@ import { EventEmitter } from 'events';
 
 class AssetPreloaderImpl extends EventEmitter {
   private loadedCount = 0;
-  private preloads: Record<string, Promise<HTMLImageElement>>;
+  private imageQueue: Record<string, Promise<HTMLImageElement>>;
   private audioQueue: Record<string, Promise<HTMLAudioElement>>;
 
   constructor(resources: string[], audioSources: string[]) {
     super();
 
-    this.preloads = resources.reduce((acc, src) => {
+    this.imageQueue = resources.reduce((acc, src) => {
       acc[src] = this.loadImage(src);
       return acc;
     }, {} as Record<string, Promise<HTMLImageElement>>);
+
     this.audioQueue = audioSources.reduce((acc, src) => {
       acc[src] = this.loadAudio(src);
       return acc;
@@ -60,19 +61,26 @@ class AssetPreloaderImpl extends EventEmitter {
     const promises = imgSrc.map((src) => this.getImage(src));
     return Promise.all(promises);
   }
+
+  public getImageQueue(): Promise<HTMLImageElement>[] {
+    // Return a copy of the current queue
+    return Object.values(this.imageQueue).slice();
+  }
+
   public getAudioList(audioSrc: string[]): Promise<HTMLAudioElement[]> {
     const promises = audioSrc.map((src) => this.getAudio(src));
     return Promise.all(promises);
   }
 
   public getImage(imgSrc: string): Promise<HTMLImageElement> {
-    let promise = this.preloads[imgSrc];
+    let promise = this.imageQueue[imgSrc];
     if (!promise) {
       promise = this.loadImage(imgSrc);
-      this.preloads[imgSrc] = promise;
+      this.imageQueue[imgSrc] = promise;
     }
     return promise;
   }
+
   public getAudio(audioSrc: string): Promise<HTMLAudioElement> {
     let promise = this.audioQueue[audioSrc];
     if (!promise) {
@@ -82,8 +90,13 @@ class AssetPreloaderImpl extends EventEmitter {
     return promise;
   }
 
+  public getAudioQueue(): Promise<HTMLAudioElement>[] {
+    // Return a copy of the current queue
+    return Object.values(this.audioQueue).slice();
+  }
+
   public getProgress() {
-    return this.loadedCount / (Object.keys(this.preloads).length + Object.keys(this.audioQueue).length);
+    return this.loadedCount / (Object.keys(this.imageQueue).length + Object.keys(this.audioQueue).length);
   }
 }
 

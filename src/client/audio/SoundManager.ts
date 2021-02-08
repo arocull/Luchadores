@@ -52,7 +52,7 @@ const libraryNames = [
  */
 class SoundManagerInit {
   /**
-   * @property {Record<string, HTMLAduioElement[]>} lib
+   * @property {Record<string, HTMLAudioElement[]>} lib
    * @summary Library, stores list of all sound names and corresponding HTMLAudioElement variants
    */
   private lib: Record<string, HTMLAudioElement[]>;
@@ -64,7 +64,7 @@ class SoundManagerInit {
 
   /**
    * @function addLibrarySound
-   * @summary Adds the given sound to the audio libary
+   * @summary Adds the given sound to the audio library
    * @param {string} sfxName Name of sound
    * @param {HTMLAudioElement} sfx Sound effect itself
    */
@@ -81,9 +81,10 @@ class SoundManagerInit {
   private addLibrarySounds(sfxNames: string[]) {
     sfxNames.forEach((name: string) => {
       const noNumbers: string = name.replace(/[0-9]/, '');
-      AssetPreloader.getAudio(`Audio/${name}.mp3`).then((sfx) => {
-        this.addLibrarySound(noNumbers, sfx);
-      });
+      AssetPreloader.getAudio(`Audio/${name}.mp3`)
+        .then((sfx) => {
+          this.addLibrarySound(noNumbers, sfx);
+        });
     });
   }
 
