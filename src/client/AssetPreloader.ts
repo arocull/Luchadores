@@ -49,7 +49,6 @@ class AssetPreloaderImpl extends EventEmitter {
         this.loadedCount++;
         this.emit('progress', { progress: this.getProgress(), file: source });
         // TODO: Garbage collect these?
-        console.log('Audio ', source, ' loaded');
         resolve(audio);
       });
 

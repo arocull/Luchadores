@@ -33,7 +33,6 @@ function AnimationFrame(tick: number) {
 }
 
 (function setup() {
-  console.log('Preloading assets ...');
   viewport.width = window.innerWidth;
   viewport.height = window.innerHeight;
 
@@ -46,8 +45,6 @@ function AnimationFrame(tick: number) {
   }
 
   AssetPreloader.on('progress', (status) => {
-    console.log(`Preload progress: ${Math.round(status.progress * 100)}% ... (${status.file})`);
-
     viewport.width = window.innerWidth;
     viewport.height = window.innerHeight;
     tempCam.Scale(viewport.width, viewport.height);
