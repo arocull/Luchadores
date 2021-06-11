@@ -62,8 +62,7 @@ export function encoder(kind: IEvent): Uint8Array {
  */
 export function decoder(buffer: Buffer | ArrayBuffer | Uint8Array): IEvent {
   let data: Uint8Array;
-  if (buffer instanceof Buffer
-      || buffer instanceof ArrayBuffer) {
+  if (buffer instanceof ArrayBuffer) { // buffer instanceof Buffer ||
     data = new Uint8Array(buffer);
   } else {
     data = buffer;
