@@ -1,6 +1,7 @@
 import { SubscriberContainer } from '../../common/messaging/container';
 import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import Vector from '../../common/engine/Vector';
+import Sound from './Sound';
 import SoundManager from './SoundManager';
 import Client from '../ClientState';
 import Camera from '../Camera';
@@ -29,7 +30,7 @@ class ClientAudioInit {
     this.subscriptions.attach('Audio_DamageTaken', (audioEvent: any) => {
       if (audioEvent.dmg > 0.03 && this.lastHurtSound > 1) {
         const sfx = SoundManager.playSound(`${fighterTypeToString(audioEvent.fighterType)}/Hurt`);
-        sfx.volume = 0.3;
+        sfx.src.volume = 0.6;
         this.lastHurtSound = 0;
       }
     });
@@ -69,16 +70,16 @@ class ClientAudioInit {
    * @param {string} sfxName Name of the sound to play
    * @param {Vector} position Position of the sound to play
    * @param {number} volume Base volume of the audio
-   * @returns {HTMLAudioElement} Returns the sound element that was played
+   * @returns {Sound} Returns the sound element that was played
    */
-  public playSound(sfxName: string, position: Vector, volume: number): HTMLAudioElement {
+  public playSound(sfxName: string, position: Vector, volume: number): Sound {
     const dist = Vector.DistanceXY(position, this.camera.GetFocusPosition());
     if (dist >= this.dropoff) return null; // Sound happened too far away, don't bother playing
 
     const sfx = SoundManager.playSound(sfxName);
     if (sfx) {
       // Math.log(-dist + this.dropoffPlusOne) / this.dropoffLN
-      sfx.volume = Math.max(Math.min((1 - dist / this.dropoff) * volume, 1), 0);
+      sfx.src.volume = Math.max(Math.min((1 - dist / this.dropoff) * volume, 1), 0);
     }
 
     return sfx;
@@ -100,7 +101,8 @@ class ClientAudioInit {
 
         // If flamingo switched from true to false, they stopped breathing and their attack has recharged
         if (character.getCharacter() === FighterType.Flamingo && this.lastSpecialBoolean === false) {
-          SoundManager.playSound('Flamingo/Inhale');
+          const sfx = SoundManager.playSound('Flamingo/Inhale');
+          sfx.src.volume = 0.4;
         }
       }
     }

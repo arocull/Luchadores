@@ -1,5 +1,11 @@
 import AssetPreloader from '../AssetPreloader';
+import Sound from './Sound';
 
+/**
+ * @constant libraryNames
+ * @summary Names of all default sound effects in game
+ * @todo Remove hardcoding. Load a JSON?
+ */
 const libraryNames = [
   'BulletWhizz1',
   'BulletWhizz2',
@@ -46,20 +52,35 @@ const libraryNames = [
 ];
 
 /**
+ * @constant announcerLibraryNames
+ * @summary Names of all announcer sound effects in game
+ * @todo Remove hardcoding. Load a JSON?
+ */
+const announcerLibraryNames = [
+  'Announcer/Luchadores1',
+  'Announcer/FighterName/Sheep1',
+  'Announcer/FighterName/Sheep2',
+  'Announcer/FighterName/Deer1',
+  'Announcer/FighterName/Deer2',
+  'Announcer/FighterName/Flamingo1',
+  'Announcer/FighterName/Flamingo2',
+];
+
+/**
  * @class SoundManager
  * @summary Handles loading and playback of audio
  * @todo Find proper format to convert audio to for cross-platform compatibility
  */
 class SoundManagerInit {
   /**
-   * @property {Record<string, HTMLAudioElement[]>} lib
+   * @property {Record<string, Sound[]>} lib
    * @summary Library, stores list of all sound names and corresponding HTMLAudioElement variants
    */
-  private lib: Record<string, HTMLAudioElement[]>;
+  private lib: Record<string, Sound[]>;
   private enabled: boolean = false;
 
   constructor() {
-    this.lib = ({} as Record<string, HTMLAudioElement[]>);
+    this.lib = ({} as Record<string, Sound[]>);
   }
 
   /**
@@ -69,14 +90,17 @@ class SoundManagerInit {
    * @param {HTMLAudioElement} sfx Sound effect itself
    */
   private addLibrarySound(sfxName: string, sfx: HTMLAudioElement) {
-    if (!this.lib[sfxName]) this.lib[sfxName] = [sfx]; // Initialize array if not present
-    else this.lib[sfxName].push(sfx); // Otherwise push it to end of array
+    const sound: Sound = new Sound(sfx);
+
+    if (!this.lib[sfxName]) this.lib[sfxName] = [sound]; // Initialize array if not present
+    else this.lib[sfxName].push(sound); // Otherwise push it to end of array
   }
 
   /**
    * @function addLibrarySounds
    * @summary Loads all audio with given names. Removes numbers and indexes audio
    * @param {string[]} sfxNames List of audio names to load in
+   * @todo Support alternative sound formats depending on platform
    */
   private addLibrarySounds(sfxNames: string[]) {
     sfxNames.forEach((name: string) => {
@@ -118,34 +142,71 @@ class SoundManagerInit {
   }
 
   /**
+   * @function enableAnnouncer
+   * @summary Loads in announced sound library
+   */
+  public enableAnnouncer() {
+    this.addLibrarySounds(announcerLibraryNames);
+  }
+
+  /**
+   * @function tick
+   * @summary Ticks all sound ages
+   * @param {number} deltaTime Time passed since last frame
+   */
+  public tick(deltaTime: number) {
+    Object.entries(this.lib).forEach(([, sfxList]) => {
+      sfxList.forEach((sfx) => {
+        // eslint-disable-next-line no-param-reassign
+        sfx.time += deltaTime;
+      });
+    });
+  }
+
+  /**
    * @function playSound
    * @summary Plays a sound variant with the given name from the audio library
    * @param {string} sfxName Name of sound to play
-   * @returns {HTMLAudioElement} Sound that is currently being played
+   * @returns {Sound} Sound that is currently being played
    */
-  public playSound(sfxName: string): HTMLAudioElement {
+  public playSound(sfxName: string, owner: any = null): Sound {
     if (!this.enabled) return null;
 
     const sfxList = this.lib[sfxName]; // Get list of audio (multiple variants)
     if (!sfxList) {
-      console.log('Sound effect ', sfxName, ' not found!');
+      console.error('Sound effect ', sfxName, ' not found!');
       return null;
     }
-    const sfx = sfxList[Math.floor(sfxList.length * Math.random())]; // Pick random audio from list
-    sfx.play();
+
+    sfxList.sort(this.SoundSort); // Sort so the oldest sound is on top, to reduce chance of interrupting sounds
+    console.log(sfxList);
+    const sfx = sfxList[0]; // Play first sound
+    sfx.play(owner);
+
     return sfx;
   }
 
-  public enableAnnouncer() {
-    this.addLibrarySounds([
-      'Announcer/Luchadores1',
-      'Announcer/FighterName/Sheep1',
-      'Announcer/FighterName/Sheep2',
-      'Announcer/FighterName/Deer1',
-      'Announcer/FighterName/Deer2',
-      'Announcer/FighterName/Flamingo1',
-      'Announcer/FighterName/Flamingo2',
-    ]);
+  public stopSound(sfxName: string, owner: any = null) {
+    const sfxList = this.lib[sfxName];
+    if (!sfxList) { // Sound library doesn't exist, return
+      return;
+    }
+
+    if (owner) { // If we were given an owner object, only stop sounds owned by that object
+      sfxList.forEach((element) => {
+        element.stopOwner(owner);
+      });
+    } else { // Otherwise, stop all relevant sounds
+      sfxList.forEach((element) => {
+        element.stop();
+      });
+    }
+  }
+
+  private SoundSort(a: Sound, b: Sound): number {
+    if (a.time < b.time) return 1;
+    if (a.time > b.time) return -1;
+    return 0;
   }
 }
 

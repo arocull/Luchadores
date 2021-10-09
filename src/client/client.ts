@@ -26,6 +26,7 @@ function AnimationFrame(tick: number) {
 
   if (client) client.tick(DeltaTime);
   if (graphics) graphics.tick(DeltaTime);
+  SoundManager.tick(DeltaTime);
   ClientAudio.tick(DeltaTime);
 
   return window.requestAnimationFrame(AnimationFrame);

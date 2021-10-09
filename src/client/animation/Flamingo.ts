@@ -15,7 +15,7 @@ class AnimFlamingo extends Animator {
 
     const attacking: boolean = (this.realState === AnimationState.Attacking || this.realState === AnimationState.AttackingMoving);
     if (attacking && !this.playingAudio) {
-      this.screamAudio = ClientAudio.playSound('Flamingo/Scream', this.owner.Position, 0.3);
+      this.screamAudio = ClientAudio.playSound('Flamingo/Scream', this.owner.Position, 0.3).src;
       this.playingAudio = true;
     } else if (!attacking && this.screamAudio) {
       this.screamAudio.pause();
