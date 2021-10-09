@@ -23,15 +23,6 @@ class ClientAudioInit {
 
     this.setDropOff(21);
 
-    // Play sound when damage is taken
-    this.subscriptions.attach('Audio_DamageTaken', (audioEvent: any) => {
-      if (audioEvent.dmg > 0.03 && this.lastHurtSound > 1) {
-        const sfx = SoundManager.playSound(`${fighterTypeToString(audioEvent.fighterType)}/Hurt`);
-        sfx.src.volume = 0.6;
-        this.lastHurtSound = 0;
-      }
-    });
-
     // Play a given sound at a given position
     this.subscriptions.attach('Audio_General', (obj: any) => {
       this.playSound(obj.sfxName, obj.pos, obj.vol, obj.owner || null);
@@ -40,6 +31,24 @@ class ClientAudioInit {
     // Play a user-interface sound
     this.subscriptions.attach('Audio_UI', (sfxName: string) => {
       SoundManager.playSound(sfxName);
+    });
+
+
+    // MORE SPECIFIC AUDIO //
+    // Play sound when damage is taken
+    this.subscriptions.attach('Audio_DamageTaken', (audioEvent: any) => {
+      if (audioEvent.dmg > 0.03 && this.lastHurtSound > 0.85) {
+        const sfx = SoundManager.playSound(`${fighterTypeToString(audioEvent.fighterType)}/Hurt`);
+        sfx.src.volume = 0.5;
+        this.lastHurtSound = 0;
+      }
+    });
+
+    // Play a bullet whizz sound when our character gets hit by a bullet
+    this.subscriptions.attach('Audio_BulletWhizz', (obj: any) => {
+      if (obj.obj === this.clientState.character) {
+        this.playSound('BulletWhizz', obj.pos, 0.5, null);
+      }
     });
   }
 
