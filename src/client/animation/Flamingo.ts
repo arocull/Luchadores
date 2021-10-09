@@ -3,23 +3,20 @@ import { MessageBus } from '../../common/messaging/bus';
 import Vector from '../../common/engine/Vector';
 import Animator from './Animator';
 import { PFire, PSmoke } from '../particles';
-import AnimationState from './AnimationState';
 import ClientAudio from '../audio/ClientAudio';
 
 class AnimFlamingo extends Animator {
-  private screamAudio: HTMLAudioElement = null;
   private playingAudio: boolean = false;
 
   public Tick(DeltaTime: number) {
     super.Tick(DeltaTime);
 
-    const attacking: boolean = (this.realState === AnimationState.Attacking || this.realState === AnimationState.AttackingMoving);
+    const attacking = this.owner.Firing && this.owner.getSpecialNumber() > 0 && !this.owner.getSpecialBoolean();
     if (attacking && !this.playingAudio) {
-      this.screamAudio = ClientAudio.playSound('Flamingo/Scream', this.owner.Position, 0.3).src;
+      ClientAudio.playSound('Flamingo/Scream', this.owner.Position, 0.4, this.owner);
       this.playingAudio = true;
-    } else if (!attacking && this.screamAudio) {
-      this.screamAudio.pause();
-      this.screamAudio.currentTime = 0;
+    } else if (!attacking && this.playingAudio) {
+      ClientAudio.stopSound('Flamingo/Scream', this.owner);
       this.playingAudio = false;
     }
   }
@@ -27,7 +24,7 @@ class AnimFlamingo extends Animator {
   protected triggerUniqueIdle() {
     super.triggerUniqueIdle();
 
-    ClientAudio.playSound('Flamingo/Squawk', this.owner.Position, 0.4);
+    ClientAudio.playSound('Flamingo/Squawk', this.owner.Position, 0.35);
   }
 
   protected frameFalling() {

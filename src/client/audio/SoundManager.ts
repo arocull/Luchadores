@@ -174,12 +174,12 @@ class SoundManagerInit {
 
     const sfxList = this.lib[sfxName]; // Get list of audio (multiple variants)
     if (!sfxList) {
+      // eslint-disable-next-line no-console
       console.error('Sound effect ', sfxName, ' not found!');
       return null;
     }
 
     sfxList.sort(this.SoundSort); // Sort so the oldest sound is on top, to reduce chance of interrupting sounds
-    console.log(sfxList);
     const sfx = sfxList[0]; // Play first sound
     sfx.play(owner);
 
