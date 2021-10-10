@@ -7,9 +7,11 @@ import ClientAudio from './audio/ClientAudio';
 import { UILoadScreen } from './ui';
 import Camera from './Camera';
 import Render from './Render';
+import Announcer from './audio/Announcer';
 
 let client: ClientState;
 let graphics: ClientGraphics;
+let announcer: Announcer;
 
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
@@ -28,6 +30,7 @@ function AnimationFrame(tick: number) {
   if (graphics) graphics.tick(DeltaTime);
   SoundManager.tick(DeltaTime);
   ClientAudio.tick(DeltaTime);
+  announcer.tick(DeltaTime);
 
   return window.requestAnimationFrame(AnimationFrame);
 }
@@ -80,6 +83,7 @@ function AnimationFrame(tick: number) {
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
     ClientAudio.setClientState(client);
+    announcer = new Announcer(client);
 
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);

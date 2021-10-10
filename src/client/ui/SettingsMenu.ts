@@ -1,6 +1,7 @@
 import RenderSettings from '../RenderSettings';
 import { MessageBus } from '../../common/messaging/bus';
 import { RenderQuality } from '../../common/engine/Enums';
+import SoundManager from '../audio/SoundManager';
 
 class UISettingsMenu {
   private qualityLow: HTMLElement;
@@ -86,6 +87,7 @@ class UISettingsMenu {
       RenderSettings.EnableAnnouncer = !RenderSettings.EnableAnnouncer;
       if (RenderSettings.EnableAnnouncer) {
         announcer.innerText = 'Enabled';
+        SoundManager.enableAnnouncer(); // Load in announcer audio
       } else {
         announcer.innerText = 'Disabled';
       }

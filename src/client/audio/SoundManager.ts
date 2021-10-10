@@ -58,12 +58,36 @@ const libraryNames = [
  */
 const announcerLibraryNames = [
   'Announcer/Luchadores1',
+
   'Announcer/FighterName/Sheep1',
   'Announcer/FighterName/Sheep2',
   'Announcer/FighterName/Deer1',
   'Announcer/FighterName/Deer2',
   'Announcer/FighterName/Flamingo1',
   'Announcer/FighterName/Flamingo2',
+
+  'Announcer/KillMethod/Sheep1',
+  'Announcer/KillMethod/Sheep2',
+  'Announcer/KillMethod/Deer1',
+  'Announcer/KillMethod/Deer2',
+  'Announcer/KillMethod/Flamingo1',
+  'Announcer/KillMethod/Flamingo2',
+
+  'Announcer/BattleCallouts/OhBuildingTension1',
+  'Announcer/BattleCallouts/OhBuildingTension2',
+  'Announcer/BattleCallouts/OhBuildingTension3',
+  'Announcer/BattleCallouts/OhSympathetic1',
+  'Announcer/BattleCallouts/OhSympathetic2',
+  'Announcer/BattleCallouts/OhSympathetic3',
+  'Announcer/BattleCallouts/OhSympathetic4',
+  'Announcer/BattleCallouts/MustHurt1',
+  'Announcer/BattleCallouts/MustHurt2',
+  'Announcer/BattleCallouts/MustHurt3',
+  'Announcer/BattleCallouts/MustHurt4',
+  'Announcer/BattleCallouts/Surprise1',
+  'Announcer/BattleCallouts/Surprise2',
+  'Announcer/BattleCallouts/Surprise3',
+  'Announcer/BattleCallouts/Surprise4',
 ];
 
 /**
@@ -78,6 +102,7 @@ class SoundManagerInit {
    */
   private lib: Record<string, Sound[]>;
   private enabled: boolean = false;
+  private loadedAnnouncerAudio: boolean = false;
 
   constructor() {
     this.lib = ({} as Record<string, Sound[]>);
@@ -143,10 +168,13 @@ class SoundManagerInit {
 
   /**
    * @function enableAnnouncer
-   * @summary Loads in announced sound library
+   * @summary Loads in announced sound library, only fires once
    */
   public enableAnnouncer() {
-    this.addLibrarySounds(announcerLibraryNames);
+    if (!this.loadedAnnouncerAudio) {
+      this.loadedAnnouncerAudio = true;
+      this.addLibrarySounds(announcerLibraryNames);
+    }
   }
 
   /**

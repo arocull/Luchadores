@@ -270,13 +270,15 @@ class Client {
   private onDeath(died: number, killer: number) {
     let diedName: string = '';
     let killerCharacter: Fighter = null;
+    let diedCharacter: Fighter = null;
 
     for (let i = 0; i < this.world.Fighters.length; i++) { // Iterate through all fighters
 
       if (this.world.Fighters[i].getOwnerID() === died) { // Character is killed
-        MessageBus.publish('Effect_PlayerDied', this.world.Fighters[i].Position);
-        diedName = this.world.Fighters[i].DisplayName; // Obtain this honorable luchador's name
-        this.world.Fighters[i].MarkedForCleanup = true; // Mark for cleanup (allows kill counting before removal)
+        diedCharacter = this.world.Fighters[i];
+        MessageBus.publish('Effect_PlayerDied', diedCharacter.Position);
+        diedName = diedCharacter.DisplayName; // Obtain this honorable luchador's name
+        diedCharacter.MarkedForCleanup = true; // Mark for cleanup (allows kill counting before removal)
 
       } else if (this.world.Fighters[i].getOwnerID() === killer) { // Character that did it
         killerCharacter = this.world.Fighters[i]; // Keep track of killer (for killcam)
@@ -308,6 +310,8 @@ class Client {
         died === this.player.getCharacterID(),
         killer === this.player.getCharacterID(),
       ));
+
+      MessageBus.publish('Announcer_Kill', diedCharacter);
     } else { // Show generic death message
       this.uiDeathNotifs.push(new UIDeathNotification(
         diedName,
