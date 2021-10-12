@@ -16,7 +16,7 @@ import {
 } from '../common/events';
 import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
-import { MapPreset } from '../common/engine/Enums';
+import { MapSnowy } from '../common/engine/maps';
 
 interface Action {
   player: Player;
@@ -36,7 +36,7 @@ class Clockwork {
   private lastPublish: number = 0;
 
   constructor() {
-    this.world = new World(MapPreset.Snowy, true);
+    this.world = new World(new MapSnowy());
     this.world.doReaping = true;
 
     this.actions = {};
@@ -45,6 +45,11 @@ class Clockwork {
     this.publishRate = Math.floor(1000 / 20); // Number of milliseconds per world state publish
   }
 
+  /**
+   * @function tick
+   * @summary Ticks the game state forward
+   * @param {delta} delta Change in time since last frame
+   */
   private tick(delta: number) {
     if (this.running) {
       if (delta > 0) {
@@ -92,15 +97,29 @@ class Clockwork {
     }
   }
 
+  /**
+   * @function broadcast
+   * @summary Sends a single message to all connected clients
+   * @param {IEvent} message Message to broadcast
+   */
   public broadcast(message: IEvent) {
     this.connections.forEach((conn) => MessageBus.publish(conn.getTopicSend(), message));
   }
 
+  /**
+   * @function broadcastList
+   * @summary Sends a list of messages to all connected clients
+   * @param {IEvent[]} messages Messages to broadcast
+   */
   public broadcastList(messages: IEvent[]) {
     messages.forEach((msg) => this.broadcast(msg));
   }
 
-  public updatePlayerStates() { // Iterates through all players and informs them of their character ID and health
+  /**
+   * @function updatePlayerStates
+   * @summary Iterates through all players and informs them of their character ID and health
+   */
+  public updatePlayerStates() {
     for (let i = 0; i < this.connections.length; i++) {
       // Only sends message if their character exists though (they shouldn't need it if they don't have a character)
       const conn = this.connections[i];
@@ -133,7 +152,12 @@ class Clockwork {
     Logger.debug('Broadcasting player list, %i players left', list.length);
   }
 
-  // TODO: Needs tests?
+  /**
+   * @function
+   * @summary Gets the lowest, unused character ID
+   * @returns {number} The lowest unused character ID, an integer
+   * @todo Needs tests
+   */
   private getLowestUnusedCharacterID(): number {
     const available = []; // Get list of all possible numbers
     for (let i = 1; i <= World.MAX_LOBBY_SIZE; i++) {
@@ -164,8 +188,16 @@ class Clockwork {
   busPlayerConnectHook(plr: Player, message: IPlayerConnect) {
     plr.setUsername(message.username);
 
-    // Broadcast an state of all player names, scores, IDs, etc; also sends clients their character IDs
+    // Broadcast a state of all player names, scores, IDs, etc; also sends clients their character IDs
     this.updatePlayerList();
+
+    Logger.debug(`Initializing player with map type ${this.world.map.id}`);
+
+    // Send world to the player
+    MessageBus.publish(plr.getTopicSend(), {
+      type: TypeEnum.WorldNew,
+      mapId: this.world.map.id,
+    });
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one
     if (!plr.getCharacter() || plr.getCharacter().HP <= 0) {

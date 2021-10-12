@@ -39,9 +39,10 @@ enum ColliderType {
 }
 
 enum MapPreset {
-  Sandy = 0,
-  Grassy = 1,
-  Snowy = 2,
+  None,
+  Sandy,
+  Grassy,
+  Snowy,
 }
 
 enum UIFrameType {

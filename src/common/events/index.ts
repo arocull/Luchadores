@@ -62,6 +62,10 @@ export interface IPlayerDisconnect extends events.IPlayerDisconnect {
   type: TypeEnum.PlayerDisconnect,
 }
 
+export interface IWorldNew extends events.IWorldNew {
+  type: TypeEnum.WorldNew;
+}
+
 export interface IWorldState extends events.IWorldState {
   type: TypeEnum.WorldState;
 }
@@ -85,6 +89,7 @@ export type IEvent =
   | IPlayerDisconnect
   | IPing
   | IPong
+  | IWorldNew
   | IWorldState
   | IPlayerListState
   ;

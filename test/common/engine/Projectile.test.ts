@@ -2,12 +2,12 @@ import Vector from '../../../src/common/engine/Vector';
 import Random from '../../../src/common/engine/Random';
 import { Sheep, Deer, Flamingo } from '../../../src/common/engine/fighters/index';
 import BBullet from '../../../src/common/engine/projectiles/Bullet';
-import Map from '../../../src/common/engine/Map';
+import Map from '../../../src/common/engine/maps/Map';
 import World from '../../../src/common/engine/World';
+import { MapPreset } from '../../../src/common/engine/Enums';
 
 test('bullet damage test', () => {
-  const world = new World();
-  world.Map = new Map(20, 20, 0);
+  const world = new World(new Map(MapPreset.None, 20, 20, 0));
 
   const sheep = new Sheep(1, new Vector(0, 10, 0));
   const sheep2 = new Sheep(2, new Vector(0, 20, 0));
@@ -27,8 +27,7 @@ test('bullet damage test', () => {
 });
 
 test('bullet miss owner test', () => {
-  const world = new World();
-  world.Map = new Map(20, 20, 0);
+  const world = new World(new Map(MapPreset.None, 20, 20, 0));
   const sheep2 = new Sheep(2, new Vector(0, 20, 0));
   const bullet2 = new BBullet(new Vector(10, 20, 0), new Vector(-1, 0, 0), sheep2);
 
@@ -46,8 +45,7 @@ test('bullet miss owner test', () => {
 });
 
 test('bullet timeout test', () => {
-  const world = new World();
-  world.Map = new Map(20, 20, 0);
+  const world = new World(new Map(MapPreset.None, 20, 20, 0));
   const bullet3 = new BBullet(new Vector(0, 0, 0), new Vector(1, 0, 0), null);
 
   world.Bullets.push(bullet3);
@@ -64,8 +62,7 @@ test('bullet timeout test', () => {
 
 test('bullet jump-dodge test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
-  world.Map = new Map(20, 20, 10);
+  const world = new World(new Map(MapPreset.None, 20, 20, 10));
 
   const deer = new Deer(1, new Vector(5, 0, 0));
   deer.aim(new Vector(1, 0, 0));
@@ -100,8 +97,7 @@ test('bullet jump-dodge test', () => {
 
 test('bullet shock latency test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
-  world.Map = new Map(10, 10, 0);
+  const world = new World(new Map(MapPreset.None, 10, 10, 0));
   const flam = new Flamingo(1, new Vector(5, 5, 0));
   world.Fighters.push(flam);
 

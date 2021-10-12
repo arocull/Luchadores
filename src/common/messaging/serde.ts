@@ -38,6 +38,8 @@ function getProtobufType(object: IEvent): ProtobufTypeSerde {
     case TypeEnum.Ping:
     case TypeEnum.Pong: // Falls thru - same struct
       return events.PingPong;
+    case TypeEnum.WorldNew:
+      return events.WorldNew;
     case TypeEnum.WorldState:
       return events.WorldState;
     case TypeEnum.PlayerListState:

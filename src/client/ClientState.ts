@@ -19,6 +19,7 @@ import UIManager from './ui/UIManager';
 import { Vector } from '../common/engine/math';
 import InputState from './controls/InputState';
 import Wristwatch from '../common/engine/time/Wristwatch';
+import { MapClientSandy, mapFromID } from './maps';
 /* eslint-enable object-curly-newline */
 
 
@@ -46,7 +47,6 @@ class Client {
   private worldUpdatePending: boolean; // Is there a WorldState update that is pending
   private worldUpdateLastPacketTime: number; // Time the world state packet was received
   private worldUpdate: IWorldState; // WorldState event
-  private worldUpdateFirst: boolean; // Is this the first WorldState the client is receiving (applied map prop loading)?
 
   // Render Hook-Ups, contain some render data but also important information
   private screenWidth: number;
@@ -75,19 +75,18 @@ class Client {
 
     // Initialize basic, empty world for player to roam around in if we use it
     // Is populated and changed when player connects
-    this.world = new World();
+    this.world = new World(new MapClientSandy());
     Random.randomSeed();
 
     this.worldUpdatePending = false;
     this.worldUpdateLastPacketTime = 0;
     this.worldUpdate = null;
-    this.worldUpdateFirst = true;
 
     // Initialize render hookups (implemented by ClientGraphics module)
     this.screenWidth = 600;
     this.screenHeight = 400;
     this.camera = new Camera(this.screenWidth, this.screenHeight, 18, 14);
-    this.camera.SetFocusPosition(new Vector(this.world.Map.Width / 2, this.world.Map.Height / 2, 0));
+    this.camera.SetFocusPosition(new Vector(this.world.map.width / 2, this.world.map.height / 2, 0));
     this.uiPlayerList = [];
     this.uiDeathNotifs = [];
     this.uiManager = null;
@@ -153,7 +152,11 @@ class Client {
 
           MessageBus.subscribe(this.topics.ClientNetworkFromServer, (msg: IEvent) => {
             switch (msg.type) {
-              case TypeEnum.WorldState:
+              case TypeEnum.WorldNew: // Load new map
+                this.world = new World(mapFromID(msg.mapId));
+                MessageBus.publish('WorldNew', this.world);
+                break;
+              case TypeEnum.WorldState: // Apply world state to current world
                 this.worldUpdatePending = true;
                 this.worldUpdate = msg;
                 this.worldUpdateLastPacketTime = decodeInt64(msg.timestamp);
@@ -441,9 +444,8 @@ class Client {
       this.worldUpdatePending = false;
 
       // Applies world state and resets UpdateMissed on all updated fighters
-      decodeWorldState(this.worldUpdate, this.world, this.worldUpdateFirst);
+      decodeWorldState(this.worldUpdate, this.world);
       appliedWorldState = true;
-      this.worldUpdateFirst = false;
 
       // Prune fighters who fail to recieve consistent updates from server
       for (let i = 0; i < this.world.Fighters.length; i++) {

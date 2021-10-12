@@ -4,10 +4,11 @@ import { Flamingo } from '../../../src/common/engine/fighters/index';
 import AOEBlast from '../../../src/common/engine/combat/AOEBlast';
 import World from '../../../src/common/engine/World';
 import { MessageBus } from '../../../src/common/messaging/bus';
+import { Map } from '../../../src/common/engine/maps';
 
 test('AOE falloff test', () => {
   Random.setSeed(1);
-  const world = new World();
+  const world = new World(new Map());
   const flam1 = new Flamingo(1, new Vector(20, 20, 0));
   const flam2 = new Flamingo(2, new Vector(21, 20, 0));
   world.Fighters.push(flam1, flam2);

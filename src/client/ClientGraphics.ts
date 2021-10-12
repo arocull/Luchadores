@@ -2,7 +2,7 @@ import Client from './ClientState';
 import UIManager from './ui/UIManager';
 import Camera from './Camera';
 import {
-  Particle, PRosePetal, PSmashEffect, PConfetti, PMoveDash, PSnowfall,
+  Particle, PRosePetal, PSmashEffect, PConfetti, PMoveDash,
 } from './particles';
 import Render from './Render';
 import RenderSettings from './RenderSettings';
@@ -12,12 +12,12 @@ import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
 import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
-import { MapPreset, RenderQuality } from '../common/engine/Enums';
+import { RenderQuality } from '../common/engine/Enums';
+import Map from '../common/engine/maps/Map';
+import { MapClient } from './maps';
 
 class ClientGraphics {
   public uiManager: UIManager;
-  private camera: Camera;
-  private world: World;
 
   public viewport: HTMLCanvasElement;
   public canvas: CanvasRenderingContext2D;
@@ -25,12 +25,8 @@ class ClientGraphics {
 
   public particles: Particle[];
 
-  public weatherParticleTimer: number; // Used for keeping track of the next weather particle spawn
-
   constructor(private clientState: Client) {
     this.uiManager = new UIManager();
-    this.camera = this.clientState.camera;
-    this.world = this.clientState.getWorld();
 
     this.clientState.uiManager = this.uiManager;
 
@@ -40,8 +36,6 @@ class ClientGraphics {
     this.fpsCounter = [];
 
     this.particles = [];
-
-    this.weatherParticleTimer = 0;
 
     MessageBus.subscribe('Effect_NewParticle', (msg) => {
       this.particles.push(msg as Particle);
@@ -61,9 +55,6 @@ class ClientGraphics {
         msg.map.Texture = img;
       });
     });
-
-    // Load textures after events are hooked up
-    this.world.Map.loadTexture();
   }
 
   public tick(DeltaTime: number) {
@@ -108,8 +99,8 @@ class ClientGraphics {
 
 
     // Weather Effects
-    if (RenderSettings.Quality === RenderQuality.High) {
-      this.weatherParticles(DeltaTime, this.world.Map.mapID);
+    if (RenderSettings.Quality >= RenderQuality.Medium) {
+      this.mapClient.tickWeather(DeltaTime, this.particles);
     }
 
 
@@ -128,7 +119,7 @@ class ClientGraphics {
     this.clientState.camera.UpdateFocus(DeltaTime);
 
     // Draw screen
-    Render.DrawScreen(this.camera, this.world, this.particles);
+    Render.DrawScreen(this.camera, this.world, this.particles, this.mapClient);
     // Do interface actions and draw interface
     this.uiManager.tick(DeltaTime, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning);
 
@@ -170,30 +161,17 @@ class ClientGraphics {
     }
   }
 
-  /**
-   * @function weatherParticles
-   * @summary Spawns weather particles
-   * @param {number} DeltaTime Change in time (in seconds) since last frame
-   * @param {MaPreset} mapID The map that is being played
-   * @todo Derive corners from camera bounds and anticipated position (possible with FightObserver branch)
-   */
-  private weatherParticles(DeltaTime: number, mapID: MapPreset) {
-    // TODO: Derive corners from camera bounds + anticipated position?
-    // Note: This is doable in the FightObserver branch (Camera.ScreenToWorld)
-    // Branch needs to be merged before this feature can be used
-    const topLeftCorner = new Vector(-10, -10, 10);
-    const bottomRightCorner = new Vector(this.world.Map.Width + 10, this.world.Map.Height + 10, 12);
-
-    switch (mapID) {
-      case MapPreset.Snowy:
-        this.weatherParticleTimer += 200 * DeltaTime; // Spawn around 200 particles per second
-        PSnowfall.Spawn(this.particles, topLeftCorner, bottomRightCorner, Math.floor(this.weatherParticleTimer), 1); // Spawn integer amount
-        break;
-      default:
-        return;
-    }
-
-    this.weatherParticleTimer -= Math.floor(this.weatherParticleTimer); // Subtract integer amount spawned
+  private get camera(): Camera {
+    return this.clientState.camera;
+  }
+  private get world(): World {
+    return this.clientState.getWorld();
+  }
+  private get map(): Map {
+    return this.world.map;
+  }
+  private get mapClient(): MapClient {
+    return <MapClient> <unknown> this.map;
   }
 }
 
