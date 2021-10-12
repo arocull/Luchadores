@@ -12,6 +12,11 @@ enum CalloutType {
   MustHurt,
   Ouch,
   Surprise,
+  Intense,
+  Bullets,
+  Pursuit,
+  Advance,
+  LethalPlan,
 }
 
 /**

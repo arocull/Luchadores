@@ -61,11 +61,6 @@ class UIClassSelect {
           flavorText.textContent = 'He\'s just really weird.';
           descript.textContent = 'Reign terror upon your foes by spewing fire upon them--just don\'t run out of breath.';
           break;
-        case FighterType.Toad:
-          fighterName.textContent = 'spanish pun about electricity + toad';
-          flavorText.textContent = 'He\'s always feeling a bit ecstatic.';
-          descript.textContent = 'Build up static charge by hopping around, before discharing massive voltage on opponents by wandering close.';
-          break;
       }
     });
 

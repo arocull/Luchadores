@@ -83,7 +83,7 @@ function AnimationFrame(tick: number) {
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
     ClientAudio.setClientState(client);
-    announcer = new Announcer(client);
+    announcer = new Announcer(client, graphics.camera);
 
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);
