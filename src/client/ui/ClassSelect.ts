@@ -1,6 +1,5 @@
 import { FighterType, fighterTypeToString } from '../../common/engine/Enums';
 import { MessageBus } from '../../common/messaging/bus';
-// import SoundManager from '../audio/SoundManager';
 
 class UIClassSelect {
   private selected: FighterType;
@@ -42,8 +41,6 @@ class UIClassSelect {
       portrait.src = `Portraits/${fighterTypeToString(this.selected)}.png`;
       portrait.alt = fighterTypeToString(this.selected);
 
-      // SoundManager.playSound(`FighterName/${fighterTypeToString(this.selected)}`);
-
       switch (clickedLuchador) {
         default:
         case FighterType.Sheep:
@@ -67,8 +64,8 @@ class UIClassSelect {
     MessageBus.publish('UI_ClickLuchador', FighterType.Sheep); // Use sheep defaults
   }
 
-  private buildPortrait(fighter: FighterType): HTMLTableDataCellElement {
-    const tableData: HTMLTableDataCellElement = <HTMLTableDataCellElement>document.createElement('td');
+  private buildPortrait(fighter: FighterType): HTMLTableCellElement {
+    const tableData: HTMLTableCellElement = <HTMLTableCellElement>document.createElement('td');
 
     const container: HTMLDivElement = <HTMLDivElement>document.createElement('div');
     container.className = 'portrait_container';

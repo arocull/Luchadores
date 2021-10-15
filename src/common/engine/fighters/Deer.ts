@@ -107,6 +107,12 @@ class Deer extends Fighter {
 
     MessageBus.publish('NewProjectile', bullet);
     MessageBus.publish(`Animation_FireBullet${this.getOwnerID()}`, bullet);
+    MessageBus.publish('Audio_General', {
+      sfxName: 'Deer/Gunshot',
+      pos: this.Position,
+      vol: 0.25,
+      owner: this,
+    });
     return bullet;
   }
 

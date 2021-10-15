@@ -77,7 +77,7 @@ class ClientAudioInit {
    * Surround sound imitation.
    *
    * Linear Volume Formula: 1 - x / dropoff
-   * Logarithmic Volume Formula: ln(-x + dropoff + 1) / 3.045
+   * Logarithmic Volume Formula: ln(-x + dropoff + 1) / ln(dropoff)
    * @param {string} sfxName Name of the sound to play
    * @param {Vector} position Position of the sound to play
    * @param {number} volume Base volume of the audio
