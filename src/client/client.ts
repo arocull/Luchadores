@@ -60,6 +60,7 @@ function AnimationFrame(tick: number) {
     'Interface/Gear.png',
     'Maps/Arena.jpg',
     'Maps/Grass.jpg',
+    'Maps/Snowy.jpg',
     'Portraits/Sheep.png',
     'Portraits/Deer.png',
     'Portraits/Flamingo.png',

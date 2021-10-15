@@ -1,6 +1,7 @@
 import Vector from '../../common/engine/Vector';
 import Particle from './Particle';
 import { ParticleType } from '../../common/engine/Enums';
+import RenderSettings from '../RenderSettings';
 
 class PConfetti extends Particle {
   constructor(position: Vector, strandSize: number, burstIntensity: number) {
@@ -28,6 +29,8 @@ class PConfetti extends Particle {
 
   // Creates X many petals
   static Burst(particleList: Particle[], position: Vector, petalSize: number, intensity: number, strands: number) {
+    // eslint-disable-next-line no-param-reassign
+    strands *= RenderSettings.getParticleRatio(); // Alter number of particles based off of render settings
     for (let i = 0; i < strands; i++) particleList.push(new PConfetti(position, petalSize, intensity));
   }
 }

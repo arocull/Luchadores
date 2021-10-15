@@ -15,13 +15,13 @@ import AssetPreloader from './AssetPreloader';
 import { FightObserver, ThreatObject } from '../common/engine/combat/FightObserver';
 import Fighter from '../common/engine/Fighter';
 import ProjectileGroup from '../common/engine/combat/ProjectileGroup';
+import { RenderQuality } from '../common/engine/Enums';
+import Map from '../common/engine/maps/Map';
+import { MapClient } from './maps';
 
 const ObservationRate = 0.12; // How many seconds until next observation from the FightObserver
-
 class ClientGraphics {
   public uiManager: UIManager;
-  private camera: Camera;
-  private world: World;
   private observer: FightObserver;
 
   public viewport: HTMLCanvasElement;
@@ -36,8 +36,6 @@ class ClientGraphics {
 
   constructor(private clientState: Client) {
     this.uiManager = new UIManager();
-    this.camera = this.clientState.camera;
-    this.world = this.clientState.getWorld();
 
     this.clientState.uiManager = this.uiManager;
     this.observer = new FightObserver(this.world);
@@ -57,7 +55,7 @@ class ClientGraphics {
       this.particles.push(msg as Particle);
     });
     MessageBus.subscribe('Effect_PlayerDied', (msg) => {
-      PConfetti.Burst(this.particles, msg as Vector, 0.2, 4, 50 * RenderSettings.ParticleAmount); // Burst into confetti!
+      PConfetti.Burst(this.particles, msg as Vector, 0.2, 4, 250); // Burst into confetti!
     });
     MessageBus.subscribe('LoadAsset_Prop', (msg) => {
       AssetPreloader.getImage(msg.texture).then((img) => {
@@ -71,9 +69,6 @@ class ClientGraphics {
         msg.map.Texture = img;
       });
     });
-
-    // Load textures after events are hooked up
-    this.world.Map.loadTexture();
   }
 
   public tick(DeltaTime: number) {
@@ -86,7 +81,7 @@ class ClientGraphics {
         else if (a.Animator) {
           a.Animator.Tick(DeltaTime);
           if (a.Animator.killEffectCountdown === 0) { // If a death effect is to occur, execute it
-            PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 20 * RenderSettings.ParticleAmount);
+            PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 100);
           }
 
           if (a.Animator.doMoveParticle) {
@@ -116,6 +111,13 @@ class ClientGraphics {
       }
     }
 
+
+    // Weather Effects
+    if (RenderSettings.Quality >= RenderQuality.Medium) {
+      this.mapClient.tickWeather(DeltaTime, this.particles);
+    }
+
+
     // Tick and prune particles
     for (let i = 0; i < this.particles.length; i++) {
       this.particles[i].Tick(DeltaTime);
@@ -131,7 +133,7 @@ class ClientGraphics {
     this.clientState.camera.UpdateFocus(DeltaTime);
 
     // Draw screen
-    Render.DrawScreen(this.camera, this.world, this.particles);
+    Render.DrawScreen(this.camera, this.world, this.particles, this.mapClient);
 
 
     // DEBUG //
@@ -235,6 +237,19 @@ class ClientGraphics {
         this.camera,
       );
     }
+  }
+
+  private get camera(): Camera {
+    return this.clientState.camera;
+  }
+  private get world(): World {
+    return this.clientState.getWorld();
+  }
+  private get map(): Map {
+    return this.world.map;
+  }
+  private get mapClient(): MapClient {
+    return <MapClient> <unknown> this.map;
   }
 }
 

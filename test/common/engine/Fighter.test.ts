@@ -1,14 +1,13 @@
 import Vector from '../../../src/common/engine/Vector';
 import Random from '../../../src/common/engine/Random';
 import { Sheep, Deer, Flamingo } from '../../../src/common/engine/fighters/index';
-import Map from '../../../src/common/engine/Map';
+import Map from '../../../src/common/engine/maps/Map';
 import World from '../../../src/common/engine/World';
+import { MapPreset } from '../../../src/common/engine/Enums';
 
 test('fighter collision test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
-  world.Map.Width = 500;
-  world.Map.wallStrength = 0;
+  const world = new World(new Map(MapPreset.None, 500, 40, 23, 0));
 
   const a = new Sheep(1, new Vector(0, 1, 0));
   const b = new Deer(2, new Vector(50, 1, 5));
@@ -38,8 +37,7 @@ test('fighter collision test', () => {
 
 test('fighter riding test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
-  world.Map = new Map(100, 20, 0, 0);
+  const world = new World(new Map(MapPreset.None, 100, 20, 0, 0));
 
   const a = new Sheep(1, new Vector(10, 10, 0));
   const b = new Deer(2, new Vector(10, 10, a.Height + 2));
@@ -92,7 +90,7 @@ test('fighter riding test', () => {
 
 test('sheep landing-shockwave test', () => {
   Random.setSeed(1); // Set random seed for consistency
-  const world = new World();
+  const world = new World(new Map());
   const sheep = new Sheep(1, new Vector(20, 20, 0));
   const flam = new Flamingo(2, new Vector(30, 30, 0));
   world.Fighters.push(sheep, flam);
@@ -128,7 +126,7 @@ test('sheep landing-shockwave test', () => {
 
 test('flamingo jetpack test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
+  const world = new World(new Map());
   const flam = new Flamingo(1, new Vector(20, 20, 0));
   world.Fighters.push(flam);
 
@@ -162,7 +160,7 @@ test('flamingo jetpack test', () => {
 // Kill effect tests
 test('sheep kill-effect test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
+  const world = new World(new Map());
   world.Map = new Map(500, 50, 23, 0);
   const sheep1 = new Sheep(1, new Vector(1, 20, 0));
   const sheep2 = new Sheep(2, new Vector(1, 40, 0));
@@ -190,8 +188,7 @@ test('sheep kill-effect test', () => {
 
 test('deer kill-effect test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
-  world.Map = new Map(500, 50, 23, 0);
+  const world = new World(new Map(MapPreset.None, 500, 50, 23, 0));
   const deer1 = new Deer(1, new Vector(1, 20, 0));
   const deer2 = new Deer(2, new Vector(1, 40, 3));
   const sheep = new Sheep(3, new Vector(1, 40, 0));
@@ -237,8 +234,7 @@ test('deer kill-effect test', () => {
 
 test('flamingo kill-effect test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
-  const world = new World();
-  world.Map = new Map(500, 50, 23, 0);
+  const world = new World(new Map(MapPreset.None, 500, 50, 23, 0));
   const flam = new Flamingo(1, new Vector(1, 20, 0));
   world.Fighters.push(flam);
 

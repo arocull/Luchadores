@@ -1,6 +1,7 @@
 import Vector from '../../common/engine/Vector';
 import Particle from './Particle';
 import { ParticleType } from '../../common/engine/Enums';
+import RenderSettings from '../RenderSettings';
 
 class PRosePetal extends Particle {
   constructor(position: Vector, petalSize: number, burstIntensity: number) {
@@ -43,6 +44,10 @@ class PRosePetal extends Particle {
   static Burst(particleList: Particle[], position: Vector, petalSize: number, intensity: number, petals: number) {
     const pos = Vector.Clone(position);
     pos.z += 1;
+
+    // eslint-disable-next-line no-param-reassign
+    petals *= RenderSettings.getParticleRatio(); // Alter number of particles based off of render settings
+
     for (let i = 0; i < petals; i++) {
       const dir = Vector.Multiply(
         Vector.UnitVectorFromXYZ(Math.random() - 0.5, Math.random() - 0.5, Math.random() / 2),

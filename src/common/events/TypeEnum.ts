@@ -18,8 +18,9 @@ enum TypeEnum {
   PlayerDisconnect = 305,
   PlayerConnectResponse = 306,
 
-  WorldState = 400,
-  PlayerListState = 401,
+  WorldNew = 400,
+  WorldState = 401,
+  PlayerListState = 402,
 };
 
 export { TypeEnum as default };

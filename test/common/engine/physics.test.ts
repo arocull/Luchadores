@@ -1,13 +1,12 @@
 import { Vector, Ray } from '../../../src/common/engine/math';
 import Prop from '../../../src/common/engine/props/Prop';
 import { Sheep, Flamingo } from '../../../src/common/engine/fighters';
-import Map from '../../../src/common/engine/Map';
+import Map from '../../../src/common/engine/maps/Map';
 import World from '../../../src/common/engine/World';
-import { ColliderType } from '../../../src/common/engine/Enums';
+import { ColliderType, MapPreset } from '../../../src/common/engine/Enums';
 
 test('physics collision test', () => {
-  const world = new World();
-  world.Map = new Map(200, 200, 0);
+  const world = new World(new Map(MapPreset.None, 200, 200, 0));
   const a = new Sheep(1, new Vector(100, 99, 0));
   const b = new Sheep(2, new Vector(100, 101, 0));
   world.Fighters.push(a, b);
@@ -25,8 +24,7 @@ test('physics collision test', () => {
 });
 
 test('physics friction and gravity test', () => {
-  const world = new World();
-  world.Map = new Map(200, 200, 0.5);
+  const world = new World(new Map(MapPreset.None, 200, 200, 0.5));
   const c = new Sheep(3, new Vector(75, 100, 0));
   const d = new Sheep(4, new Vector(125, 50, 0));
   world.Fighters.push(c, d);
@@ -43,8 +41,7 @@ test('physics friction and gravity test', () => {
 });
 
 test('physics terminal velocity test', () => {
-  const world = new World();
-  world.Map = new Map(500, 1, 0, 0);
+  const world = new World(new Map(MapPreset.None, 500, 1, 0, 0));
   const e = new Sheep(5, new Vector(0, 0, 0));
   world.Fighters = [e];
   e.Move(new Vector(1, 0, 0));
@@ -58,8 +55,7 @@ test('physics terminal velocity test', () => {
 });
 
 test('physics prop collision tests', () => {
-  const world = new World();
-  world.Map = new Map(500, 500, 0, 0);
+  const world = new World(new Map(MapPreset.None, 500, 500, 0, 0));
 
   const sheep = new Sheep(1, new Vector(0, 0.1, 0)); // Slight depth offset to test deforming
   const cylinder = new Prop(new Vector(20, 0, 0), ColliderType.Cylinder, 0.5, 5);
@@ -94,7 +90,7 @@ test('physics prop collision tests', () => {
 });
 
 test('physics inside-bounding collision test', () => {
-  const world = new World();
+  const world = new World(new Map());
 
   // Slight offset to allow direction vector to form if pushed outward
   const xPos = 0.01;

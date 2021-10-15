@@ -1,0 +1,5 @@
+message WorldNew {
+    required int32 type = 1;
+    required int32 mapId = 2;
+    // Gamemode info would go here
+}

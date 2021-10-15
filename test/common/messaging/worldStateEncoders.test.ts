@@ -3,14 +3,13 @@ import decodeWorldState from '../../../src/client/network/WorldStateDecoder';
 import Random from '../../../src/common/engine/Random';
 import Vector from '../../../src/common/engine/Vector';
 import World from '../../../src/common/engine/World';
-import Map from '../../../src/common/engine/Map';
+import Map from '../../../src/common/engine/maps/Map';
 import { Sheep, Flamingo } from '../../../src/common/engine/fighters/index';
 import { BBullet } from '../../../src/common/engine/projectiles/index';
-import { FighterType, ProjectileType } from '../../../src/common/engine/Enums';
+import { FighterType, MapPreset, ProjectileType } from '../../../src/common/engine/Enums';
 
 test('world state encode / decode', () => {
-  const start = new World();
-  start.Map = new Map(100, 50, 0.5, 10);
+  const start = new World(new Map(MapPreset.None, 100, 50, 0.5, 10));
   start.Fighters.push(new Sheep(1, new Vector(25, 25, 10)));
   start.Fighters.push(new Flamingo(2, new Vector(30, 25, 0)));
   start.Bullets.push(new BBullet(new Vector(0, 0, 0), new Vector(1, 0, 0), start.Fighters[0]));
@@ -20,7 +19,7 @@ test('world state encode / decode', () => {
   Random.setSeed(10);
   Random.setIndex(5);
 
-  const end = new World();
+  const end = new World(new Map(MapPreset.None, 100, 50, 0.5, 10));
   const encodedState = encodeWorldState(start);
 
   Random.setSeed(3);
@@ -30,10 +29,6 @@ test('world state encode / decode', () => {
 
   expect(Random.getSeed()).toBe(10);
   expect(Random.getIndex()).toBe(5);
-
-  expect(end.Map.Width).toBe(100);
-  expect(end.Map.Height).toBe(50);
-  expect(end.Map.Friction).toBe(0.5);
 
   expect(start.Fighters.length).toBe(2);
   expect(start.Bullets.length).toBe(1);

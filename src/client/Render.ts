@@ -1,7 +1,7 @@
 // Client only -- Renders stuff to the screen
 /* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
-import { EntityType, ParticleType, ProjectileType, MapPreset, UIFrameType, FighterType, RenderQuality, ColliderType } from '../common/engine/Enums';
+import { EntityType, ParticleType, ProjectileType, UIFrameType, FighterType, RenderQuality, ColliderType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
 import { Fighter } from '../common/engine/fighters';
 import Animator from './animation/Animator';
@@ -12,7 +12,8 @@ import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/inde
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import World from '../common/engine/World';
-import Map from '../common/engine/Map';
+import { Map } from '../common/engine/maps';
+import { MapClient } from './maps/index';
 import { TwoPi } from '../common/engine/math';
 /* eslint-enable object-curly-newline */
 
@@ -66,12 +67,12 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
       corners.push(camera.PositionOffset(furthest.Position));
     }
   }
-  corners.push(camera.PositionOffset(new Vector(map.Width, 0, 0)));
+  corners.push(camera.PositionOffset(new Vector(map.width, 0, 0)));
   ArenaBoundFrontPassIndex = corners.length - 1; // Arena bottom always renders in front--separate from other bounds
 
 
   // Right arena bound
-  if (camera.InFrame(new Vector(map.Width, center.y, 0))) {
+  if (camera.InFrame(new Vector(map.width, center.y, 0))) {
     let furthest: Fighter = null;
     let furthestPos: number = 0;
 
@@ -79,7 +80,7 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
     // Looks a little awkward when multiple players are out of bounds, but better than arena bound snapping to each one
     for (let i = 0; i < fighters.length; i++) {
       const pos = fighters[i].Position.x + fighters[i].Radius; // Position determined by X or Y position +/- radius
-      if (((furthest && pos > furthestPos) || (!furthest && pos > map.Width)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
+      if (((furthest && pos > furthestPos) || (!furthest && pos > map.width)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
         furthestPos = pos;
         furthest = fighters[i];
       }
@@ -94,8 +95,8 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
   }
 
   // Top arena bound
-  corners.push(camera.PositionOffset(new Vector(map.Width, map.Height, 0)));
-  if (camera.InFrame(new Vector(center.x, map.Height, 0))) {
+  corners.push(camera.PositionOffset(new Vector(map.width, map.height, 0)));
+  if (camera.InFrame(new Vector(center.x, map.height, 0))) {
     let furthest: Fighter = null;
     let furthestPos: number = 0;
 
@@ -103,7 +104,7 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
     // Looks a little awkward when multiple players are out of bounds, but better than arena bound snapping to each one
     for (let i = 0; i < fighters.length; i++) {
       const pos = fighters[i].Position.y + fighters[i].Radius; // Position determined by X or Y position +/- radius
-      if (((furthest && pos > furthestPos) || (!furthest && pos > map.Height)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
+      if (((furthest && pos > furthestPos) || (!furthest && pos > map.height)) && !fighters[i].riding) { // Are they out furthest? Are they past the bound?
         furthestPos = pos;
         furthest = fighters[i];
       }
@@ -118,7 +119,7 @@ function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] 
   }
 
   // Left arena bound
-  corners.push(camera.PositionOffset(new Vector(0, map.Height, 0)));
+  corners.push(camera.PositionOffset(new Vector(0, map.height, 0)));
   if (camera.InFrame(new Vector(0, center.y, 0))) {
     let furthest: Fighter = null;
     let furthestPos: number = 0;
@@ -301,17 +302,13 @@ class Renderer {
     camera: Camera,
     world: World,
     particles: Particle[],
+    mapClient: MapClient,
   ) {
-    const map = world.Map;
     const fighters = world.Fighters;
     const projectiles = world.Bullets;
     const props = world.Props;
 
-
-    switch (map.mapID) {
-      case MapPreset.Grassy: canvas.fillStyle = '#0d542f'; break;
-      default: canvas.fillStyle = '#e3a324'; break;
-    }
+    canvas.fillStyle = mapClient.backgroundColor;
     canvas.fillRect(0, 0, camera.Width, camera.Height);
 
     // Username font settings
@@ -323,13 +320,13 @@ class Renderer {
     const offsetY = camera.Height / 2;
     const zoom = camera.Zoom;
 
-    const mapWidth = map.Width * zoom;
-    const mapHeight = map.Height * zoom;
+    const mapWidth = world.map.width * zoom;
+    const mapHeight = world.map.height * zoom;
 
     const topLeft = camera.PositionOffset(new Vector(0, 0, 0));
-    if (map.Texture) {
+    if (mapClient.texture) {
       canvas.drawImage( // Still draws entire map texture, but was extremely hard to try and it do it the other way
-        map.Texture,
+        mapClient.texture,
         0, 0,
         3076, 3076,
         topLeft.x - mapWidth / 4,
@@ -347,7 +344,7 @@ class Renderer {
     canvas.beginPath();
     let corners: Vector[] = null;
     if (RenderSettings.Quality > RenderQuality.Low) {
-      corners = GetArenaBounds(camera, map, fighters);
+      corners = GetArenaBounds(camera, world.map, fighters);
       // Draw all arena boundaries except for frontmost
       canvas.moveTo(corners[ArenaBoundFrontPassIndex].x, corners[ArenaBoundFrontPassIndex].y);
       for (let i = ArenaBoundFrontPassIndex + 1; i < corners.length; i++) {
@@ -355,9 +352,9 @@ class Renderer {
       }
       canvas.lineTo(topLeft.x, topLeft.y);
     } else {
-      const p1 = camera.PositionOffset(new Vector(map.Width, 0, 0));
-      const p2 = camera.PositionOffset(new Vector(map.Width, map.Height, 0));
-      const p3 = camera.PositionOffset(new Vector(0, map.Height, 0));
+      const p1 = camera.PositionOffset(new Vector(world.map.width, 0, 0));
+      const p2 = camera.PositionOffset(new Vector(world.map.width, world.map.height, 0));
+      const p3 = camera.PositionOffset(new Vector(0, world.map.height, 0));
 
       canvas.moveTo(topLeft.x, topLeft.y);
       canvas.lineTo(p1.x, p1.y);

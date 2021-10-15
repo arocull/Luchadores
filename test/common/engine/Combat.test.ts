@@ -6,10 +6,11 @@ import { FightObserver } from '../../../src/common/engine/combat/FightObserver';
 import ProjectileGroup from '../../../src/common/engine/combat/ProjectileGroup';
 import World from '../../../src/common/engine/World';
 import { MessageBus } from '../../../src/common/messaging/bus';
+import { Map } from '../../../src/common/engine/maps';
 
 test('AOE falloff test', () => {
   Random.setSeed(1);
-  const world = new World();
+  const world = new World(new Map());
   const flam1 = new Flamingo(1, new Vector(20, 20, 0));
   const flam2 = new Flamingo(2, new Vector(21, 20, 0));
   world.Fighters.push(flam1, flam2);
@@ -39,7 +40,7 @@ test('AOE falloff test', () => {
 });
 test('FightObserver fighter threat test', () => {
   Random.setSeed(1);
-  const world = new World();
+  const world = new World(new Map());
   const sheep = new Sheep(1, new Vector(5, 20, 0));
   const deer = new Deer(2, new Vector(22, 20, 0));
   const flam = new Flamingo(3, new Vector(20, 20, 0));
@@ -107,7 +108,7 @@ test('FightObserver fighter threat test', () => {
 });
 test('FightObserver projectile threat test', () => {
   Random.setSeed(1);
-  const world = new World();
+  const world = new World(new Map());
   const sheep = new Sheep(1, new Vector(20, 20, 0));
   const deer1 = new Deer(2, new Vector(30, 20, 0));
   const deer2 = new Deer(3, new Vector(30, 21, 0));

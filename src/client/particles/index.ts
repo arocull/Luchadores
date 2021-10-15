@@ -9,6 +9,7 @@ import PBulletFire from './BulletFire';
 import PBulletShell from './BulletShell';
 import PMoveDash from './MoveDash';
 import PShockwave from './Shockwave';
+import PSnowfall from './Snowfall';
 
 export {
   Particle,
@@ -22,4 +23,5 @@ export {
   PBulletShell,
   PMoveDash,
   PShockwave,
+  PSnowfall,
 };

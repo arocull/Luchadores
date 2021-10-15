@@ -141,7 +141,7 @@ class FightObserver {
     if (a.Position.z <= 0 && a.type === EntityType.Fighter) { // If they are on the ground and a fighter, apply friction
       const len = a.Velocity.lengthXY() + a.Acceleration.lengthXY() * t; // Approximate velocity length
 
-      const frictionalForce = Math.max(3 - Math.log(len / 2 + 1), 1) * this.world.Map.Friction; // Calculated frictional force
+      const frictionalForce = Math.max(3 - Math.log(len / 2 + 1), 1) * this.world.map.friction; // Calculated frictional force
 
       // Obtain VERY ROUGHLY GUESSED friction
       const friction = Vector.Multiply(Vector.UnitVectorXY(a.Velocity), frictionalForce).clamp(0, len / t);

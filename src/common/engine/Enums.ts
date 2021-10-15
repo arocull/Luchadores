@@ -31,6 +31,7 @@ enum ParticleType {
   BulletShell = 7,
   MoveDash = 8,
   Shockwave = 9,
+  Snowfall = 10,
 }
 
 enum ColliderType {
@@ -39,8 +40,10 @@ enum ColliderType {
 }
 
 enum MapPreset {
-  Sandy = 0,
-  Grassy = 1,
+  None,
+  Sandy,
+  Grassy,
+  Snowy,
 }
 
 enum UIFrameType {

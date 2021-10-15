@@ -5,14 +5,13 @@ import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import AOEBlast from './combat/AOEBlast';
 import Prop from './props/Prop';
-import Map from './Map';
+import { Map } from './maps/index';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
-import { MessageBus } from '../messaging/bus';
-import { FighterType, MapPreset, EntityType } from './Enums';
+import { FighterType, EntityType } from './Enums';
 import { Sheep, Deer, Flamingo } from './fighters';
 import { TypeEnum } from '../events';
 import { CollisionTrace, CollisionTraceBullet, CollideFighters } from './math/Collision';
-
+import { SubscriberContainer } from '../messaging/container';
 
 /**
  * @class
@@ -35,33 +34,36 @@ class World {
   public Bullets: Projectile[];
   public aoeAttacks: AOEBlast[];
   public Props: Prop[];
-  public Map: Map;
+  public Map: Map; // TODO: Make this private so 'Map' is read-only
 
   public doReaping: boolean;
   private kills: IPlayerDied[];
 
-  constructor(mapPreset: MapPreset = MapPreset.Sandy, loadProps: boolean = false, loadTextures: boolean = false) {
-    this.Map = new Map(40, 40, 23, 10000, mapPreset);
-    if (loadTextures) this.Map.loadTexture();
+  private subscribers: SubscriberContainer = new SubscriberContainer();
+
+  constructor(map: Map) {
+    this.Map = map;
 
     this.Fighters = [];
     this.Bullets = [];
     this.aoeAttacks = [];
-    if (loadProps) {
-      this.Props = this.Map.getProps(mapPreset, loadTextures);
-    } else {
-      this.Props = []; // Props not loaded by default
-    }
+
+    this.Props = this.map.getProps(); // Always load in props
 
     this.doReaping = false;
     this.kills = [];
 
-    MessageBus.subscribe('NewProjectile', (message) => {
+    this.subscribers.attach('NewProjectile', (message) => {
       this.Bullets.push(message as Projectile);
     });
-    MessageBus.subscribe('AOE_Blast', (message) => {
+    this.subscribers.attach('AOE_Blast', (message) => {
       this.aoeAttacks.push(message as AOEBlast);
     });
+  }
+
+  // Make map read-only
+  public get map(): Map {
+    return this.Map;
   }
 
 
@@ -92,12 +94,12 @@ class World {
         avgLocation = Vector.Add(avgLocation, this.Fighters[i].Position);
       }
       avgLocation = Vector.Divide(avgLocation, this.Fighters.length);
-      avgLocation.x = this.Map.Width - avgLocation.x;
-      avgLocation.y = this.Map.Height - avgLocation.y;
+      avgLocation.x = this.map.width - avgLocation.x;
+      avgLocation.y = this.map.height - avgLocation.y;
       avgLocation.z = 0;
     } else { // Otherwise, just drop them in the middle of the map
-      avgLocation.x = this.Map.Width / 2;
-      avgLocation.y = this.Map.Height / 2;
+      avgLocation.x = this.map.width / 2;
+      avgLocation.y = this.map.height / 2;
     }
 
     let fight: Fighter = null;
@@ -203,11 +205,11 @@ class World {
           obj.rodeThisTick = obj.riding;
         }
       } else { // If fighter is out of bounds, bounce them back (wrestling arena has elastic walls), proportional to distance outward
-        if (obj.Position.x < 0) accel.x += this.Map.wallStrength * Math.abs(obj.Position.x);
-        else if (obj.Position.x > this.Map.Width) accel.x -= this.Map.wallStrength * (obj.Position.x - this.Map.Width);
+        if (obj.Position.x < 0) accel.x += this.map.wallStrength * Math.abs(obj.Position.x);
+        else if (obj.Position.x > this.map.width) accel.x -= this.map.wallStrength * (obj.Position.x - this.map.width);
 
-        if (obj.Position.y < 0) accel.y += this.Map.wallStrength * Math.abs(obj.Position.y);
-        else if (obj.Position.y > this.Map.Height) accel.y -= this.Map.wallStrength * (obj.Position.y - this.Map.Height);
+        if (obj.Position.y < 0) accel.y += this.map.wallStrength * Math.abs(obj.Position.y);
+        else if (obj.Position.y > this.map.height) accel.y -= this.map.wallStrength * (obj.Position.y - this.map.height);
 
         // Force divided by mass equals acceleration
         accel.x /= mass;
@@ -234,7 +236,7 @@ class World {
           accel,
           Vector.Multiply(
             Vector.UnitVector(leveled),
-            force * this.Map.Friction,
+            force * this.map.friction,
           ).clamp( // Limit it so it does not push the player backwards while standing still (still acceleration though)
             0,
             len / Math.max(DeltaTime, 0.001), // Ensure DT > 0 so we do not run into any divide by zero errors and corrupt the system
