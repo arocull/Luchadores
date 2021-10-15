@@ -1,6 +1,10 @@
+import Vector from '../../common/engine/Vector';
+
 class Sound {
   public owner: any = null;
   public time: number = 0;
+  public volume: number = 1; // Set volume of sound, for attenuation
+  public position: Vector = new Vector(0, 0, 0); // 3D position of sound, for attenuation
   constructor(public src: HTMLAudioElement) { }
 
   /**
