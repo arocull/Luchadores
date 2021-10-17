@@ -188,6 +188,7 @@ class Announcer {
     this.playing = SoundManager.playSound(soundName); // Play actual sound
     if (this.playing === null) { return; } // If no sound was played, move on
 
+    this.playing.src.volume = 0.6;
     const dur = this.playing.src.duration; // Get duration of audio
 
     // eslint-disable-next-line no-restricted-globals

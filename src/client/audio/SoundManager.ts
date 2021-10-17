@@ -115,7 +115,6 @@ class SoundManagerInit {
    */
   private lib: Record<string, Sound[]>;
   private enabled: boolean = false;
-  private loadedAnnouncerAudio: boolean = false;
 
   constructor() {
     this.lib = ({} as Record<string, Sound[]>);
@@ -177,17 +176,7 @@ class SoundManagerInit {
     this.enabled = true;
 
     this.addLibrarySounds(libraryNames);
-  }
-
-  /**
-   * @function enableAnnouncer
-   * @summary Loads in announced sound library, only fires once
-   */
-  public enableAnnouncer() {
-    if (!this.loadedAnnouncerAudio) {
-      this.loadedAnnouncerAudio = true;
-      this.addLibrarySounds(announcerLibraryNames);
-    }
+    this.addLibrarySounds(announcerLibraryNames);
   }
 
   /**

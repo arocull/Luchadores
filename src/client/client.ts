@@ -58,7 +58,8 @@ function AnimationFrame(tick: number) {
     }
   });
 
-  // TODO: Generate asset list at compile time and return them here
+  // TODO: Generate asset list as a prebuild step and return them here
+  // TODO: Do same thing with audio
   AssetPreloader.getImages([
     'Interface/Logo.png',
     'Interface/Gear.png',
