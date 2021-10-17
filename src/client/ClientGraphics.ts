@@ -12,33 +12,25 @@ import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
 import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
-import { FightObserver, ThreatObject } from '../common/engine/combat/FightObserver';
+import { ThreatObject } from '../common/engine/combat/FightObserver';
 import Fighter from '../common/engine/Fighter';
 import ProjectileGroup from '../common/engine/combat/ProjectileGroup';
 import { RenderQuality } from '../common/engine/Enums';
 import Map from '../common/engine/maps/Map';
 import { MapClient } from './maps';
 
-const ObservationRate = 0.12; // How many seconds until next observation from the FightObserver
 class ClientGraphics {
   public uiManager: UIManager;
-  private observer: FightObserver;
-
   public viewport: HTMLCanvasElement;
   public canvas: CanvasRenderingContext2D;
   public fpsCounter: number[];
 
   public particles: Particle[];
 
-  private observationTimer: number;
-  private observedFighters: ThreatObject[];
-  private observedBulletGroups: ThreatObject[];
-
   constructor(private clientState: Client) {
     this.uiManager = new UIManager();
 
     this.clientState.uiManager = this.uiManager;
-    this.observer = new FightObserver(this.world);
 
     this.viewport = <HTMLCanvasElement>document.getElementById('render');
     this.canvas = this.viewport.getContext('2d');
@@ -46,10 +38,6 @@ class ClientGraphics {
     this.fpsCounter = [];
 
     this.particles = [];
-
-    this.observationTimer = ObservationRate;
-    this.observedFighters = [];
-    this.observedBulletGroups = [];
 
     MessageBus.subscribe('Effect_NewParticle', (msg) => {
       this.particles.push(msg as Particle);
@@ -135,14 +123,6 @@ class ClientGraphics {
     // Draw screen
     Render.DrawScreen(this.camera, this.world, this.particles, this.mapClient);
 
-
-    // DEBUG //
-    // Currently this acts as a debug, but announcer ticking would look similar to this (though would be separated into its own class)
-    if (RenderSettings.EnableAnnouncer && this.clientState.character) {
-      this.debugObserver(DeltaTime);
-    }
-
-
     // Do interface actions and draw interface
     this.uiManager.tick(DeltaTime, this.camera, this.clientState.character, this.clientState.connected, this.clientState.respawning);
 
@@ -185,61 +165,35 @@ class ClientGraphics {
   }
 
   /**
-   * @function debugObserver
-   * @summary Draws information gathered using the Fight Observer
+   * @function debugDraw
+   * @summary Draws information gathered using the Threat Object data
    * @description Draws a blue collision box around the player,
    * blue-to-green-to-orange collision boxes around enemies (based off of threat level),
    * and bounding boxes for bullet groups and their corresponding threat level.
-   * @param {number} DeltaTime Change in time (in seconds) since last frame
+   * @param {number} deltaTime Change in time (in seconds) since last frame
    */
-  protected debugObserver(DeltaTime: number) {
+  protected debugDraw(deltaTime: number, observedFighters: ThreatObject[], observedBulletGroups: ThreatObject[]) {
     Render.drawCollision(this.clientState.character, Particle.RGBToHex(0, 128, 250), this.camera);
 
-    this.observationTimer -= DeltaTime;
-    if (this.observationTimer <= 0) {
-      this.observationTimer = ObservationRate;
-
-      // Get 3 most threatening fighters
-      this.observedFighters = this.observer.GetThreateningFighters(this.clientState.character, this.world.Fighters, 3, ObservationRate);
-
-      // Get all threatening bullet groups (so we can see all existing ones, not just a few)
-      const leeway = Math.max(this.camera.getScreenWidth(), this.camera.getScreenHeight()) * 0.05;
-
-      const botLeft = this.camera.ScreenToWorld(-leeway, -leeway);
-      const topRight = this.camera.ScreenToWorld(this.camera.getScreenWidth() + leeway, this.camera.getScreenHeight() + leeway);
-
-      // Vertical positions need to be flipped (upward is +Y)
-      const flipY = botLeft.y;
-      botLeft.y = topRight.y;
-      topRight.y = flipY;
-
-      const groups = this.observer.formProjectileGroups(botLeft, topRight);
-      this.observedBulletGroups = this.observer.GetThreateningProjectileGroups(this.clientState.character, groups, groups.length, ObservationRate);
-
-      // const groups: ThreatObject[] = this.observer.GetThreateningProjectileGroups(this.clientState.character);
-    }
-
-    for (let i = 0; i < this.observedFighters.length; i++) {
+    for (let i = 0; i < observedFighters.length; i++) {
       Render.drawCollision(
-        <Fighter> this.observedFighters[i].object,
-        Particle.RGBToHex((this.observedFighters[i].threat / 7) * 255, 128, 50),
+        <Fighter> observedFighters[i].object,
+        Particle.RGBToHex((observedFighters[i].threat / 7) * 255, 128, 50),
         this.camera,
       );
     }
-    for (let i = 0; i < this.observedBulletGroups.length; i++) {
-      const bgroup = <ProjectileGroup> this.observedBulletGroups[i].object;
-      bgroup.purge();
-      bgroup.calculate(ObservationRate);
+    for (let i = 0; i < observedBulletGroups.length; i++) {
+      const bgroup = <ProjectileGroup> observedBulletGroups[i].object;
 
       Render.drawBoundingBox(
         bgroup.projectiles,
-        Particle.RGBToHex((this.observedBulletGroups[i].threat / 6) * 255, 128, 50),
+        Particle.RGBToHex((observedBulletGroups[i].threat / 6) * 255, 128, 50),
         this.camera,
       );
     }
   }
 
-  private get camera(): Camera {
+  public get camera(): Camera {
     return this.clientState.camera;
   }
   private get world(): World {

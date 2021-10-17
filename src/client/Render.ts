@@ -37,7 +37,6 @@ function GetKillMethod(fighter: FighterType): string {
     case FighterType.Sheep: return ' bulldozed ';
     case FighterType.Deer: return ' gunned down ';
     case FighterType.Flamingo: return ' incinerated ';
-    case FighterType.Toad: return ' electrocuted ';
     default: return ' died';
   }
 }

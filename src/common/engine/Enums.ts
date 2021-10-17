@@ -10,7 +10,6 @@ enum FighterType {
   Sheep = 0,
   Deer = 1,
   Flamingo = 2,
-  Toad = 3,
 
   None = -1,
 }
@@ -68,11 +67,31 @@ const FighterTypeStrings = [
   'Sheep',
   'Deer',
   'Flamingo',
-  'Toad',
+];
+const FighterTypeGenders = [// He, She, or They
+  'She',
+  'He',
+  'He',
 ];
 
-function fighterTypeToString(type: FighterType) {
+/**
+ * @function fighterTypeToString
+ * @summary Returns a string version of the fighter type
+ * @param type Type of fighter the character is
+ * @returns {string} The internal name of the character ('Sheep', 'Deer', etc)
+ */
+function fighterTypeToString(type: FighterType): string {
   return FighterTypeStrings[type];
+}
+
+/**
+ * @function fighterTypeToGender
+ * @summary Returns the gender of the given fighter
+ * @param type Type of fighter the character is
+ * @returns {string} Gender of the character ('He', 'She', or 'They')
+ */
+function fighterTypeToGender(type: FighterType): string {
+  return FighterTypeGenders[type];
 }
 
 export {
@@ -86,4 +105,5 @@ export {
   RenderQuality,
   ConnectResponseType,
   fighterTypeToString,
+  fighterTypeToGender,
 };

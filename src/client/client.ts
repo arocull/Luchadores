@@ -1,13 +1,17 @@
 import AssetPreloader from './AssetPreloader';
+import SoundManager from './audio/SoundManager';
 import ClientState from './ClientState';
 import ClientGraphics from './ClientGraphics';
+import ClientAudio from './audio/ClientAudio';
 // Load screen imports
 import { UILoadScreen } from './ui';
 import Camera from './Camera';
 import Render from './Render';
+import Announcer from './audio/Announcer';
 
 let client: ClientState;
 let graphics: ClientGraphics;
+let announcer: Announcer;
 
 const viewport = <HTMLCanvasElement>document.getElementById('render');
 const canvas = viewport.getContext('2d');
@@ -24,12 +28,14 @@ function AnimationFrame(tick: number) {
 
   if (client) client.tick(DeltaTime);
   if (graphics) graphics.tick(DeltaTime);
+  SoundManager.tick(DeltaTime);
+  ClientAudio.tick(DeltaTime);
+  announcer.tick(DeltaTime);
 
   return window.requestAnimationFrame(AnimationFrame);
 }
 
 (function setup() {
-  console.log('Preloading assets ...');
   viewport.width = window.innerWidth;
   viewport.height = window.innerHeight;
 
@@ -42,8 +48,6 @@ function AnimationFrame(tick: number) {
   }
 
   AssetPreloader.on('progress', (status) => {
-    console.log(`Preload progress: ${Math.round(status.progress * 100)}% ... (${status.file})`);
-
     viewport.width = window.innerWidth;
     viewport.height = window.innerHeight;
     tempCam.Scale(viewport.width, viewport.height);
@@ -54,7 +58,8 @@ function AnimationFrame(tick: number) {
     }
   });
 
-  // TODO: Generate asset list at compile time and return them here
+  // TODO: Generate asset list as a prebuild step and return them here
+  // TODO: Do same thing with audio
   AssetPreloader.getImages([
     'Interface/Logo.png',
     'Interface/Gear.png',
@@ -68,9 +73,20 @@ function AnimationFrame(tick: number) {
     'Sprites/Deer.png',
     'Sprites/Flamingo.png',
     'Sprites/Barrel.png',
-  ]).then(() => {
+  ]);
+
+  SoundManager.initialize(); // Start load in of audio (should move later)
+
+  const assetPromises: Promise<any>[] = []
+    .concat(AssetPreloader.getImageQueue())
+    .concat(AssetPreloader.getAudioQueue());
+
+  Promise.all(assetPromises).then(() => {
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
+    ClientAudio.setClientState(client);
+    announcer = new Announcer(client, graphics.camera);
+
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);
   });

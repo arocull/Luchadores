@@ -3,8 +3,30 @@ import { MessageBus } from '../../common/messaging/bus';
 import Vector from '../../common/engine/Vector';
 import Animator from './Animator';
 import { PFire, PSmoke } from '../particles';
+import ClientAudio from '../audio/ClientAudio';
 
 class AnimFlamingo extends Animator {
+  private playingAudio: boolean = false;
+
+  public Tick(DeltaTime: number) {
+    super.Tick(DeltaTime);
+
+    const attacking = this.owner.Firing && this.owner.getSpecialNumber() > 0 && !this.owner.getSpecialBoolean();
+    if (attacking && !this.playingAudio) {
+      ClientAudio.playSound('Flamingo/Scream', this.owner.Position, 0.4, this.owner);
+      this.playingAudio = true;
+    } else if (!attacking && this.playingAudio) {
+      ClientAudio.stopSound('Flamingo/Scream', this.owner);
+      this.playingAudio = false;
+    }
+  }
+
+  protected triggerUniqueIdle() {
+    super.triggerUniqueIdle();
+
+    ClientAudio.playSound('Flamingo/Squawk', this.owner.Position, 0.35);
+  }
+
   protected frameFalling() {
     this.frame = 6;
     this.row = 1;

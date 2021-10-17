@@ -265,7 +265,7 @@ class FightObserver {
    * @summary Returns a given number of the most threatening projectile groups
    * @param {Fighter} player Player to detect approaching fighters for
    * @param {ProjectileGroup[]} groups Bullet groups to evaluate as threats
-   * @param {number} limit Maximum number of fighters to return
+   * @param {number} limit Maximum number of bullet group threat objects to return
    * @param {number} t Time in seconds for future estimations, must be greater than 0
    * @returns {ThreatObject[]} Returns a ThreatObject array of 'limit' length
    */

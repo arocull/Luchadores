@@ -26,6 +26,7 @@ class Fighter extends Prop {
   public MaxHP: number;
 
   public Kills: number;
+  public DamageDealt: number;
   public LastHitBy: number;
 
   public Flipped: boolean;
@@ -75,6 +76,7 @@ class Fighter extends Prop {
     this.MaxHP = HP;
 
     this.Kills = 0; // How many kills this fighter has racked up this life
+    this.DamageDealt = 0; // Total amount of damage dealt in this life
     this.LastHitBy = -1; // Player ID of last attacker
 
     this.Flipped = false; // Do we draw them facing leftward or rightward?
@@ -108,15 +110,33 @@ class Fighter extends Prop {
   public TakeDamage(dmg: number, attacker: Fighter) {
     this.HP -= dmg;
 
-    if (attacker) this.LastHitBy = attacker.ID;
-    if (this.HP < 0) this.HP = 0;
+    if (attacker) {
+      this.LastHitBy = attacker.ID;
+      attacker.EarnDamage(dmg);
+    }
+    if (this.HP < 0) {
+      this.HP = 0;
+    }
   }
-  // Award this fighter a kill, can be overridden by subclasses for special abilities
+  /**
+   * @function EarnKill
+   * @summary Award this fighter a kill, can be overridden by subclasses for special abilities, also awards health
+   * @virtual
+   */
   public EarnKill() {
     this.Kills++;
 
     // Restore some HP upon earning a kill
     this.HP = Math.min(this.HP + KILL_HEALTH_RETURN * this.MaxHP, this.MaxHP);
+  }
+  /**
+   * @function EarnDamage
+   * @summary Award this fighter positive damage they induced on someone else
+   * @param {number} dmg Damage this fighter induced
+   */
+  public EarnDamage(dmg: number) {
+    if (dmg <= 0) { return; }
+    this.DamageDealt += dmg;
   }
 
 
@@ -237,6 +257,12 @@ class Fighter extends Prop {
   }
   public setBulletCooldown(newCooldown: number) {
     this.BulletCooldown = newCooldown;
+  }
+  public getMomentum(): number {
+    return this.Mass * this.Velocity.length();
+  }
+  public getMomentumXY(): number {
+    return this.Mass * this.Velocity.lengthXY();
   }
 
   /* eslint-disable class-methods-use-this */

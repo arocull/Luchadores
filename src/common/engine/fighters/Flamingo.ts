@@ -133,7 +133,18 @@ class Flamingo extends Fighter {
 
     this.breath += DelaTime * 8;
     if (this.breath > this.maxBreath) this.breath = this.maxBreath;
-    if (this.breath > this.maxBreath / 2) this.breathing = false; // If breath has reached at least half capacity, allow fire-breathing again
+    if (this.breath > this.maxBreath / 2 && this.breathing) {
+      this.breathing = false; // If breath has reached at least half capacity, allow fire-breathing again
+
+      // Play inhale sound
+      // TODO: Should this only play for client's character?
+      MessageBus.publish('Audio_General', {
+        sfxName: 'Flamingo/Inhale',
+        pos: this.Position,
+        vol: 0.4,
+        owner: this,
+      });
+    }
   }
 
   public getBreath(): number {
