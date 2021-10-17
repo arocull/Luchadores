@@ -59,7 +59,6 @@ class Deer extends Fighter {
   }
 
   public fireBullet(): BBullet {
-    this.BulletShock += this.bulletCooldownTime * 10;
     this.BulletCooldown += this.bulletCooldownTime;
     this.bulletIndex++;
 
@@ -112,6 +111,10 @@ class Deer extends Fighter {
       pos: this.Position,
       vol: 0.25,
       owner: this,
+    });
+    MessageBus.publish(`CameraShake${this.getOwnerID()}`, {
+      amnt: this.bulletCooldownTime * 9,
+      max: 10,
     });
     return bullet;
   }

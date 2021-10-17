@@ -1,25 +1,28 @@
 import { Vector, PiOverTwo } from '../common/engine/math';
 import Fighter from '../common/engine/Fighter';
 import RenderSettings from './RenderSettings';
+import { MessageBus, Subscriber } from '../common/messaging/bus';
 
 const ClipBound = -0.2; // Only stop drawing the object if it is X * Zoom out of frame
 const ClipBoundPlusOne = 1 - ClipBound;
 
 class Camera {
-  private Focus: Fighter;
-  private FocusPosition: Vector;
+  private Focus: Fighter = null;
+  private FocusPosition: Vector = new Vector(0, 0, 0);
 
   private OffsetX: number;
   private OffsetY: number;
 
   private baseZoom: number;
-  public Zoom: number;
-  public Shake: number;
+  public Zoom: number = 20;
+  public shake: number = 0;
 
   private lerpFocusPosition: Vector; // Initial focus position of lerp
   private lerpTime: number; // Time progressed through lerp
   private lerpTimeMax: number; // Set lerp time
   private lerping: boolean;
+
+  private shakeListener: Subscriber = null;
 
   constructor(
     public Width: number, // Width of scene in pixels
@@ -29,9 +32,6 @@ class Camera {
   ) {
     this.Focus = null;
     this.FocusPosition = new Vector(0, 0, 0);
-
-    this.Zoom = 20;
-    this.Shake = 0;
 
     this.OffsetX = Width / 2;
     this.OffsetY = Height / 2;
@@ -48,6 +48,20 @@ class Camera {
     this.Height = newHeight;
     this.OffsetX = newWidth / 2;
     this.OffsetY = newHeight / 2;
+  }
+  /**
+   * @function SetFighterID
+   * @summary Swaps camera to listen to the given fighter ID for camera shake
+   * @param {number} fighter Fighter ID of the fighter to listen to for screenshake
+   */
+  public SetFighterID(fighter: number) {
+    if (this.shakeListener) { // If we were already subscribed, unsubscribe them
+      MessageBus.unsubscribe(this.shakeListener.topic, this.shakeListener.consumer);
+    }
+    // Subscribe new listener
+    this.shakeListener = MessageBus.subscribe(`CameraShake${fighter}`, (msg) => {
+      this.InduceShake(msg.amnt, msg.max);
+    });
   }
 
 
@@ -92,13 +106,13 @@ class Camera {
       if (this.Focus.isRanged()) zoomBoost = 0.85;
 
       // If camera shake is enabled, do it
-      if (this.Shake > 0 && RenderSettings.EnableCameraShake) {
-        this.Shake -= DeltaTime * 10; // Gradually reduce camera shake over time
-        if (this.Shake < 0) this.Shake = 0;
+      if (this.shake > 0 && RenderSettings.EnableCameraShake) {
+        this.shake -= DeltaTime * 10; // Gradually reduce camera shake over time
+        if (this.shake < 0) this.shake = 0;
 
-        const shake = (new Vector(Math.random() - 0.5, Math.random() - 0.5, 0)).clamp(1, 1); // Generate random shake direction
-        this.FocusPosition = Vector.Add(this.FocusPosition, Vector.Multiply(shake, (Math.random() * this.Shake) / 100)); // Offset camera
-      } else if (!RenderSettings.EnableCameraShake) this.Shake = 0;
+        const shake = Vector.UnitVector(new Vector(Math.random() - 0.5, Math.random() - 0.5, 0)); // Generate random shake direction
+        this.FocusPosition = Vector.Add(this.FocusPosition, Vector.Multiply(shake, (Math.random() * this.shake) / 100)); // Offset camera
+      } else if (!RenderSettings.EnableCameraShake) this.shake = 0;
     }
 
     // Use constant aspect ratio, set a minimum value in case of zero
@@ -122,6 +136,21 @@ class Camera {
   // Returns the current focus position of the camera
   public GetFocusPosition(): Vector {
     return this.FocusPosition;
+  }
+  /**
+   * @function InduceShake
+   * @summary Induces camera shake
+   * @param {number} amount Amount of camera shake to induce
+   * @param {number} max Maximum amount of camera shake that can be induced from this effect
+   */
+  public InduceShake(amount: number, max: number) {
+    // If this newly added shake amount would surpass the maximum it could induce, clamp it
+    if (this.shake + amount > max) {
+      // eslint-disable-next-line no-param-reassign
+      amount = max - this.shake;
+    }
+
+    this.shake += amount; // Add in camera shake
   }
 
   // Gets position's offset relative to the camera focal point
@@ -151,7 +180,13 @@ class Camera {
     );
   }
 
-  // Takes a 2D screen position and converts it into an engine-readable coordinate (XY only)
+  /**
+   * @function ScreenToWorld
+   * @summary Takes a 2D screen position and converts it into an engine-readable coordinate (XY only)
+   * @param {number} inputX Screen X coordinate
+   * @param {number} inputY Screen Y coordinate
+   * @returns {Vector} Engine-readable coordinate (XY only)
+   */
   public ScreenToWorld(inputX: number, inputY: number): Vector {
     return new Vector(
       this.FocusPosition.x - ((inputX - this.OffsetX) / (-this.Zoom)),

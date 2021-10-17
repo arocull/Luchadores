@@ -91,7 +91,7 @@ class ClientGraphics {
 
           // Camera shake upon impact or nearby impact
           if (this.clientState.character && Vector.Distance(a.Position, this.clientState.character.Position) <= 2) {
-            this.camera.Shake += a.JustHitMomentum / 1500;
+            this.camera.InduceShake(a.JustHitMomentum / 1000, 50); // / 1500
           }
 
           a.JustHitMomentum = 0; // Reset fighter momentums (only used for visual effects)
