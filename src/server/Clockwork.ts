@@ -338,6 +338,9 @@ class Clockwork {
     if (this.running) {
       this.running = false;
 
+      if (this.world) { // Deconstruct world
+        this.world.deconstruct();
+      }
       this.subscribers.detachAll();
 
       clearTimeout(this.tickTimeout);

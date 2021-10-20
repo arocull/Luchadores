@@ -155,6 +155,9 @@ class Client {
           MessageBus.subscribe(this.topics.ClientNetworkFromServer, (msg: IEvent) => {
             switch (msg.type) {
               case TypeEnum.WorldNew: // Load new map
+                if (this.world) { // Deconstruct previous world
+                  this.world.deconstruct();
+                }
                 this.world = new World(mapFromID(msg.mapId));
                 MessageBus.publish('WorldNew', this.world);
                 break;

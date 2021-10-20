@@ -49,6 +49,14 @@ class Animator {
     this.killEffectCountdown = -1;
     this.moveTimer = 0;
   }
+  /**
+   * @function deconstruct
+   * @summary Deconstructs the Animator
+   * @virtual
+   */
+  public deconstruct() {
+
+  }
 
 
   // Unique idle animation, different for every character with different effects hence its own seperate function

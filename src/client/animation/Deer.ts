@@ -22,7 +22,7 @@ class AnimDeer extends Animator {
 
     MessageBus.subscribe(this.bulletChannel, this.firedBullet);
   }
-  public destruct() {
+  public deconstruct() {
     MessageBus.unsubscribe(this.bulletChannel, this.firedBullet);
   }
 

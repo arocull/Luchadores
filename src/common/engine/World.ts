@@ -60,6 +60,13 @@ class World {
       this.aoeAttacks.push(message as AOEBlast);
     });
   }
+  /**
+   * @function deconstruct
+   * @summary Unsubscribes all message bus subscribers to prevent memory leaks
+   */
+  public deconstruct() {
+    this.subscribers.detachAll();
+  }
 
   // Make map read-only
   public get map(): Map {
