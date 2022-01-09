@@ -282,7 +282,7 @@ class Client {
 
       if (this.world.Fighters[i].getOwnerID() === died) { // Character is killed
         diedCharacter = this.world.Fighters[i];
-        MessageBus.publish('Effect_PlayerDied', diedCharacter.Position);
+        MessageBus.publish('Effect_PlayerDied', Vector.Add(diedCharacter.Position, new Vector(0, diedCharacter.Height / 2, 0)));
         diedName = diedCharacter.DisplayName; // Obtain this honorable luchador's name
         diedCharacter.MarkedForCleanup = true; // Mark for cleanup (allows kill counting before removal)
 

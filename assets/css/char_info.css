@@ -37,9 +37,9 @@ div.char_info h2 {
 div.char_info p {
     font-family: 'Roboto', sans-serif;
     font-size: 1.5vmax;
-    text-indent: 2em;
-    text-align: justify;
-    text-align-last: left;
+    text-indent: 0;
+    text-align: center;
+    text-align-last: center;
     padding: 0 0.5em 0 0.5em;
     margin: auto;
     color: #eeeeee;

@@ -10,11 +10,16 @@ class Particle extends Entity {
   public Alpha: number;
   public Width: number;
 
-  public UsePhysics: boolean; // Upon ticking, do we update its position and velocity?
-  protected BounceReturn: number; // Does it bounce off the ground? How much?
-  protected StopOnGround: boolean; // Should the particle continue moving once it hits the ground?
-  protected Drag: number; // How much should its speed be dampened as it moves through the air
-  protected Trail: number; // Should the tail of the particle slowly follow its head, or operate statically?
+  /** @summary Upon ticking, do we update its position and velocity? */
+  public UsePhysics: boolean;
+  /** @summary Does it bounce off the ground? How much? */
+  protected BounceReturn: number;
+  /** @summary Should the particle continue moving once it hits the ground? */
+  protected StopOnGround: boolean;
+  /** @summary How much should its speed be dampened as it moves through the air. Multiplied by DeltaTime per-frame. */
+  protected Drag: number;
+  /** @summary Should the tail of the particle slowly follow its head, or operate statically? */
+  protected Trail: number;
 
   constructor(
     public particleType: ParticleType,
@@ -80,7 +85,9 @@ class Particle extends Entity {
         }
       }
       // Apply drag
-      if (this.Drag > 0) this.Velocity = Vector.Multiply(this.Velocity, 1 - this.Drag * DeltaTime);
+      if (this.Drag > 0) {
+        this.Velocity = Vector.Multiply(this.Velocity, Math.max(1 - this.Drag * DeltaTime, 0));
+      }
 
       this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(this.Acceleration, DeltaTime));
     }
