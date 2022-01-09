@@ -13,6 +13,7 @@ body {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+    background-color: #000000;
 }
 img {
     -webkit-user-drag: none;
@@ -140,16 +141,6 @@ table.character_list {
     display: inline-block;
     text-align: center;
 }
-div.character_info {
-    position: absolute;
-    table-layout: fixed;
-    right: 0%;
-    left: 70%;
-    width: 30%;
-    height: 100%;
-    background-color: #a4540c;
-    display: inline-block;
-}
 div.portrait_container {
     margin: 5%;
     width: 90%;
@@ -161,12 +152,6 @@ div.portrait_container:hover {
     background-color: rgba(42, 255, 255, 0.5);
     border-radius: 5%;
 }
-div.info_portrait_container {
-    margin: 4%;
-    width: 92%;
-    height: auto;
-    text-align: center;
-}
 img.portrait {
     z-index: auto;
     max-width: 100%;
@@ -174,57 +159,6 @@ img.portrait {
     width: auto;
     height: auto;
     vertical-align: middle;
-}
-div.info_characterName {
-    font-family: 'Flamenco', cursive;
-    font-size: 3vmax;
-    text-align: center;
-    color: #ffffff;
-    margin-left: 5%;
-    margin-right: 5%;
-    margin-top: 3%;
-    margin-bottom: 3%;
-    width: 90%;
-}
-div.info_characterFlavor {
-    font-family: 'Flamenco', cursive;
-    font-size: 1.3vmax;
-    text-align: center;
-    color: #dddddd;
-    margin-top: 3%;
-    margin-left: 3%;
-    margin-right: 3%;
-    margin-bottom: 5%;
-    width: 94%;
-}
-div.info_characterDescript {
-    font-family: 'Roboto', sans-serif;
-    font-size: 1.5vmax;
-    text-indent: 4vmax;
-    text-align: justify;
-    margin-left: 2%;
-    margin-right: 2%;
-    color: #eeeeee;
-    height: 40%;
-}
-button.confirm_character {
-    position: absolute;
-    font-family: 'Roboto', sans-serif;
-    font-size: 3.5vmin;
-    background-color: #00aa11;
-    color: #000000;
-    left: 10%;
-    right: 10%;
-    bottom: 4%;
-    width: 80%;
-    height: 5vmin;
-    vertical-align: middle;
-    margin: -5px;
-    border: 5px solid #008000;
-}
-button.confirm_character:hover {
-    margin: -5px;
-    border: 5px solid #00c0c0;
 }
 
 

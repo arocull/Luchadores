@@ -23,7 +23,8 @@
         <!-- STYLING -->
         <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Flamenco&display=swap" rel="stylesheet">
-        <link href="styles.css" rel="stylesheet">
+        <link href="css/styles.css" rel="stylesheet">
+        <link href="css/char_info.css" rel="stylesheet">
     </head>
     <body>
         <div id="settings_gear_container" hidden><img class="settings_gear" id="settings_gear" src="Interface/Gear.png" alt="Settings"></div>
@@ -45,15 +46,17 @@
             <table class="character_list" id="character_list">
                 <!-- Table data is built upon play -->
             </table>
-            <div class="character_info" id="character_info">
-                <div class="info_portrait_container"><img class="portrait" id="character_portrait" src="Portraits/Sheep.png"/></div>
-                <br />
-                <div class="info_characterName" id="character_name"></div>
-                <div class="info_characterFlavor" id="character_flavor"></div>
-                <br />
-                <div class="info_characterDescript" id="character_descript"></div>
-                <br />
-                <button class="confirm_character" id="character_confirm" hidden>Confirm</button>
+            <div class="char_info" id="character_info">
+                <div class="portrait">
+                    <img id="character_portrait" src="Portraits/Sheep.png"/>
+                </div>
+                <h2 id="character_name">La Oveja Grande</h2>
+                <p class="flavor" id="character_flavor">She really REALLY loves chocolate.</p>
+                <hr />
+                <p id="character_descript">testing once again. There is a lot of text here. You will most likely not read any of it, but that's okay.</p>
+                <button class="confirm_character" id="character_confirm" hidden>
+                    <p>Confirm</p>    
+                </button>
             </div>
         </div>
 
