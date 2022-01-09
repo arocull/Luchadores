@@ -18,7 +18,7 @@ import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
 import { ConnectResponseType } from '../common/engine/Enums';
 import { IPlayerConnectResponse } from '../common/events/events';
-import { MapSnowy } from '../common/engine/maps';
+import { MapGrassy } from '../common/engine/maps';
 
 interface Action {
   player: Player;
@@ -38,7 +38,7 @@ class Clockwork {
   private lastPublish: number = 0;
 
   constructor() {
-    this.world = new World(new MapSnowy());
+    this.world = new World(new MapGrassy());
     this.world.doReaping = true;
 
     this.actions = {};
