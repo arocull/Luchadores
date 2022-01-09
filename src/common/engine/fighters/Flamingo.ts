@@ -125,6 +125,10 @@ class Flamingo extends Fighter {
     const proj = new BFire(pos, dir, this);
     proj.Velocity = Vector.Add(proj.Velocity, fireVelo);
     MessageBus.publish('NewProjectile', proj);
+    MessageBus.publish(`CameraShake${this.getOwnerID()}`, {
+      amnt: 0.7,
+      max: 15,
+    });
     return proj;
   }
 

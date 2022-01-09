@@ -147,7 +147,7 @@ class Camera {
     // If this newly added shake amount would surpass the maximum it could induce, clamp it
     if (this.shake + amount > max) {
       // eslint-disable-next-line no-param-reassign
-      amount = max - this.shake;
+      amount = Math.max(max - this.shake, 0); // Clamp camera shake increase to different, or 0
     }
 
     this.shake += amount; // Add in camera shake
