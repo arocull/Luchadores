@@ -35,8 +35,6 @@ class Fighter extends Prop {
   public MarkedForCleanup: boolean;
   public DisplayName: string;
 
-  public JustHitPosition: Vector;
-  public JustHitMomentum: number;
   public JustLanded: boolean;
   private jumpTimer: number;
   public lastCollision: Fighter;
@@ -84,9 +82,6 @@ class Fighter extends Prop {
     this.UpdatesMissed = 0;
     this.MarkedForCleanup = false;
     this.DisplayName = null;
-
-    this.JustHitPosition = new Vector(0, 0, 0);
-    this.JustHitMomentum = 0;
     this.lastCollision = null;
 
     this.riding = null;
@@ -141,9 +136,8 @@ class Fighter extends Prop {
 
 
   // If this collided with another fighter, set state
-  public CollideWithFighter(hit: Fighter, momentum: number) {
-    this.JustHitPosition = Vector.Average(this.Position, hit.Position);
-    this.JustHitMomentum = momentum;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public CollideWithFighter(hit: Fighter, momentum: number) { // Momentum used in subclasses
     this.lastCollision = hit;
   }
 
@@ -225,7 +219,6 @@ class Fighter extends Prop {
     // Reset states
     this.JustLanded = false;
     this.rodeThisTick = null;
-    this.JustHitMomentum = 0;
     this.BulletShock = 0;
 
     if (!this.isFalling()) this.jumpTimer -= DeltaTime;

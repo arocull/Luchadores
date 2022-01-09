@@ -154,10 +154,14 @@ class Announcer {
         soundName = 'Luchadores';
         break;
       case CalloutType.Name:
-        soundName = `FighterName/${fighterTypeToString(event.instigator.getCharacter())}`;
+        if (event.instigator) {
+          soundName = `FighterName/${fighterTypeToString(event.instigator.getCharacter())}`;
+        }
         break;
       case CalloutType.Kill:
-        soundName = `KillMethod/${fighterTypeToString(event.instigator.getCharacter())}`;
+        if (event.instigator) {
+          soundName = `KillMethod/${fighterTypeToString(event.instigator.getCharacter())}`;
+        }
         break;
       case CalloutType.BuildTension:
         soundName = 'BattleCallouts/OhBuildingTension';

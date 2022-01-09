@@ -3,6 +3,7 @@ import Ray from './Ray';
 import TraceResult from './TraceResult';
 import Prop from '../props/Prop';
 import Fighter from '../Fighter';
+import { MessageBus } from '../../messaging/bus';
 
 // Internal Functions //
 /* eslint-disable no-param-reassign */
@@ -69,6 +70,19 @@ function CollideFighters(a: Fighter, b: Fighter, info: TraceResult) {
 
     a.CollideWithFighter(b, moment1); // Trigger collision events
     b.CollideWithFighter(a, moment2);
+
+    // Induce camera shake
+    const camShakeEvent = {
+      amnt: (moment1 + moment2) / 1000,
+      max: 50,
+    };
+    MessageBus.publish(`CameraShake${a.getOwnerID()}`, camShakeEvent);
+    MessageBus.publish(`CameraShake${b.getOwnerID()}`, camShakeEvent);
+    // Play smash particle animation
+    MessageBus.publish('Effect_Smash', {
+      pos: Vector.Average(a.Position, b.Position),
+      moment: moment1 + moment2,
+    });
 
     // Momentum Transfer--should we swap momentums or sum them (essentially, what collision do we want)
     const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / massA);

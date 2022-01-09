@@ -419,6 +419,7 @@ class Client {
     const mismatch = msg.characterID !== this.player.getCharacterID();
 
     this.player.assignCharacterID(msg.characterID);
+    this.camera.SetFighterID(msg.characterID);
 
     if (mismatch && this.character) { // Kill character if there was an ID mismatch
       this.character.HP = 0;
@@ -521,9 +522,7 @@ class Client {
     this.world.tick(worldDeltaTime, appliedWorldState);
     // Camera and visuals ticked separately on ClientGraphics
 
-    if (this.character) { // Apply bullet shock
-      this.camera.Shake += this.character.BulletShock;
-    } else if (!this.uiManager || !(this.uiManager.isClassSelectOpen() || this.uiManager.isUsernameSelectOpen())) { // Do not tick if player is selecting username or character
+    if (!this.uiManager || !(this.uiManager.isClassSelectOpen() || this.uiManager.isUsernameSelectOpen())) { // Do not tick if player is selecting username or character
       this.respawnTimer -= DeltaTime; // Count down respawn timer to zero from three
 
       if (this.respawnTimer <= 0 && this.uiManager && !this.uiManager.inGUIMode()) { // If it reaches zero, they are allowed to spawn--open menus

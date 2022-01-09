@@ -19,7 +19,7 @@ test('fighter collision test', () => {
   for (let i = 0; i < 180; i++) {
     world.tick(0.03);
 
-    if (a.JustHitMomentum > 0 && !hasHit) {
+    if (b.HP < b.MaxHP && !hasHit) {
       hasHit = true;
       a.Move(new Vector(-1, 0, 0));
       expect(b.Velocity.x).toBeGreaterThan(0);
@@ -161,7 +161,7 @@ test('flamingo jetpack test', () => {
 test('sheep kill-effect test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World(new Map());
-  world.Map = new Map(500, 50, 23, 0);
+  world.Map = new Map(MapPreset.None, 500, 50, 23, 0);
   const sheep1 = new Sheep(1, new Vector(1, 20, 0));
   const sheep2 = new Sheep(2, new Vector(1, 40, 0));
   world.Fighters.push(sheep1, sheep2);

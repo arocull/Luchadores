@@ -50,6 +50,10 @@ class Sheep extends Fighter {
     this.landingVelocity = Math.min(Math.max(velocity / 9, 0), 2); // Clamp max radius to 1
 
     MessageBus.publish('AOE_Blast', new AOEBlast(this.Position, this.landingVelocity, this.landingVelocity * 6, this, this.landingVelocity * 500, true, false));
+    MessageBus.publish(`CameraShake${this.getOwnerID()}`, {
+      amnt: velocity,
+      max: 10,
+    });
   }
 
   public EarnKill() {

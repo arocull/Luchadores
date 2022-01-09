@@ -10,7 +10,6 @@ import World from '../common/engine/World';
 import { UIDeathNotification, UIPlayerInfo } from './ui';
 import { MakeAnimator } from './animation';
 import { Vector } from '../common/engine/math';
-import { MessageBus } from '../common/messaging/bus';
 import AssetPreloader from './AssetPreloader';
 import { ThreatObject } from '../common/engine/combat/FightObserver';
 import Fighter from '../common/engine/Fighter';
@@ -18,6 +17,7 @@ import ProjectileGroup from '../common/engine/combat/ProjectileGroup';
 import { RenderQuality } from '../common/engine/Enums';
 import Map from '../common/engine/maps/Map';
 import { MapClient } from './maps';
+import { SubscriberContainer } from '../common/messaging/container';
 
 class ClientGraphics {
   public uiManager: UIManager;
@@ -26,6 +26,7 @@ class ClientGraphics {
   public fpsCounter: number[];
 
   public particles: Particle[];
+  private subscriptions: SubscriberContainer;
 
   constructor(private clientState: Client) {
     this.uiManager = new UIManager();
@@ -39,24 +40,34 @@ class ClientGraphics {
 
     this.particles = [];
 
-    MessageBus.subscribe('Effect_NewParticle', (msg) => {
+    // Attach MessageBus subscriptions
+    this.subscriptions = new SubscriberContainer();
+    this.subscriptions.attach('Effect_NewParticle', (msg) => {
       this.particles.push(msg as Particle);
     });
-    MessageBus.subscribe('Effect_PlayerDied', (msg) => {
+    this.subscriptions.attach('Effect_PlayerDied', (msg) => {
       PConfetti.Burst(this.particles, msg as Vector, 0.2, 4, 250); // Burst into confetti!
     });
-    MessageBus.subscribe('LoadAsset_Prop', (msg) => {
+    this.subscriptions.attach('LoadAsset_Prop', (msg) => {
       AssetPreloader.getImage(msg.texture).then((img) => {
         // eslint-disable-next-line no-param-reassign
         msg.prop.texture = img;
       });
     });
-    MessageBus.subscribe('LoadAsset_Map', (msg) => {
+    this.subscriptions.attach('LoadAsset_Map', (msg) => {
       AssetPreloader.getImage(msg.texture).then((img) => {
         // eslint-disable-next-line no-param-reassign
         msg.map.Texture = img;
       });
     });
+    this.subscriptions.attach('Effect_Smash', (msg) => {
+      for (let j = 0; j < 3; j++) { // Smash effect particles
+        this.particles.push(new PSmashEffect(msg.pos, msg.moment / 5000));
+      }
+    });
+  }
+  public deconstruct() {
+    this.subscriptions.detachAll();
   }
 
   public tick(DeltaTime: number) {
@@ -81,20 +92,6 @@ class ClientGraphics {
               a.Radius,
             );
           }
-        }
-
-        // Collision effects
-        if (a.JustHitMomentum > 700) {
-          for (let j = 0; j < 3; j++) { // Smash effect particles
-            this.particles.push(new PSmashEffect(a.JustHitPosition, a.JustHitMomentum / 5000));
-          }
-
-          // Camera shake upon impact or nearby impact
-          if (this.clientState.character && Vector.Distance(a.Position, this.clientState.character.Position) <= 2) {
-            this.camera.Shake += a.JustHitMomentum / 1500;
-          }
-
-          a.JustHitMomentum = 0; // Reset fighter momentums (only used for visual effects)
         }
       }
     }
