@@ -1,6 +1,5 @@
 * {
     font-family: 'Roboto', sans-serif;
-    font-family: 'Flamenco', cursive;
 }
 canvas {
     z-index: auto;
@@ -48,6 +47,12 @@ img.logo {
     background: none;
 }
 
+h1, h2 {
+    font-family: 'Flamenco', 'Script MT', cursive;
+}
+h3, h4, p {
+    font-family: 'Roboto', sans-serif;
+}
 
 div.ui_usernameSelect {
     font-family: 'Roboto', sans-serif;
@@ -173,79 +178,4 @@ div.ui_title {
     height: 10%;
     position: absolute;
     top: -8%;
-}
-div.ui_settings {
-    font-family: 'Roboto', sans-serif;
-    z-index: 1;
-    position: absolute;
-    padding: 0;
-    top: 10%;
-    left: 10%;
-    right: 10%;
-    bottom: 10%;
-    width: 80%;
-    height: 80%;
-    background-color: #737373;
-}
-div.setting_title {
-    text-align: left;
-    text-anchor: middle;
-    font-family: 'Roboto', sans-serif;
-    font-size: 4vmin;
-    color: #ffffff;
-    margin-left: 8%;
-    margin-right: 8%;
-    width: 84%;
-}
-div.setting_info {
-    text-align: left;
-    text-anchor: middle;
-    font-family: 'Roboto', sans-serif;
-    font-size: 3vmin;
-    color: #dfdfdf;
-    margin-left: 8%;
-    margin-right: 8%;
-    width: 84%;
-}
-div.setting_info_misc {
-    text-align: center;
-    text-anchor: middle;
-    font-family: 'Roboto', sans-serif;
-    font-size: 3.2vmin;
-    color: #ffffff;
-    margin-left: 20%;
-    margin-right: 20%;
-    width: 60%;
-}
-table.settings_options {
-    table-layout: fixed;
-    margin-left: 5%;
-    margin-right: 5%;
-    width: 90%;
-    height: 8%;
-}
-button.settings_button {
-    font-family: 'Roboto', sans-serif;
-    font-size: 3vmin;
-    background-color: #646464;
-    color: #ffffff;
-    margin-left: 20%;
-    margin-right: 20%;
-    width: 60%;
-    height: 100%;
-}
-button.settings_button:hover {
-    background-color: #999999;
-}
-img.settings_gear {
-    z-index: 10;
-    position: absolute;
-    display: inline-block;
-    background: none;
-    margin: 5px;
-    width: 3vmin;
-    height: 3vmin;
-}
-button.settings_gear:hover {
-    background-color: rgba(42, 255, 255, 0.5);
 }

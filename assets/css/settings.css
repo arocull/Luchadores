@@ -1,0 +1,78 @@
+div.settings {
+    position: absolute;
+    padding: 0;
+    top: calc(10% - 5px);
+    left: calc(10% - 5px);
+    width: 80%;
+    height: 80%;
+    background-color: #737373;
+    border-radius: 5px;
+    border: 5px #646464 dotted;
+}
+div.settings h2 {
+    position: relative;
+    font-weight: bold;
+    text-anchor: middle;
+    font-size: 8vmin;
+    color: #ffffff;
+    width: auto;
+    bottom: 6vmin;
+    text-align: center;
+    text-align-last: center;
+    margin: 0;
+}
+div.settings h3 {
+    color: #ffffff;
+    text-align: left;
+    text-align-last: left;
+    font-size: 4vmin;
+    margin: 0;
+}
+div.settings h4 {
+    color: #ffffff;
+    text-align: center;
+    text-align-last: center;
+    font-size: 3.5vmin;
+    margin: 0;
+}
+div.settings p {
+    color: #dfdfdf;
+    text-align: left;
+    text-align-last: left;
+    text-indent: 0;
+    font-size: 3vmin;
+    margin: 0;
+}
+
+div.settings table.options {
+    table-layout: fixed;
+    margin-left: 5%;
+    margin-right: 5%;
+    width: 90%;
+    height: 8%;
+}
+button.settings_button {
+    font-family: 'Roboto', sans-serif;
+    font-size: 3vmin;
+    background-color: #646464;
+    color: #ffffff;
+    margin-left: 20%;
+    margin-right: 20%;
+    width: 60%;
+    height: 100%;
+}
+button.settings_button:hover {
+    background-color: #999999;
+}
+img.settings_gear {
+    z-index: 10;
+    position: absolute;
+    display: inline-block;
+    background: none;
+    margin: 5px;
+    width: 3vmin;
+    height: 3vmin;
+}
+button.settings_gear:hover {
+    background-color: rgba(42, 255, 255, 0.5);
+}

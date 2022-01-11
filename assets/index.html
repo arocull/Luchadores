@@ -3,6 +3,10 @@
     <head>
         <title>Luchadores</title>
         <meta charset="utf-8">
+        <!-- Don't index our servers! They are very temporary! -->
+        <meta name="robots" content="noindex" />
+        <meta name="googlebot" content="noindex" />
+
         
         <link rel="shortcut icon" href="/Interface/page_icon.png" />
         <meta name="keywords" content="game, video game, videogame, battle, arena, luchadores, luchador, animal, animals">
@@ -25,6 +29,7 @@
         <link href="https://fonts.googleapis.com/css2?family=Flamenco&display=swap" rel="stylesheet">
         <link href="css/styles.css" rel="stylesheet">
         <link href="css/char_info.css" rel="stylesheet">
+        <link href="css/settings.css" rel="stylesheet">
     </head>
     <body>
         <div id="settings_gear_container" hidden><img class="settings_gear" id="settings_gear" src="Interface/Gear.png" alt="Settings"></div>
@@ -61,14 +66,14 @@
         </div>
 
 
-        <div class="ui_settings" id="settings_menu" hidden>
-            <div class="ui_title"><b>Settings</b></div>
-            <table class="settings_options">
+        <div class="settings" id="settings_menu" hidden>
+            <h2>Settings</h2>
+            <table class="options">
                 <tr>
-                    <div class="setting_title">> Render Quality</div>
+                    <h3>> Render Quality</h3>
                 </tr>
                 <tr>
-                    <div class="setting_info">Determines drawing of certain special effects like arena bound stretching and weather. Performance impact varies by platform.</div>
+                    <p>Determines drawing of certain special effects like arena bound stretching and weather. Performance impact varies by platform.</p>
                 </tr>
                 <tr>
                     <td><button class="settings_button" id="graphics_1">Fast</button></td>
@@ -76,15 +81,13 @@
                     <td><button class="settings_button" id="graphics_3">Pretty</button></td>
                 </tr>
             </table>
-
-            <hr>
-
-            <table class="settings_options">
+            <hr/>
+            <table class="options">
                 <tr>
-                    <div class="setting_title">> Particles</div>
+                    <h3>> Particles</h3>
                 </tr>
                 <tr>
-                    <div class="setting_info">How many particles should be generated and simulated. The more particles the prettier, but the more processing power each frame takes.</div>
+                    <p>How many particles should be generated and simulated. The more particles the prettier, but the more processing power each frame takes.</p>
                 </tr>
                 <tr>
                     <td><button class="settings_button" id="particles_1">Minimal</button></td>
@@ -92,20 +95,18 @@
                     <td><button class="settings_button" id="particles_3">Excessive</button></td>
                 </tr>
             </table>
-
-            <hr>
-
-            <table class="settings_options">
+            <hr/>
+            <table class="options">
                 <tr>
-                    <div class="setting_title">> Extra Settings</div>
+                    <h3>> Extra Settings</h3>
                 </tr>
                 <tr>
-                    <div class="setting_info">Quality of life settings. Because everyone is different. <3</div>
+                    <p>Quality of life settings. Because everyone is different. <3</p>
                 </tr>
                 <tr>
-                    <td><div class="setting_info_misc">FPS Counter</div></td>
-                    <td><div class="setting_info_misc">Camera Shake</div></td>
-                    <td><div class="setting_info_misc">Announcer</div></td>
+                    <td><h4>FPS Counter</h4></td>
+                    <td><h4>Camera Shake</h4></td>
+                    <td><h4>Announcer</h4></td>
                 </tr>
                 <tr>
                     <td><button class="settings_button" id="fps_counter">Disabled</button></td>
@@ -113,9 +114,7 @@
                     <td><button class="settings_button" id="announcer">Enabled</button></td>
                 </tr>
             </table>
-
             <br />
-            
             <button class="settings_button" id="settings_close" style="width:10%; height:6%; margin-left:45%; position:absolute; bottom:-3%">Close</button>
         </div>
 
