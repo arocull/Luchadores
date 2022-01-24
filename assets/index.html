@@ -28,6 +28,7 @@
         <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Flamenco&display=swap" rel="stylesheet">
         <link href="css/styles.css" rel="stylesheet">
+        <link href="css/username.css" rel="stylesheet">
         <link href="css/char_info.css" rel="stylesheet">
         <link href="css/settings.css" rel="stylesheet">
     </head>
@@ -36,14 +37,18 @@
         <canvas id="render" width="1000" height="800"></canvas>
 
 
-        <div class="ui_usernameSelect" id="username_select" hidden>
+        <div class="username_select" id="username_select" hidden>
             <div class="logo_container">
                 <img class="logo" src="interface/logo.png" alt="LUCHADORES" width="1281" height="235"/>
             </div>
-            <div class="ui_usernameInstructions">Please type in a username.<br />It will last for this session only.</div>
-            <input class="username" id="username_input" name="username" type="text" autofocus minlength="3" maxlength="24" size="30"/>
-            <div class="ui_usernameError" id="username_error" hidden>Error info here.</div>
-            <button class="confirm_button" id="username_confirm">Confirm</button>
+            <div>
+                <p>Welcome to <em>Luchadores</em>!<br />Please type in your wrestler name.<br />It will last for this session only.</p>
+                <input class="username" id="username_input" name="username" type="text" autofocus minlength="3" maxlength="24" size="25"/>
+                <br />
+                <button class="confirm" id="username_confirm">Confirm</button>
+            </div>
+            <br />
+            <div class="err" id="username_error" hidden>Error info here.</div>
         </div>
 
 

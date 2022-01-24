@@ -45,18 +45,18 @@ class UIClassSelect {
         default:
         case FighterType.Sheep:
           fighterName.textContent = 'La Oveja Grande';
-          flavorText.textContent = 'She really, REALLY likes chocolate.';
-          descript.textContent = 'Roll around and build momentum, before slamming into enemies and crushing them under your immense weight.';
+          flavorText.textContent = 'Crushing excitement to make friends!';
+          descript.textContent = 'Roll around and build momentum, before smashing into enemies and slinging them with your immense weight!';
           break;
         case FighterType.Deer:
           fighterName.textContent = 'El Ciervo Macabro';
           flavorText.textContent = 'Don\'t ask where he got the guns.';
-          descript.textContent = 'Fire a constant stream of long-range bullets with precision, and dodge attacks with superior agility.';
+          descript.textContent = 'Fire a rapid stream of bullets, and dodge attacks with superior agility.';
           break;
         case FighterType.Flamingo:
           fighterName.textContent = 'El Flamenacre';
-          flavorText.textContent = 'He\'s just really weird.';
-          descript.textContent = 'Reign terror upon your foes by spewing fire upon them--just don\'t run out of breath.';
+          flavorText.textContent = 'Feels a little hot-headed.';
+          descript.textContent = 'Spew lethal flames in a cone! Propel yourself through the air like a rocket! Just don\'t run out of breath.';
           break;
       }
     });
