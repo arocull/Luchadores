@@ -8,7 +8,7 @@
         <meta name="googlebot" content="noindex" />
 
         
-        <link rel="shortcut icon" href="/Interface/page_icon.png" />
+        <link rel="shortcut icon" href="/interface/page_icon.png" />
         <meta name="keywords" content="game, video game, videogame, battle, arena, luchadores, luchador, animal, animals">
         <meta name="author" content="Alan O'Cull, James O'Cull, Max O'Cull">
 
@@ -20,8 +20,8 @@
         <meta name="og:description" content="A top-down fast-paced online arena battle with exaggerated wrestling matches.">
         <meta name="twitter:description" content="A top-down fast-paced online arena battle with exaggerated wrestling matches.">
         
-        <meta name="og:image" content="http://alanocull.com:3000/Interface/page_icon.png"> <!--TODO: auto-generate this URL-->
-        <meta name="twitter:image" content="http://alanocull.com:3000/Interface/page_icon.png"> <!--TODO: auto-generate this URL-->
+        <meta name="og:image" content="http://alanocull.com:3000/interface/page_icon.png"> <!--TODO: auto-generate this URL-->
+        <meta name="twitter:image" content="http://alanocull.com:3000/interface/page_icon.png"> <!--TODO: auto-generate this URL-->
         <meta data-react-helmet="true" name="theme-color"content="#7f0000" />
 
         <!-- STYLING -->
@@ -32,13 +32,13 @@
         <link href="css/settings.css" rel="stylesheet">
     </head>
     <body>
-        <div id="settings_gear_container" hidden><img class="settings_gear" id="settings_gear" src="Interface/Gear.png" alt="Settings"></div>
+        <div id="settings_gear_container" hidden><img class="settings_gear" id="settings_gear" src="interface/gear.png" alt="Settings"></div>
         <canvas id="render" width="1000" height="800"></canvas>
 
 
         <div class="ui_usernameSelect" id="username_select" hidden>
             <div class="logo_container">
-                <img class="logo" src="Interface/Logo.png" alt="LUCHADORES" width="1281" height="235"/>
+                <img class="logo" src="interface/logo.png" alt="LUCHADORES" width="1281" height="235"/>
             </div>
             <div class="ui_usernameInstructions">Please type in a username.<br />It will last for this session only.</div>
             <input class="username" id="username_input" name="username" type="text" autofocus minlength="3" maxlength="24" size="30"/>
@@ -68,54 +68,55 @@
 
         <div class="settings" id="settings_menu" hidden>
             <h2>Settings</h2>
-            <table class="options">
-                <tr>
-                    <h3>> Render Quality</h3>
-                </tr>
-                <tr>
-                    <p>Determines drawing of certain special effects like arena bound stretching and weather. Performance impact varies by platform.</p>
-                </tr>
-                <tr>
-                    <td><button class="settings_button" id="graphics_1">Fast</button></td>
-                    <td><button class="settings_button" id="graphics_2">Balanced</button></td>
-                    <td><button class="settings_button" id="graphics_3">Pretty</button></td>
-                </tr>
-            </table>
-            <hr/>
-            <table class="options">
-                <tr>
-                    <h3>> Particles</h3>
-                </tr>
-                <tr>
-                    <p>How many particles should be generated and simulated. The more particles the prettier, but the more processing power each frame takes.</p>
-                </tr>
-                <tr>
-                    <td><button class="settings_button" id="particles_1">Minimal</button></td>
-                    <td><button class="settings_button" id="particles_2">Medium</button></td>
-                    <td><button class="settings_button" id="particles_3">Excessive</button></td>
-                </tr>
-            </table>
-            <hr/>
-            <table class="options">
-                <tr>
-                    <h3>> Extra Settings</h3>
-                </tr>
-                <tr>
-                    <p>Quality of life settings. Because everyone is different. <3</p>
-                </tr>
-                <tr>
-                    <td><h4>FPS Counter</h4></td>
-                    <td><h4>Camera Shake</h4></td>
-                    <td><h4>Announcer</h4></td>
-                </tr>
-                <tr>
-                    <td><button class="settings_button" id="fps_counter">Disabled</button></td>
-                    <td><button class="settings_button" id="camera_shake">Enabled</button></td>
-                    <td><button class="settings_button" id="announcer">Enabled</button></td>
-                </tr>
-            </table>
-            <br />
-            <button class="settings_button" id="settings_close" style="width:10%; height:6%; margin-left:45%; position:absolute; bottom:-3%">Close</button>
+            <div class="aligner">
+                <table class="options">
+                    <tr>
+                        <h3>> Render Quality</h3>
+                    </tr>
+                    <tr>
+                        <p>Determines drawing of certain special effects like arena bound stretching and weather. Performance impact varies by platform.</p>
+                    </tr>
+                    <tr>
+                        <td><button id="graphics_1">Fast</button></td>
+                        <td><button id="graphics_2">Balanced</button></td>
+                        <td><button id="graphics_3">Pretty</button></td>
+                    </tr>
+                </table>
+                <hr/>
+                <table class="options">
+                    <tr>
+                        <h3>> Particles</h3>
+                    </tr>
+                    <tr>
+                        <p>How many particles should be generated and simulated. The more particles the prettier, but the more processing power each frame takes.</p>
+                    </tr>
+                    <tr>
+                        <td><button id="particles_1">Minimal</button></td>
+                        <td><button id="particles_2">Medium</button></td>
+                        <td><button id="particles_3">Excessive</button></td>
+                    </tr>
+                </table>
+                <hr/>
+                <table class="options">
+                    <tr>
+                        <h3>> Extra Settings</h3>
+                    </tr>
+                    <tr>
+                        <p>Quality of life settings. Because everyone is different. <3</p>
+                    </tr>
+                    <tr>
+                        <td><h4>FPS Counter</h4></td>
+                        <td><h4>Camera Shake</h4></td>
+                        <td><h4>Announcer</h4></td>
+                    </tr>
+                    <tr>
+                        <td><button id="fps_counter">Disabled</button></td>
+                        <td><button id="camera_shake">Enabled</button></td>
+                        <td><button id="announcer">Enabled</button></td>
+                    </tr>
+                </table>
+            </div>
+            <button id="settings_close">Close</button>
         </div>
 
         <script src="client.js"></script>

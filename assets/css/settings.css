@@ -1,5 +1,5 @@
 div.settings {
-    position: absolute;
+    position: fixed;
     padding: 0;
     top: calc(10% - 5px);
     left: calc(10% - 5px);
@@ -9,6 +9,13 @@ div.settings {
     border-radius: 5px;
     border: 5px #646464 dotted;
 }
+div.settings div.aligner {
+    position: relative;
+    top: -8vmin;
+    padding: 1em;
+    display: block;
+}
+
 div.settings h2 {
     position: relative;
     font-weight: bold;
@@ -43,27 +50,72 @@ div.settings p {
     font-size: 3vmin;
     margin: 0;
 }
+div.settings hr {
+    margin: 0.75em;
+    padding: 0;
+    border: 0.5vmin #646464 solid;
+    border-radius: 0.5vmin;
+}
 
 div.settings table.options {
     table-layout: fixed;
-    margin-left: 5%;
-    margin-right: 5%;
-    width: 90%;
-    height: 8%;
+    margin-left: 3%;
+    width: 94%;
+    height: auto;
 }
-button.settings_button {
+div.settings button {
     font-family: 'Roboto', sans-serif;
     font-size: 3vmin;
-    background-color: #646464;
+    background-color: #424242;
     color: #ffffff;
     margin-left: 20%;
     margin-right: 20%;
     width: 60%;
-    height: 100%;
+    height: 2em;
+    border: none;
 }
-button.settings_button:hover {
+div.settings button:hover {
     background-color: #999999;
 }
+div.settings #settings_close {
+    position: absolute;
+    width: 5em;
+    height: 2em;
+    margin-left: calc(50% - 2.5em);
+    bottom: -1em;
+    display: block;
+}
+
+div.settings button.selected {
+    animation-name: settings_selected_animation;
+    animation-duration: 5s;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    animation-timing-function: linear;
+    background-color: #649999;
+}
+div.settings button.selected:hover {
+    background-color: #426464;
+    color: #ffffff;
+}
+@keyframes settings_selected_animation {
+    0% {
+        color: #ffff55;
+    }
+    25% {
+        color: #55ff55;
+    }
+    50% {
+        color: #55ffff;
+    }
+    75% {
+        color: #ffaaaa;
+    }
+    100% {
+        color: #ffff55;
+    }
+}
+
 img.settings_gear {
     z-index: 10;
     position: absolute;
@@ -72,7 +124,24 @@ img.settings_gear {
     margin: 5px;
     width: 3vmin;
     height: 3vmin;
+    image-rendering: pixelated;
+    transform-origin: center;
 }
-button.settings_gear:hover {
-    background-color: rgba(42, 255, 255, 0.5);
+img.settings_gear:hover {
+    animation-name: settings_gear_spin;
+    animation-duration: 2s;
+    animation-iteration-count: infinite;
+    animation-direction: normal;
+    animation-timing-function: linear;
+}
+@keyframes settings_gear_spin {
+    0% {
+        transform: rotate(0deg) scale(1.1);
+    }
+    50% {
+        transform: rotate(180deg) scale(1.1);
+    }
+    100% {
+        transform: rotate(360deg) scale(1.1);
+    }
 }

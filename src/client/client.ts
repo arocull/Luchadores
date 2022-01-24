@@ -61,8 +61,8 @@ function AnimationFrame(tick: number) {
   // TODO: Generate asset list as a prebuild step and return them here
   // TODO: Do same thing with audio
   AssetPreloader.getImages([
-    'Interface/Logo.png',
-    'Interface/Gear.png',
+    'interface/logo.png',
+    'interface/gear.png',
     'Maps/Arena.jpg',
     'Maps/Grass.jpg',
     'Maps/Snowy.jpg',
