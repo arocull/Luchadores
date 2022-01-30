@@ -61,6 +61,7 @@ function AnimationFrame(tick: number) {
   // TODO: Generate asset list as a prebuild step and return them here
   // TODO: Do same thing with audio
   AssetPreloader.getImages([
+    'interface/loading_icon.gif',
     'interface/logo.png',
     'interface/gear.png',
     'Maps/Arena.jpg',
@@ -82,10 +83,14 @@ function AnimationFrame(tick: number) {
     .concat(AssetPreloader.getAudioQueue());
 
   Promise.all(assetPromises).then(() => {
+    // Initialize client stuff
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
     ClientAudio.setClientState(client);
     announcer = new Announcer(client, graphics.camera);
+
+    // Hide loading screen
+    uiLoadScreen.hide();
 
     console.log('Asset preloading complete. Initializing clients.');
     window.requestAnimationFrame(AnimationFrame);

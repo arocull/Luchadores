@@ -28,6 +28,7 @@
         <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/css2?family=Flamenco&display=swap" rel="stylesheet">
         <link href="css/styles.css" rel="stylesheet">
+        <link href="css/load.css" rel="stylesheet">
         <link href="css/username.css" rel="stylesheet">
         <link href="css/char_info.css" rel="stylesheet">
         <link href="css/settings.css" rel="stylesheet">
@@ -36,10 +37,16 @@
         <div id="settings_gear_container" hidden><img class="settings_gear" id="settings_gear" src="interface/gear.png" alt="Settings"></div>
         <canvas id="render" width="1000" height="800"></canvas>
 
+        <div class="load_screen" id="load_screen">
+            <div class="load_icon">
+                <img class="load_icon" src="interface/loading_icon.gif" alt="Loading Icon" />
+            </div>
+        </div>
+
 
         <div class="username_select" id="username_select" hidden>
             <div class="logo_container">
-                <img class="logo" src="interface/logo.png" alt="LUCHADORES" width="1281" height="235"/>
+                <img class="logo" src="interface/logo.png" alt="LUCHADORES"/>
             </div>
             <div>
                 <p>Welcome to <em>Luchadores</em>!<br />Please type in your wrestler name.<br />It will last for this session only.</p>
