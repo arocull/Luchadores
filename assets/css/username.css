@@ -50,6 +50,17 @@ div.username_select div.err {
     color: #ff2222;
     font-weight: bold;
 }
+div.username_select a {
+    text-align: center;
+    text-align-last: center;
+    text-anchor: middle;
+    text-decoration: none;
+    font-size: 1.5vmax;
+    color: #7f0000;
+    max-width: 100%;
+    margin: 0.5em auto 0.5em auto;
+    display: block;
+}
 div.username_select button.confirm {
     position: relative;
     font-size: 3.5vmin;

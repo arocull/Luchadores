@@ -1,0 +1,10 @@
+# Luchadores
+Version 0.0.1 (Alpha)
+
+A small game by the O'Cull brothers James, Max, and Alan
+
+## Changelog
+
+### Version 0.0.1
+- Added changelog
+- Performed another UI pass
