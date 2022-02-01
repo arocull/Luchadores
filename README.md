@@ -23,9 +23,9 @@ We use Webpack to build everything:
 ```
 npm run watch           # Generally the fastest, also auto-starts the server.
 npm run build           # Builds everything once.
-npm run build           # Builds everything once.
+npm run build-prod      # Builds everything once with production settings.
 npm run clean           # Clears the dist folder.
-npm run rebuild-prod    # Cleans and builds everything once with production settings.
+npm run rebuild         # Cleans and builds everything once.
 npm run rebuild-prod    # Cleans and builds everything once with production settings.
 ```
 
@@ -52,3 +52,5 @@ can forcibly ignore these by adding the `--no-verify` flag like so:
 ```
 git commit -a -m "Your message" --no-verify
 ```
+
+Be sure to add changes to the [changelog](assets/changelog.txt) when making edits, or at least when making balance changes.

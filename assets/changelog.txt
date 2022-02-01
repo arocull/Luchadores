@@ -6,5 +6,6 @@ A small game by the O'Cull brothers James, Max, and Alan
 ## Changelog
 
 ### Version 0.0.1
+- Performed another UI pass (redone menus like settings, character info, etc)
+- Separated out some CSS files for better organization
 - Added changelog
-- Performed another UI pass

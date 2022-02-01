@@ -61,6 +61,9 @@ div.username_select a {
     margin: 0.5em auto 0.5em auto;
     display: block;
 }
+div.username_select a:hover {
+    color: #fea711;
+}
 div.username_select button.confirm {
     position: relative;
     font-size: 3.5vmin;
