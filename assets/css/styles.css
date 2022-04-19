@@ -93,3 +93,8 @@ div.ui_title {
     position: absolute;
     top: -8%;
 }
+div.center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

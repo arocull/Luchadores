@@ -338,15 +338,12 @@ class Client {
     if (this.uiManager === null) return; // Do not attempt to parse input if no UI manager present
 
     // Type into username textbox
-    if (this.uiManager.inGUIMode() && this.inputSubscribers == null) {
+    if (this.inputSubscribers === null) {
       // When we enter GUI mode, bind the events
       this.inputSubscribers = new SubscriberContainer();
       this.inputSubscribers.attach(InputTopics.keydown, (k: KeyboardButtonInput) => {
         this.uiManager.keyInput(k.key); // , k.shiftKey
       });
-    } else if (!this.uiManager.inGUIMode() && this.inputSubscribers != null) {
-      // When we leave GUI mode, unbind the events
-      this.inputSubscribers.detachAll();
     }
 
     if (input.Keys.a === true) this.input.MoveDirection.x = -1;

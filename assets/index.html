@@ -81,56 +81,60 @@
 
 
         <div class="settings" id="settings_menu" hidden>
-            <h2>Settings</h2>
-            <div class="aligner">
-                <table class="options">
-                    <tr>
-                        <h3>> Render Quality</h3>
-                    </tr>
-                    <tr>
-                        <p>Determines drawing of certain special effects like arena bound stretching and weather. Performance impact varies by platform.</p>
-                    </tr>
-                    <tr>
-                        <td><button id="graphics_1">Fast</button></td>
-                        <td><button id="graphics_2">Balanced</button></td>
-                        <td><button id="graphics_3">Pretty</button></td>
-                    </tr>
-                </table>
-                <hr/>
-                <table class="options">
-                    <tr>
-                        <h3>> Particles</h3>
-                    </tr>
-                    <tr>
-                        <p>How many particles should be generated and simulated. The more particles the prettier, but the more processing power each frame takes.</p>
-                    </tr>
-                    <tr>
-                        <td><button id="particles_1">Minimal</button></td>
-                        <td><button id="particles_2">Medium</button></td>
-                        <td><button id="particles_3">Excessive</button></td>
-                    </tr>
-                </table>
-                <hr/>
-                <table class="options">
-                    <tr>
-                        <h3>> Extra Settings</h3>
-                    </tr>
-                    <tr>
-                        <p>Quality of life settings. Because everyone is different. <3</p>
-                    </tr>
-                    <tr>
-                        <td><h4>FPS Counter</h4></td>
-                        <td><h4>Camera Shake</h4></td>
-                        <td><h4>Announcer</h4></td>
-                    </tr>
-                    <tr>
-                        <td><button id="fps_counter">Disabled</button></td>
-                        <td><button id="camera_shake">Enabled</button></td>
-                        <td><button id="announcer">Enabled</button></td>
-                    </tr>
-                </table>
+            <div class="container">
+                <h2>Settings</h2>
+                <div class="aligner">
+                    <table class="options">
+                        <tr>
+                            <h3>> Render Quality</h3>
+                        </tr>
+                        <tr>
+                            <p>Determines drawing of certain special effects like arena bound stretching and weather. Performance impact varies by platform.</p>
+                        </tr>
+                        <tr>
+                            <td><button id="graphics_1">Fast</button></td>
+                            <td><button id="graphics_2">Balanced</button></td>
+                            <td><button id="graphics_3">Pretty</button></td>
+                        </tr>
+                    </table>
+                    <hr/>
+                    <table class="options">
+                        <tr>
+                            <h3>> Particles</h3>
+                        </tr>
+                        <tr>
+                            <p>How many particles should be generated and simulated. The more particles the prettier, but the more processing power each frame takes.</p>
+                        </tr>
+                        <tr>
+                            <td><button id="particles_1">Minimal</button></td>
+                            <td><button id="particles_2">Medium</button></td>
+                            <td><button id="particles_3">Excessive</button></td>
+                        </tr>
+                    </table>
+                    <hr/>
+                    <table class="options">
+                        <tr>
+                            <h3>> Extra Settings</h3>
+                        </tr>
+                        <tr>
+                            <p>Quality of life settings. Because everyone is different. <3</p>
+                        </tr>
+                        <tr>
+                            <td><h4>FPS Counter</h4></td>
+                            <td><h4>Camera Shake</h4></td>
+                            <td><h4>Announcer</h4></td>
+                        </tr>
+                        <tr>
+                            <td><button id="fps_counter">Disabled</button></td>
+                            <td><button id="camera_shake">Enabled</button></td>
+                            <td><button id="announcer">Enabled</button></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="center">
+                    <button id="settings_close">Close</button>
+                </div>
             </div>
-            <button id="settings_close">Close</button>
         </div>
 
         <script src="client.js"></script>
