@@ -1,0 +1,14 @@
+# Luchadores
+Version 0.0.1 (Alpha)
+
+A small game by the O'Cull brothers James, Max, and Alan
+
+## Changelog
+
+### Version 0.0.1
+- Performed another UI pass (redone menus like settings, character info, etc)
+- Settings menu can be toggled with escape key
+- Added changelog
+- Separated out some CSS files for better organization
+- Fixed a bug with Player List not showing local client's selected character
+- Fixed a softlock on the Username Select screen caused by confirming a username before the connection was stabilized

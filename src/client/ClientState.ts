@@ -148,10 +148,11 @@ class Client {
           MessageBus.subscribe(BusTopics.Connections, (msg: IEvent) => {
             if (msg.type === TypeEnum.ClientDisconnected) {
               this.connected = false;
-              if (this.uiManager) this.uiManager.setConnectionText('Connection lost - Reload the webpage');
+              if (this.uiManager) this.uiManager.setConnectionText('Connection LOST - Reload the webpage!');
             }
           });
 
+          // Subscribe to network events
           MessageBus.subscribe(this.topics.ClientNetworkFromServer, (msg: IEvent) => {
             switch (msg.type) {
               case TypeEnum.WorldNew: // Load new map
@@ -184,9 +185,16 @@ class Client {
         })
         .catch((err) => {
           console.error('Failed to connect!', err);
-          if (this.uiManager) this.uiManager.setConnectionText('Connection failed - Reload the webpage');
+          if (this.uiManager) this.uiManager.setConnectionText('Connection FAILED - Reload the webpage!');
         })
-        .finally(() => console.log('... and finally!'));
+        .finally(() => {
+          console.log('... and finally!');
+
+          // Tell UI Manager to allow the client to select their username now that connection is stable (to prevent softlocking)
+          if (this.uiManager) {
+            this.uiManager.enableUsernameSelect();
+          }
+        });
     }
   }
 
@@ -282,7 +290,7 @@ class Client {
 
       if (this.world.Fighters[i].getOwnerID() === died) { // Character is killed
         diedCharacter = this.world.Fighters[i];
-        MessageBus.publish('Effect_PlayerDied', diedCharacter.Position);
+        MessageBus.publish('Effect_PlayerDied', Vector.Add(diedCharacter.Position, new Vector(0, diedCharacter.Height / 2, 0)));
         diedName = diedCharacter.DisplayName; // Obtain this honorable luchador's name
         diedCharacter.MarkedForCleanup = true; // Mark for cleanup (allows kill counting before removal)
 
@@ -338,15 +346,12 @@ class Client {
     if (this.uiManager === null) return; // Do not attempt to parse input if no UI manager present
 
     // Type into username textbox
-    if (this.uiManager.inGUIMode() && this.inputSubscribers == null) {
+    if (this.inputSubscribers === null) {
       // When we enter GUI mode, bind the events
       this.inputSubscribers = new SubscriberContainer();
       this.inputSubscribers.attach(InputTopics.keydown, (k: KeyboardButtonInput) => {
         this.uiManager.keyInput(k.key); // , k.shiftKey
       });
-    } else if (!this.uiManager.inGUIMode() && this.inputSubscribers != null) {
-      // When we leave GUI mode, unbind the events
-      this.inputSubscribers.detachAll();
     }
 
     if (input.Keys.a === true) this.input.MoveDirection.x = -1;
@@ -511,6 +516,7 @@ class Client {
 
       if (this.respawning) { // If they are respawning (newly assigned character), lerp camera focus to them and close class select if open
         this.respawning = false;
+        this.player.assignCharacter(this.character);
         this.camera.LerpToFocus(this.character);
         if (this.uiManager) this.uiManager.closeClassSelect();
       }

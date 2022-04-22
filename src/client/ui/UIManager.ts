@@ -75,20 +75,32 @@ class UIManager {
 
   // Inputs a key into the UI
   public keyInput(key: string) {
-    if (this.usernameSelectOpen) {
-      switch (key) {
-        case 'Backspace': this.usernameSelect.backspace(); break;
-        case 'Enter': this.usernameSelect.enter(); break;
-        default:
+    if (this.inGUIMode()) {
+      if (this.isUsernameSelectOpen()) {
+        switch (key) {
+          case 'Backspace': this.usernameSelect.backspace(); break;
+          case 'Enter': this.usernameSelect.enter(); break;
+          default:
+        }
+      } else if (this.isClassSelectOpen()) {
+        const num = parseInt(key, 10);
+        switch (key) {
+          case 'Enter': this.classSelect.confirmSelect(); break;
+          default:
+            if (!Number.isNaN(num) && Number.isFinite(num)) {
+              this.classSelect.quickSelect(num);
+            }
+        }
+      } else if (this.isSettingsMenuOpen()) {
+        switch (key) {
+          case 'Escape': this.closeSettingsMenu(); break; // Close settings menu with escape key
+          default:
+        }
       }
-    } else if (this.classSelectOpen) {
-      const num = parseInt(key, 10);
+    } else { // Bind menu functionality outside of the actual menu
       switch (key) {
-        case 'Enter': this.classSelect.confirmSelect(); break;
+        case 'Escape': this.openSettingsMenu(); break; // Open settings menu with escape key
         default:
-          if (!Number.isNaN(num) && Number.isFinite(num)) {
-            this.classSelect.quickSelect(num);
-          }
       }
     }
   }
@@ -110,6 +122,10 @@ class UIManager {
   // Sets the connection text
   public setConnectionText(text: string = '') {
     this.connectionText.text = text;
+  }
+  // Enables the player to select their username
+  public enableUsernameSelect() {
+    this.usernameSelect.allowConfirm();
   }
 
   // Open and close functions for different menus (in case we want to add transitions later)

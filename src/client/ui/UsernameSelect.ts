@@ -7,6 +7,7 @@ class UIUsernameSelect {
 
   private display: HTMLInputElement;
   private error: HTMLElement;
+  private confirm: HTMLButtonElement;
 
   private base: HTMLElement = document.getElementById('username_select');
 
@@ -14,8 +15,9 @@ class UIUsernameSelect {
     this.display = <HTMLInputElement>document.getElementById('username_input');
     this.error = document.getElementById('username_error');
 
-    const confirm = document.getElementById('username_confirm');
-    confirm.addEventListener('click', () => {
+    this.confirm = document.getElementById('username_confirm') as HTMLButtonElement;
+    this.confirm.disabled = true;
+    this.confirm.addEventListener('click', () => {
       this.submitResponse();
     });
 
@@ -41,6 +43,7 @@ class UIUsernameSelect {
   }
 
   private submitResponse() {
+    if (this.confirm.disabled) return;
     this.base.hidden = true;
 
     this.name = this.display.value;
@@ -66,14 +69,18 @@ class UIUsernameSelect {
     this.base.hidden = true;
   }
 
+  public allowConfirm() {
+    this.confirm.disabled = false;
+  }
+
   public backspace() { // Backspace key default function is disabled, so we need to manually backspace the test
     if (!this.base.hidden) {
       this.name = this.display.value;
-      this.name = this.name.substr(0, this.name.length - 1);
+      this.name = this.name.substring(0, this.name.length - 1);
       this.display.value = this.name;
     }
   }
-  public enter() { // Only submit response if UI is
+  public enter() { // Only submit response if UI is visible and not disabled
     if (!this.base.hidden) this.submitResponse();
   }
 }

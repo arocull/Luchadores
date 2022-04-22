@@ -1,0 +1,93 @@
+div.char_info {
+    background-color: #7f0000;
+    border-left: 5px #fea711 dashed;
+    position: absolute;
+    table-layout: fixed;
+    right: 0%;
+    left: 70%;
+    width: 30%;
+    height: 100%;
+    display: inline-block;
+}
+div.char_info div.portrait {
+    position: static;
+    width: 95%;
+    height: 40%;
+    margin: auto;
+    display: block;
+}
+div.char_info div.portrait img {
+    position: static;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    margin: auto;
+    display: block;
+}
+
+div.char_info h2 {
+    font-family: 'Flamenco', cursive;
+    font-size: 8vmin;
+    text-align: center;
+    color: #ffffff;
+    padding: 0 0.5em 0 0.5em;
+    margin: auto;
+}
+div.char_info p {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.5vmax;
+    text-indent: 0;
+    text-align: center;
+    text-align-last: center;
+    padding: 0 0.5em 0 0.5em;
+    margin: auto;
+    color: #eeeeee;
+}
+div.char_info p.flavor {
+    font-family: 'Flamenco', cursive;
+    font-size: 3vmin;
+    text-align: center;
+    text-align-last: center;
+    text-indent: 0;
+    color: #dddddd;
+}
+div.char_info hr {
+    margin: 0.5em 1em 0.5em 1em;
+    border-color: #fea711;
+    border-style: solid;
+    border-radius: 0.5vmin;
+    border-width: 0.5vmin;
+}
+
+div.char_info button {
+    position: relative;
+    font-family: 'Roboto', sans-serif;
+    font-size: 3.5vmin;
+    background-color: #0e542f;
+    color: #dddddd;
+    border: none;
+    max-width: 90%;
+    min-width: 5em;
+    width: auto;
+    max-height: 2em;
+    height: auto;
+    margin: auto;
+    margin-top: 0.5em;
+    padding: 0.3em;
+    display: block;
+}
+div.char_info button:hover {
+    background-color: #509eab;
+    color: #7f0000;
+}
+div.char_info button p {
+    text-align: center;
+    text-align-last: center;
+    text-indent: 0;
+    color: #dddddd;
+    font-weight: bold;
+}
+div.char_info button:hover p {
+    color: #7f0000;
+}

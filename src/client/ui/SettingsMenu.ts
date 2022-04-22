@@ -10,6 +10,10 @@ class UISettingsMenu {
   private particleMedium: HTMLElement;
   private particleHigh: HTMLElement;
 
+  private fpsCounter: HTMLElement;
+  private cameraShake: HTMLElement;
+  private announcer: HTMLElement;
+
   private base: HTMLElement = document.getElementById('settings_menu');
 
   constructor() {
@@ -61,43 +65,33 @@ class UISettingsMenu {
 
 
     // Booleans
-    const fpsCounter = document.getElementById('fps_counter');
-    fpsCounter.addEventListener('click', () => {
+    this.fpsCounter = document.getElementById('fps_counter');
+    this.fpsCounter.addEventListener('click', () => {
       RenderSettings.FPScounter = !RenderSettings.FPScounter;
-      if (RenderSettings.FPScounter) {
-        fpsCounter.innerText = 'Enabled';
-      } else {
-        fpsCounter.innerText = 'Disabled';
-      }
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
 
-    const cameraShake = document.getElementById('camera_shake');
-    cameraShake.addEventListener('click', () => {
+    this.cameraShake = document.getElementById('camera_shake');
+    this.cameraShake.addEventListener('click', () => {
       RenderSettings.EnableCameraShake = !RenderSettings.EnableCameraShake;
-      if (RenderSettings.EnableCameraShake) {
-        cameraShake.innerText = 'Enabled';
-      } else {
-        cameraShake.innerText = 'Disabled';
-      }
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
 
-    const announcer = document.getElementById('announcer');
-    announcer.addEventListener('click', () => {
+    this.announcer = document.getElementById('announcer');
+    this.announcer.addEventListener('click', () => {
       RenderSettings.EnableAnnouncer = !RenderSettings.EnableAnnouncer;
-      if (RenderSettings.EnableAnnouncer) {
-        announcer.innerText = 'Enabled';
-      } else {
-        announcer.innerText = 'Disabled';
-      }
+      MessageBus.publish('UI_SettingsUpdate', null);
     });
+
+    this.update();
   }
 
   /* eslint-disable no-param-reassign */
   private SetSelection(button: HTMLElement, selected: boolean) {
     if (selected) {
-      button.style.color = '#55ddff';
+      button.className = 'selected';
     } else {
-      button.style.color = '#ffffff';
+      button.className = '';
     }
   }
   /* eslint-enable no-param-reassign */
@@ -142,6 +136,27 @@ class UISettingsMenu {
         this.SetSelection(this.particleHigh, true);
         break;
     }
+
+    this.updateOnCondition(this.announcer, RenderSettings.EnableAnnouncer);
+    this.updateOnCondition(this.cameraShake, RenderSettings.EnableCameraShake);
+    this.updateOnCondition(this.fpsCounter, RenderSettings.FPScounter);
+  }
+  /**
+   * @function updateOnCondition
+   * @summary Updates a toggle button based off a boolean
+   * @param updateButton Button to update selection visual
+   * @param enable If true, this button is marked as "enabled," "disabled" otherwise
+   */
+  private updateOnCondition(updateButton: HTMLElement, enable: boolean) {
+    if (enable) {
+      // eslint-disable-next-line no-param-reassign
+      updateButton.innerText = 'Enabled';
+    } else {
+      // eslint-disable-next-line no-param-reassign
+      updateButton.innerText = 'Disabled';
+    }
+
+    this.SetSelection(updateButton, enable);
   }
 
   public open() {

@@ -11,11 +11,13 @@ class UILoadScreen {
   private bar: UIFrame;
   private text: UITextBox;
 
+  private htmlDiv: HTMLElement;
+
   constructor() {
     this.frames = [];
 
-    const base = new UIFrame(0.1, 0.45, 0.8, 0.1, false);
-    base.renderStyle = '#777777'; // Should this be an image texture?
+    const base = new UIFrame(0.1, 0.85, 0.8, 0.1, false);
+    base.renderStyle = '#777777';
 
     this.bwid = base.width * BAR_WIDTH;
     const bhei = base.height * BAR_HEIGHT;
@@ -30,10 +32,10 @@ class UILoadScreen {
       bhei,
       false,
     );
-    barBack.renderStyle = '#014423';
+    barBack.renderStyle = '#7f0000';
 
     this.bar = new UIFrame(barBack.cornerX, barBack.cornerY, 0, bhei, false);
-    this.bar.renderStyle = '#11aa77';
+    this.bar.renderStyle = '#fea711';
 
     this.text = new UITextBox(base.cornerX, base.cornerY - 0.2, base.width, 0.2, false, '0% loaded...');
     this.text.textAlignment = 'right';
@@ -46,11 +48,19 @@ class UILoadScreen {
     this.frames.push(barBack);
     this.frames.push(this.bar);
     this.frames.push(this.text);
+
+
+    this.htmlDiv = document.getElementById('load_screen');
+    this.htmlDiv.hidden = false;
   }
 
   public update(percent: number) {
     this.bar.width = this.bwid * percent;
     this.text.text = `${Math.floor(percent * 100)}% loaded...`;
+  }
+
+  public hide() {
+    this.htmlDiv.hidden = true;
   }
 }
 

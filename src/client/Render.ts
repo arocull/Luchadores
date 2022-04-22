@@ -600,16 +600,16 @@ class Renderer {
 
           // Estimate how large this text line is and check for word cut-offs
           for (let i = index; i < full.length && len < width; i++) {
-            str += full.substr(i, 1);
+            str += full.substring(i, 1);
             len = MeasureString(str);
-            if (full.substr(i, 1) === ' ') lastSpace = i;
+            if (full.substring(i, 1) === ' ') lastSpace = i;
             if (len > width) surpassed = true;
           }
           if (lastSpace === -1 || !surpassed) lastSpace = full.length;
 
           str = '';
           for (let i = index; i < lastSpace; i++) {
-            str += full.substr(i, 1);
+            str += full.substring(i, 1);
             index++;
           }
           if (index === lastSpace) index++; // Don't write space character if it ended on one

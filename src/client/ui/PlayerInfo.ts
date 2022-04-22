@@ -20,8 +20,11 @@ class UIPlayerInfo extends UIFrame {
   }
 
   public update() {
-    if (this.owner.getCharacter() && this.owner.getCharacter().HP > 0) this.fighter = fighterTypeToString(this.owner.getCharacter().getCharacter());
-    else this.fighter = 'Selecting';
+    if (this.owner.getCharacter() && this.owner.getCharacter().HP > 0) {
+      this.fighter = fighterTypeToString(this.owner.getCharacter().getCharacter());
+    } else {
+      this.fighter = 'Selecting...';
+    }
   }
 
   public getOwner(): Player {
