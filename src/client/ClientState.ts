@@ -148,10 +148,11 @@ class Client {
           MessageBus.subscribe(BusTopics.Connections, (msg: IEvent) => {
             if (msg.type === TypeEnum.ClientDisconnected) {
               this.connected = false;
-              if (this.uiManager) this.uiManager.setConnectionText('Connection lost - Reload the webpage');
+              if (this.uiManager) this.uiManager.setConnectionText('Connection LOST - Reload the webpage!');
             }
           });
 
+          // Subscribe to network events
           MessageBus.subscribe(this.topics.ClientNetworkFromServer, (msg: IEvent) => {
             switch (msg.type) {
               case TypeEnum.WorldNew: // Load new map
@@ -184,9 +185,16 @@ class Client {
         })
         .catch((err) => {
           console.error('Failed to connect!', err);
-          if (this.uiManager) this.uiManager.setConnectionText('Connection failed - Reload the webpage');
+          if (this.uiManager) this.uiManager.setConnectionText('Connection FAILED - Reload the webpage!');
         })
-        .finally(() => console.log('... and finally!'));
+        .finally(() => {
+          console.log('... and finally!');
+
+          // Tell UI Manager to allow the client to select their username now that connection is stable (to prevent softlocking)
+          if (this.uiManager) {
+            this.uiManager.enableUsernameSelect();
+          }
+        });
     }
   }
 

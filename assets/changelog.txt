@@ -7,7 +7,8 @@ A small game by the O'Cull brothers James, Max, and Alan
 
 ### Version 0.0.1
 - Performed another UI pass (redone menus like settings, character info, etc)
-- Separated out some CSS files for better organization
-- Added changelog
-- Fixed a bug with Player List not showing local client's selected character
 - Settings menu can be toggled with escape key
+- Added changelog
+- Separated out some CSS files for better organization
+- Fixed a bug with Player List not showing local client's selected character
+- Fixed a softlock on the Username Select screen caused by confirming a username before the connection was stabilized

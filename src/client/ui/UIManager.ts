@@ -123,6 +123,10 @@ class UIManager {
   public setConnectionText(text: string = '') {
     this.connectionText.text = text;
   }
+  // Enables the player to select their username
+  public enableUsernameSelect() {
+    this.usernameSelect.allowConfirm();
+  }
 
   // Open and close functions for different menus (in case we want to add transitions later)
   public openUsernameSelect() {

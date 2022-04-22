@@ -83,3 +83,10 @@ div.username_select button.confirm:hover {
     background-color: #509eab;
     color: #eeeeff;
 }
+div.username_select button.confirm:disabled {
+    background-color: #737373;
+    color: #aaaaaa;
+}
+div.username_select button.confirm:disabled:hover {
+    color: #aaaaaa;
+}
