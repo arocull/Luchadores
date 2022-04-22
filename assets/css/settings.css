@@ -39,14 +39,14 @@ div.settings h3 {
     color: #ffffff;
     text-align: left;
     text-align-last: left;
-    font-size: 4vmin;
+    font-size: 3.5vmin;
     margin: 0;
 }
 div.settings h4 {
     color: #ffffff;
     text-align: center;
     text-align-last: center;
-    font-size: 3.5vmin;
+    font-size: 3.1vmin;
     margin: 0;
 }
 div.settings p {
@@ -54,11 +54,11 @@ div.settings p {
     text-align: left;
     text-align-last: left;
     text-indent: 0;
-    font-size: 3vmin;
+    font-size: 2.9vmin;
     margin: 0;
 }
 div.settings hr {
-    margin: 0.75em;
+    margin: 0.75vmin;
     padding: 0;
     border: 0.5vmin #646464 solid;
     border-radius: 0.5vmin;
@@ -85,13 +85,13 @@ div.settings button:hover {
     background-color: #999999;
 }
 div.settings #settings_close {
-    position: relative;
+    position: absolute;
     width: 5em;
     height: 2em;
     margin: auto;
     text-align: center;
     text-align-last: center;
-    bottom: 1em;
+    bottom: 0;
     display: block;
 }
 

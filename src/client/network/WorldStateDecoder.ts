@@ -9,6 +9,13 @@ import { IWorldState, IEntityFighter, IEntityProjectile } from '../../common/eve
 /* eslint-enable object-curly-newline */
 
 
+/**
+ * @function updateFighter
+ * @summary Takes a Fighter packet and world, and applies the packet to the corresponding Fighter, or generates one
+ * @param world World to apply packet to
+ * @param packet Fighter data packet
+ * @returns {Fighter} Returns true if a new fighter was generated
+ */
 function updateFighter(world: World, packet: IEntityFighter): Fighter {
   let newFighter: Fighter = null;
   for (let i = 0; i < world.Fighters.length && newFighter === null; i++) {
@@ -43,7 +50,12 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
   return newFighter;
 }
 
-
+/**
+ * @function generateProjectile
+ * @param world World to apply packet to
+ * @param packet Projectile data packet
+ * @returns {Projectile} New projectile based off of packet data
+ */
 function generateProjectile(world: World, packet: IEntityProjectile): Projectile {
   const pos = new Vector(packet.position.x, packet.position.y, packet.position.z);
   const dir = Vector.UnitVectorFromXYZ(packet.velocity.x, packet.velocity.y, packet.velocity.z);

@@ -9,3 +9,5 @@ A small game by the O'Cull brothers James, Max, and Alan
 - Performed another UI pass (redone menus like settings, character info, etc)
 - Separated out some CSS files for better organization
 - Added changelog
+- Fixed a bug with Player List not showing local client's selected character
+- Settings menu can be toggled with escape key

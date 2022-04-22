@@ -508,6 +508,7 @@ class Client {
 
       if (this.respawning) { // If they are respawning (newly assigned character), lerp camera focus to them and close class select if open
         this.respawning = false;
+        this.player.assignCharacter(this.character);
         this.camera.LerpToFocus(this.character);
         if (this.uiManager) this.uiManager.closeClassSelect();
       }
