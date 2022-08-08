@@ -86,7 +86,7 @@ function AnimationFrame(tick: number) {
     // Initialize client stuff
     client = new ClientState(window.location.host, true);
     graphics = new ClientGraphics(client);
-    ClientAudio.setClientState(client);
+    ClientAudio.setCamera(client.camera);
     announcer = new Announcer(client, graphics.camera);
 
     // Hide loading screen

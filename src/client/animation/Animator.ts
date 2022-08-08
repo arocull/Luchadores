@@ -4,6 +4,8 @@ import AssetPreloader from '../AssetPreloader';
 import AnimationState from './AnimationState';
 import { SubscriberContainer } from '../../common/messaging/container';
 import { Consumer, MessageBus } from '../../common/messaging/bus';
+import SoundManager from '../audio/SoundManager';
+import ClientAudio from '../audio/ClientAudio';
 
 
 class Animator {
@@ -24,6 +26,10 @@ class Animator {
   private timeToUniqueIdle: number;
   private inUniqueIdle: boolean;
   protected bulletTimer: number; // Used for keeping track of when last bullet was fired so we don't double-fire shells when appling world state updates
+
+  private constrainedCooldownTimer: number;
+  private killCooldownTimer: number; // Timer for counting down from kill sound effects
+  protected sfxNameIdle: string; // Sound name of idle audio
 
   public killEffectCountdown: number; // Ticks down until rose petals effects show after a kill
   /** Counts to 1 based off of current speed of character, then generates a burst of particles--resets to zero on idle, subtracts 1 upon particle burst */
@@ -56,8 +62,16 @@ class Animator {
     this.killEffectCountdown = -1;
     this.moveTimer = 0;
 
+    // Audio
+    this.constrainedCooldownTimer = 0;
+    this.killCooldownTimer = -0.1;
+    this.sfxNameIdle = 'idle';
+
+    // Events
     this.animEvents = new SubscriberContainer();
-    this.animEvents.attach(`Animation_Suplexed${owner.getOwnerID()}`, this.suplexed);
+    this.bindAnimEvent('Animation_Suplexed', (event: any) => this.suplexed(event));
+    this.bindAnimEvent('Animation_Constrained', () => this.constrained());
+    this.bindAnimEvent('Animation_Kill', () => this.earnedKill());
   }
   /**
    * @function deconstruct
@@ -76,12 +90,19 @@ class Animator {
     this.timer = 0;
     this.inUniqueIdle = true;
     this.timeToUniqueIdle = 8 + Math.random() * 5;
+
+    const sfxName = this.getAudioName(this.sfxNameIdle);
+    if (SoundManager.hasSound(sfxName)) {
+      ClientAudio.playSound(sfxName, this.owner.Position, 0.35);
+    }
   }
 
   /* eslint-disable class-methods-use-this */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   protected tickUniqueIdle() {} // Tick special effects for when entity is in their unique idle state; overridden by subclasses
-  protected tickAttacking() {} // Tick special effects for when entity is attacking; overriden by subclasses
+  protected tickAttacking(DeltaTime: number) {} // Tick special effects for when entity is attacking; overriden by subclasses
   public destruct() {} // Removes bullet listeners
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   /* eslint-enable class-methods-use-this */
 
   protected bindAnimEvent(eventName: string, consumer: Consumer) {
@@ -129,6 +150,8 @@ class Animator {
     this.bulletTimer -= DeltaTime;
     this.globalTimer += DeltaTime;
 
+    this.constrainedCooldownTimer -= DeltaTime;
+
     switch (this.getAnimationState(DeltaTime)) {
       case AnimationState.IdleUnique: // Unique idle
         this.frameIdleUnique();
@@ -149,13 +172,13 @@ class Animator {
 
       case AnimationState.Attacking: // Attack
         this.frameAttack();
-        this.tickAttacking();
+        this.tickAttacking(DeltaTime);
         this.moveTimer = 0;
         break;
 
       case AnimationState.AttackingMoving: // Attack while moving
         this.frameAttackMove();
-        this.tickAttacking();
+        this.tickAttacking(DeltaTime);
         this.moveTimer += DeltaTime * this.owner.Velocity.length();
         break;
 
@@ -178,6 +201,16 @@ class Animator {
       this.killEffectCountdown -= DeltaTime;
       if (this.killEffectCountdown < 0) this.killEffectCountdown = 0;
     } else this.killEffectCountdown = -1;
+
+    // Perform countdown for playing kill audio after earning a kill
+    if (this.killCooldownTimer > 0) {
+      this.killCooldownTimer -= DeltaTime;
+      if (this.killCooldownTimer <= 0) {
+        ClientAudio.playSound(this.getAudioName('kill'), this.owner.Position, 0.3, this.owner);
+      }
+    } else {
+      this.killCooldownTimer = -1;
+    }
   }
 
   private getAnimationState(DeltaTime: number): number {
@@ -207,11 +240,27 @@ class Animator {
     return state;
   }
 
+  protected getAudioName(sfx: string): string {
+    return `${fighterTypeToString(this.owner.getCharacter())}/${sfx}`;
+  }
+
   protected suplexed(event: any) {
-    MessageBus.publish(`CameraShake${event.fighter.getOwnerID()}`, {
+    this.constrainedCooldownTimer = 0.15; // Debounce any effects of constraints re-appearing for a frame when syncing world-states
+    MessageBus.publish(`CameraShake${this.owner.getOwnerID()}`, {
       amnt: Math.abs(event.velo),
       max: 13,
     });
+  }
+
+  protected constrained() {
+    if (this.constrainedCooldownTimer < 0 && SoundManager.hasSound(this.getAudioName('bound'))) {
+      this.constrainedCooldownTimer = 1; // Debouncer
+      ClientAudio.playSound(this.getAudioName('bound'), this.owner.Position, 0.4, this.owner);
+    }
+  }
+
+  protected earnedKill() {
+    this.killCooldownTimer = 0.35;
   }
 }
 

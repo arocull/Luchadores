@@ -5,9 +5,11 @@ import { Fighter } from '../../common/engine/fighters';
 import Animator from './Animator';
 import { PBulletShell, PBulletFire } from '../particles';
 import { BBullet } from '../../common/engine/projectiles';
+import ClientAudio from '../audio/ClientAudio';
 
 class AnimDeer extends Animator {
   private inSuplex: boolean = false;
+  private shootTimer: number = 0;
 
   constructor(owner: Fighter) {
     super(owner);
@@ -43,12 +45,21 @@ class AnimDeer extends Animator {
     this.row = 4;
   }
   protected frameAttack() {
-    this.frame = this.frameroll(1 / this.owner.getBulletCooldown(), 10);
+    this.frame = this.frameroll(0.5 / this.owner.getBulletCooldown(), 10);
     this.row = 2;
   }
   protected frameAttackMove() {
     this.frame = this.frameroll(10, 10);
     this.row = 3;
+  }
+
+  protected tickAttacking(DeltaTime: number): void {
+    this.shootTimer += DeltaTime;
+
+    if (this.shootTimer >= 7) {
+      this.shootTimer = 0;
+      ClientAudio.playSound(this.getAudioName('shoot'), this.owner.Position, 0.3, this.owner);
+    }
   }
 
   private firedBullet(bullet: BBullet) {

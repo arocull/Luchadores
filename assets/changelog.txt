@@ -1,9 +1,14 @@
 # Luchadores
-Version 0.0.3 (Alpha)
+Version 0.0.4 (Alpha)
 
 A small game by the O'Cull brothers James, Max, and Alan
 
+If you have feedback, feel free to send it to alanrocull@gmail.com
+
 ## Changelog
+
+### Version 0.0.4
+- Added some new audio for all the fighters
 
 ### Version 0.0.3
 - Added physics constraints

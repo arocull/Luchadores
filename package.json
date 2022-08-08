@@ -1,6 +1,6 @@
 {
   "name": "luchadores",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Luchadores is an arena-style combat game with a cast of silly and weird animals that participate in exaggerated \"wrestling\" matches.",
   "private": true,
   "main": "dist/src/server/server.js",

@@ -4,9 +4,16 @@ import Vector from '../../common/engine/Vector';
 import Animator from './Animator';
 import { PFire, PSmoke } from '../particles';
 import ClientAudio from '../audio/ClientAudio';
+import Fighter from '../../common/engine/Fighter';
 
 class AnimFlamingo extends Animator {
   private playingAudio: boolean = false;
+
+  constructor(owner: Fighter) {
+    super(owner);
+
+    this.sfxNameIdle = 'Squawk';
+  }
 
   public Tick(DeltaTime: number) {
     super.Tick(DeltaTime);
@@ -19,12 +26,6 @@ class AnimFlamingo extends Animator {
       ClientAudio.stopSound('Flamingo/Scream', this.owner);
       this.playingAudio = false;
     }
-  }
-
-  protected triggerUniqueIdle() {
-    super.triggerUniqueIdle();
-
-    ClientAudio.playSound('Flamingo/Squawk', this.owner.Position, 0.35);
   }
 
   protected frameFalling() {
@@ -62,7 +63,8 @@ class AnimFlamingo extends Animator {
       MessageBus.publish('Effect_NewParticle', fire);
     }
   }
-  protected tickAttacking() { // Flamingo - Fire on back and smoke breathing
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected tickAttacking(DeltaTime: number) { // Flamingo - Fire on back and smoke breathing
     if (this.timerTick % 3 === 1 && RenderSettings.nextParticle()) {
       MessageBus.publish('Effect_NewParticle', new PFire(
         Vector.Add(this.owner.Position, new Vector(

@@ -1,3 +1,4 @@
+import { has } from 'lodash';
 import AssetPreloader from '../AssetPreloader';
 import Sound from './Sound';
 
@@ -12,18 +13,44 @@ const libraryNames = [
   'BulletWhizz3',
   'BulletWhizz4',
 
-  /* Hurt Sounds */
+  /* Sheep Audio */
   'Sheep/Hurt1',
   'Sheep/Hurt2',
   'Sheep/Hurt3',
-  'Deer/Hurt1',
-  'Flamingo/Hurt1',
-  'Flamingo/Hurt2',
-  'Flamingo/Hurt3',
-
-  /* Sheep Audio */
+  'Sheep/bound1',
+  'Sheep/bound2',
+  'Sheep/bound3',
+  'Sheep/relax1',
+  'Sheep/relax2',
+  'Sheep/relax3',
+  'Sheep/hit1',
+  'Sheep/hit2',
+  'Sheep/hit3',
+  'Sheep/hit4',
+  'Sheep/hit5',
+  'Sheep/hum1',
+  'Sheep/hum2',
+  'Sheep/hum3',
+  'Sheep/kill1',
+  'Sheep/kill2',
+  'Sheep/kill3',
 
   /* Deer Audio */
+  'Deer/Hurt1',
+  'Deer/Hurt2',
+  'Deer/Hurt3',
+  'Deer/Hurt4',
+  'Deer/bound1',
+  'Deer/bound2',
+  'Deer/idle1',
+  'Deer/idle2',
+  'Deer/idle3',
+  'Deer/kill1',
+  'Deer/kill2',
+  'Deer/kill3',
+  'Deer/shoot1',
+  'Deer/shoot2',
+  'Deer/shoot3',
   'Deer/Gunshot1',
   'Deer/Gunshot2',
   'Deer/Gunshot3',
@@ -38,6 +65,13 @@ const libraryNames = [
   'Deer/Gunshot12',
 
   /* Flamingo Audio */
+  'Flamingo/Hurt1',
+  'Flamingo/Hurt2',
+  'Flamingo/Hurt3',
+  'Flamingo/bound1',
+  'Flamingo/bound2',
+  'Flamingo/bound3',
+  'Flamingo/bound4',
   'Flamingo/Inhale1',
   'Flamingo/Inhale2',
   'Flamingo/Inhale3',
@@ -49,6 +83,9 @@ const libraryNames = [
   'Flamingo/Squawk1',
   'Flamingo/Squawk2',
   'Flamingo/Squawk3',
+  'Flamingo/kill1',
+  'Flamingo/kill2',
+  'Flamingo/kill3',
 ];
 
 /**
@@ -191,6 +228,15 @@ class SoundManagerInit {
         sfx.time += deltaTime;
       });
     });
+  }
+
+  /**
+   * @summary Checks to see if a sound name exists in the sound library
+   * @param {string} sfxName Name of sound effect
+   * @returns {boolean} True if the sound exists in the sound library, false otherwise
+   */
+  public hasSound(sfxName: string): boolean {
+    return has(this.lib, sfxName);
   }
 
   /**

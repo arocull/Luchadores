@@ -105,7 +105,8 @@ class Fighter extends Prop {
 
 
   // Takes damage from the set attacker, does NOT handle kills (kills should only be handled by server)
-  public TakeDamage(dmg: number, attacker: Fighter) {
+  // Returns true if this value zeroed out the opponent's health
+  public TakeDamage(dmg: number, attacker: Fighter): boolean {
     this.HP -= dmg;
 
     if (attacker) {
@@ -114,7 +115,9 @@ class Fighter extends Prop {
     }
     if (this.HP < 0) {
       this.HP = 0;
+      return true;
     }
+    return false;
   }
   /**
    * @function EarnKill

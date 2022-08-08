@@ -3,12 +3,12 @@ import { fighterTypeToString } from '../../common/engine/Enums';
 import Vector from '../../common/engine/Vector';
 import Sound from './Sound';
 import SoundManager from './SoundManager';
-import Client from '../ClientState';
 import Camera from '../Camera';
 import Entity from '../../common/engine/Entity';
+import Player from '../../common/engine/Player';
 
 class ClientAudioInit {
-  private clientState: Client;
+  private player: Player;
   private camera: Camera;
 
   private dropoff: number = 23; // Maximum distance a sound can be heard from
@@ -43,15 +43,20 @@ class ClientAudioInit {
 
     // Play a bullet whizz sound when our character gets hit by a bullet
     this.subscriptions.attach('Audio_BulletWhizz', (obj: any) => {
-      if (obj.obj === this.clientState.character) {
+      if (obj.obj === this.player.getCharacter()) {
         this.playSound('BulletWhizz', obj.pos, 0.5, null);
       }
     });
+
+    this.subscriptions.attach('PlayerReady', (plr: Player) => this.setPlayer(plr));
   }
 
-  public setClientState(owningState: Client) {
-    this.clientState = owningState;
-    this.camera = owningState.camera;
+  public setCamera(cam: Camera) {
+    this.camera = cam;
+  }
+
+  public setPlayer(plr: Player) {
+    this.player = plr;
   }
 
   /**

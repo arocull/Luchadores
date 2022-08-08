@@ -110,6 +110,8 @@ class Client {
 
         this.uiPlayerList.push(new UIPlayerInfo(this.player, true));
       }
+
+      MessageBus.publish('PlayerReady', this.player);
     });
     MessageBus.subscribe('PickCharacter', (type: FighterType) => {
       this.respawnTimer = 3;
@@ -330,6 +332,7 @@ class Client {
       ));
 
       MessageBus.publish('Announcer_Kill', diedCharacter);
+      MessageBus.publish(`Animation_Kill${killerCharacter.getOwnerID()}`, false);
     } else { // Show generic death message
       this.uiDeathNotifs.push(new UIDeathNotification(
         diedName,

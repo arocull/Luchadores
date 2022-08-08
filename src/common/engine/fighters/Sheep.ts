@@ -41,7 +41,8 @@ class Sheep extends Fighter {
     super.CollideWithFighter(hit, momentum);
 
     if (momentum > this.MaxMomentum / 3 && !this.attackBlocked()) { // Stacking passengers adds to max momentum
-      hit.TakeDamage((momentum / this.MaxMomentum) * 40, this);
+      const killing = hit.TakeDamage((momentum / this.MaxMomentum) * 40, this);
+      MessageBus.publish(`Animation_Hit${this.getOwnerID()}`, killing);
     }
   }
 
