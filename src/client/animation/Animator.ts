@@ -2,6 +2,8 @@ import Fighter from '../../common/engine/Fighter';
 import { fighterTypeToString } from '../../common/engine/Enums';
 import AssetPreloader from '../AssetPreloader';
 import AnimationState from './AnimationState';
+import { SubscriberContainer } from '../../common/messaging/container';
+import { Consumer, MessageBus } from '../../common/messaging/bus';
 
 
 class Animator {
@@ -16,6 +18,7 @@ class Animator {
 
   public timer: number;
   public timerTick: number;
+  protected globalTimer: number; // Non-animation dependent timer
   public lastState: AnimationState;
   protected realState: AnimationState;
   private timeToUniqueIdle: number;
@@ -27,6 +30,8 @@ class Animator {
   private moveTimer: number;
   /** Whether or not to do movement particles this tick */
   public doMoveParticle: boolean;
+
+  protected animEvents: SubscriberContainer;
 
   constructor(protected owner: Fighter) {
     AssetPreloader.getImage(`Sprites/${fighterTypeToString(owner.getCharacter())}.png`).then((img) => {
@@ -42,20 +47,25 @@ class Animator {
 
     this.timer = 0;
     this.timerTick = 0;
+    this.globalTimer = 0;
+
     this.lastState = AnimationState.Idle;
     this.timeToUniqueIdle = Math.random() * 13;
     this.bulletTimer = 0;
 
     this.killEffectCountdown = -1;
     this.moveTimer = 0;
+
+    this.animEvents = new SubscriberContainer();
+    this.animEvents.attach(`Animation_Suplexed${owner.getOwnerID()}`, this.suplexed);
   }
   /**
    * @function deconstruct
-   * @summary Deconstructs the Animator
+   * @summary Deconstructs the Animator. Unbinds animation events.
    * @virtual
    */
   public deconstruct() {
-
+    this.animEvents.detachAll();
   }
 
 
@@ -74,12 +84,27 @@ class Animator {
   public destruct() {} // Removes bullet listeners
   /* eslint-enable class-methods-use-this */
 
+  protected bindAnimEvent(eventName: string, consumer: Consumer) {
+    this.animEvents.attach(`${eventName}${this.owner.getOwnerID()}`, consumer);
+  }
+
+  /**
+   * @summary Takes input parameters and outputs an animation frame
+   * @param {number} scale Time-scale for animation
+   * @param {number} frames Number of frames to output
+   * @param {number} alpha Time value to use for the animation frame
+   * @returns {number} Outputted animation frame. Offset can be manually added
+   */
+  protected frameroll(scale: number = 5, frames: number = 5, alpha: number = this.timer): number {
+    return Math.floor(alpha * scale) % frames;
+  }
+
   protected frameIdle() {
-    this.frame = Math.floor(this.timer * 5) % 5;
+    this.frame = this.frameroll(5, 5);
     this.row = 0;
   }
   protected frameIdleUnique() {
-    this.frame = (Math.floor(this.timer * 5) % 5) + 5;
+    this.frame = 5 + this.frameroll(5, 5);
     this.row = 0;
   }
   protected frameFalling() {
@@ -87,21 +112,22 @@ class Animator {
     this.row = 0;
   }
   protected frameMove() {
-    this.frame = Math.floor(this.timer * 10) % 10;
+    this.frame = this.frameroll(10, 10);
     this.row = 1;
   }
   protected frameAttack() {
-    this.frame = Math.floor(this.timer * 5) % 5;
+    this.frame = this.frameroll(5, 5);
     this.row = 2;
   }
   protected frameAttackMove() {
-    this.frame = (Math.floor(this.timer * 5) % 5) + 5;
+    this.frame = 5 + this.frameroll(5, 5);
     this.row = 2;
   }
 
   public Tick(DeltaTime: number) {
     this.timerTick++;
     this.bulletTimer -= DeltaTime;
+    this.globalTimer += DeltaTime;
 
     switch (this.getAnimationState(DeltaTime)) {
       case AnimationState.IdleUnique: // Unique idle
@@ -179,6 +205,13 @@ class Animator {
     this.realState = state;
 
     return state;
+  }
+
+  protected suplexed(event: any) {
+    MessageBus.publish(`CameraShake${event.fighter.getOwnerID()}`, {
+      amnt: Math.abs(event.velo),
+      max: 13,
+    });
   }
 }
 

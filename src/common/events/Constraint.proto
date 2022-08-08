@@ -1,0 +1,7 @@
+message Constraint {
+    required int32 ownerId = 1;
+    required int32 type = 2;
+    required float lifetime = 3;
+    required float specialA = 4;
+    required float specialB = 5;
+}

@@ -10,6 +10,9 @@ import PBulletShell from './BulletShell';
 import PMoveDash from './MoveDash';
 import PShockwave from './Shockwave';
 import PSnowfall from './Snowfall';
+import PLandingDust from './LandingDust';
+import PLandingDirt from './LandingDirt';
+import PLandingSnow from './LandingSnow';
 
 export {
   Particle,
@@ -24,4 +27,7 @@ export {
   PMoveDash,
   PShockwave,
   PSnowfall,
+  PLandingDust,
+  PLandingDirt,
+  PLandingSnow,
 };

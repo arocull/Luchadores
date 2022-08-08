@@ -1,7 +1,9 @@
-// Includes Vector.js
 import Vector from './Vector';
 import Prop from './props/Prop';
-import { EntityType, FighterType, ColliderType } from './Enums';
+// eslint-disable-next-line object-curly-newline
+import { EntityType, FighterType, ColliderType, ConstraintType } from './Enums';
+import Constraint from './constraints/Constraint';
+import { MessageBus } from '../messaging/bus';
 
 // Static Configurations
 const KILL_HEALTH_RETURN = 0.25; // Percentage of max health that is restored upon earning a kill
@@ -54,6 +56,7 @@ class Fighter extends Prop {
   public BulletShock: number;
 
   protected boostTimer: number;
+  protected fighterConstraints: Constraint[] = [];
 
   constructor(
     public HP: number,
@@ -151,7 +154,7 @@ class Fighter extends Prop {
 
   // Is this entity able to fire a bullet? Overriden by sublcasses for additional conditions such as reload times
   public canFirebullet(): boolean {
-    return (this.Firing && this.BulletCooldown <= 0);
+    return (this.Firing && this.BulletCooldown <= 0 && !this.attackBlocked());
   }
 
   // Attempt to fire a bullet--fires as many bullets as it can until the cooldown is positive or some other condition
@@ -172,13 +175,25 @@ class Fighter extends Prop {
   }
 
 
-  // Jump if this character is currently on the ground
-  public Jump(force: boolean = false) {
+  /**
+   * @summary Jump if this character is able
+   * @param {boolean} force If true, forces a jump regardless of conditions
+   * @param {Fighter[]} fighters Array of fighters for internal character use
+   */
+  public Jump(force: boolean = false, fighters: Fighter[] = []) {
     if (((this.Position.z <= 0 || this.JustLanded || this.onSurface) && this.jumpTimer <= 0) || force) {
-      this.Velocity.z += this.JumpVelocity;
-      this.dismountRider = true;
-      this.jumpTimer = 0.2;
+      this.jumpInternal(this.JumpVelocity, fighters);
     }
+  }
+  /**
+   * @summary Internal jump code, for overriding
+   * @param {Fighter[]} fighters Array of fighters for internal character use
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected jumpInternal(jumpVelo: number, fighters: Fighter[]) {
+    this.Velocity.z += jumpVelo;
+    this.dismountRider = true;
+    this.jumpTimer = 0.2;
   }
 
   // Sets the fighter's acceleration in the given vector
@@ -188,22 +203,31 @@ class Fighter extends Prop {
 
   // Called when the fighter has just landed after spending time in the air, can be overriden for special functionality
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public Land(velocity: number = 0) {
+  public Land(landVelocity: number = 0) {
     this.JustLanded = true;
+    if (!this.riding) {
+      MessageBus.publish('Effect_Land', { velocity: landVelocity, mass: this.Mass, position: this.Position });
+    }
   }
 
-  // Applies a momentum to the given fighter
-  public ApplyMomentum(momentum: Vector) {
-    this.Velocity = Vector.Add(this.Velocity, Vector.Divide(momentum, this.Mass)); // Add momentum to fighter
+  /**
+   * @function
+   * @summary Applies a momentum to the given fighter
+   * @param {Vector} momentum Momentum vector to add on to current velocity
+   * @param {number} mass Mass override, defaults to this fighter's mass
+   * @param {number} maxMoment Max momentum override, defaults to this fighter's max momentum
+   */
+  public ApplyMomentum(momentum: Vector, mass: number = this.Mass, maxMoment: number = this.MaxMomentum) {
+    this.Velocity = Vector.Add(this.Velocity, Vector.Divide(momentum, mass)); // Add momentum to fighter
 
-    if (this.Velocity.length() * this.Mass > this.MaxMomentum) { // Check to see if we went over the maximum momnentum
-      this.Velocity.clamp(0, this.MaxMomentum / this.Mass); // Clamp the momentum
+    if (this.Velocity.length() * mass > maxMoment) { // Check to see if we went over the maximum momnentum
+      this.Velocity.clamp(0, maxMoment / mass); // Clamp the momentum
     }
   }
 
   // Returns true if the fighter is falling or not
   public isFalling(): boolean {
-    return !(this.Position.z <= 0 || this.riding || this.onSurface) || this.Velocity.z > 0;
+    return !(this.Position.z <= 0 || this.riding || this.rodeThisTick || this.onSurface) || this.Velocity.z > 0;
   }
 
   // Sets aim direction of fighter
@@ -257,6 +281,12 @@ class Fighter extends Prop {
   public getMomentumXY(): number {
     return this.Mass * this.Velocity.lengthXY();
   }
+  public get jumpcooldown(): number {
+    return this.jumpTimer;
+  }
+  public set jumpcooldown(input: number) {
+    this.jumpTimer = input;
+  }
 
   /* eslint-disable class-methods-use-this */
   // Methods used in WorldState for sending/recieving special properties; overridden by subclasses
@@ -303,6 +333,75 @@ class Fighter extends Prop {
     }
 
     return Vector.Subtract(this.newPosition, this.lastPosition); // Bottom-of-stack case--return delta position
+  }
+
+  public get constraints(): Constraint[] {
+    return this.fighterConstraints;
+  }
+  /**
+   * @summary Adds the given constraint to the array of constraints affecting this fighter
+   * @param newConst New constraint to add to the constraint array
+   */
+  public constraintAdd(newConst: Constraint) {
+    if (newConst == null) return; // Do nothing if we got an invalid object
+
+    this.fighterConstraints.push(newConst);
+    // Fire animation event for us getting constrained
+    MessageBus.publish(`Animation_Constrained${this.getOwnerID()}`, newConst.type);
+  }
+  /**
+   * @summary Removes a constraint from the array of constraints affecting this fighter
+   * @param remConst Constraint to remove
+   */
+  public constraintRemove(remConst: Constraint) {
+    const idx = this.fighterConstraints.indexOf(remConst);
+    if (idx >= 0) {
+      this.fighterConstraints.splice(idx, 1);
+    }
+  }
+  /**
+   * @function
+   * @summary Returns a constraint with the given search paramateres, if possible
+   * @param {ConstraintType} constraintType Type of constraint this is
+   * @param {number} constraintOwner Fighter ID of the constraint owner
+   * @returns {Constraint} Constraint object we were searching for if we found one, or null otherwise
+   */
+  public constraintFetch(constraintType: ConstraintType, constraintOwner: number): Constraint {
+    for (let i = 0; i < this.fighterConstraints.length; i++) {
+      const constraint = this.fighterConstraints[i];
+      if (constraint.owner === constraintOwner && constraint.type === constraintType) {
+        return constraint;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * @returns {boolean} Returns true if any constraint on this fighter blocks attacking
+   */
+  public attackBlocked(): boolean {
+    for (let i = 0; i < this.fighterConstraints.length; i++) {
+      if (this.fighterConstraints[i].blocksAttack) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * @summary Checks if we can colllide with the given fighter
+   * @param otherFighter Other fighter we are colliding with
+   * @returns {boolean} True if we can collide with this fighter, false if we cannot
+   */
+  public canCollideWith(otherFighter: Fighter): boolean {
+    for (let i = 0; i < this.fighterConstraints.length; i++) {
+      if (this.fighterConstraints[i].shouldIgnoreCollision(otherFighter.getOwnerID())) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }
 

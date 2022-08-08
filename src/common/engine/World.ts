@@ -5,7 +5,7 @@ import Fighter from './Fighter';
 import Projectile from './projectiles/Projectile';
 import AOEBlast from './combat/AOEBlast';
 import Prop from './props/Prop';
-import { Map } from './maps/index';
+import { MMap } from './maps/index';
 import { IPlayerInputState, IPlayerDied } from '../events/events';
 import { FighterType, EntityType } from './Enums';
 import { Sheep, Deer, Flamingo } from './fighters';
@@ -31,20 +31,22 @@ class World {
   public static MAX_LOBBY_SIZE: number = 20;
 
   public Fighters: Fighter[];
+  private fightersByIDs: Map<number, Fighter>;
   public Bullets: Projectile[];
   public aoeAttacks: AOEBlast[];
   public Props: Prop[];
-  public Map: Map; // TODO: Make this private so 'Map' is read-only
+  public Map: MMap; // TODO: Make this private so 'Map' is read-only
 
   public doReaping: boolean;
   private kills: IPlayerDied[];
 
   private subscribers: SubscriberContainer = new SubscriberContainer();
 
-  constructor(map: Map) {
+  constructor(map: MMap) {
     this.Map = map;
 
     this.Fighters = [];
+    this.fightersByIDs = new Map<number, Fighter>();
     this.Bullets = [];
     this.aoeAttacks = [];
 
@@ -69,10 +71,23 @@ class World {
   }
 
   // Make map read-only
-  public get map(): Map {
+  public get map(): MMap {
     return this.Map;
   }
 
+  /**
+   * @summary Registers a fighter with the world, adding it to both appropiate arrays
+   * @param {Fighter} newFighter Fighter object to register with the world
+   */
+  public registerFighter(newFighter: Fighter) {
+    this.Fighters.push(newFighter);
+    this.fightersByIDs.set(newFighter.getOwnerID(), newFighter);
+  }
+  public registerFighters(...items: Fighter[]) {
+    for (let i = 0; i < items.length; i++) {
+      this.registerFighter(items[i]);
+    }
+  }
 
   // Network Interaction //
 
@@ -87,7 +102,7 @@ class World {
     char.Firing = char.isRanged() && action.mouseDown; // Are they trying to fire bullets, and can they?
 
     if (action.jump === true) {
-      char.Jump(); // Jump
+      char.Jump(false, this.Fighters); // Jump
     }
   }
   /* eslint-enable class-methods-use-this */
@@ -123,7 +138,7 @@ class World {
         break;
     }
 
-    this.Fighters.push(fight);
+    this.registerFighter(fight);
 
     return fight;
   }
@@ -165,6 +180,7 @@ class World {
         });
 
         this.Fighters.splice(i, 1);
+        this.fightersByIDs.delete(a.getOwnerID());
         i--;
       }
     }
@@ -310,6 +326,24 @@ class World {
       obj.dismountRider = false;
     }
 
+    // Tick fighter constraints
+    for (let x = 0; x < this.Fighters.length; x++) {
+      // eslint-disable-next-line prefer-destructuring
+      const constraints = this.Fighters[x].constraints;
+      for (let y = 0; y < constraints.length; y++) {
+        const bind = constraints[y];
+        const instigator = this.fightersByIDs.get(bind.owner);
+
+        // If our instigator does not exist or the bind has completed remove it
+        if (bind.completed() || instigator == null) {
+          this.Fighters[x].constraintRemove(bind);
+          y--;
+        } else {
+          bind.tick(DeltaTime, this.Fighters[x], instigator);
+        }
+      }
+    }
+
 
     // Tick bullets
     for (let i = 0; i < this.Bullets.length; i++) {
@@ -357,7 +391,7 @@ class World {
         const b = this.Fighters[j];
 
         // Don't bother attempting to collide with self or someone they just collided with
-        if (!(j === i || a.lastCollision === b || b.lastCollision === a || b.Position.z > a.Position.z)) {
+        if (!(j === i || a.lastCollision === b || b.lastCollision === a || b.Position.z > a.Position.z) && a.canCollideWith(b) && b.canCollideWith(a)) {
           const result = CollisionTrace(a, b, Ray.Clone(moveTrace));
           if (result && result.collided) {
             if (result.distance < closest) {

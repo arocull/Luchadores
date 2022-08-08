@@ -31,6 +31,22 @@ class AnimFlamingo extends Animator {
     this.frame = 6;
     this.row = 1;
   }
+  protected frameAttack() {
+    this.frame = this.frameroll(5, 5);
+    this.row = 3;
+    if (this.owner.isFalling()) {
+      this.frame += 5;
+    }
+  }
+  protected frameAttackMove() {
+    if (this.owner.isFalling()) {
+      this.frame = 5 + this.frameroll(5, 5, this.globalTimer);
+      this.row = 3;
+      return;
+    }
+    this.frame = this.frameroll(10, 10);
+    this.row = 2;
+  }
 
   protected tickUniqueIdle() {
     if (RenderSettings.nextParticle()) {

@@ -14,7 +14,7 @@ test('bullet damage test', () => {
 
   const bullet = new BBullet(new Vector(10, 10, 0), new Vector(-1, 0, 0), sheep2);
 
-  world.Fighters.push(sheep, sheep2);
+  world.registerFighters(sheep, sheep2);
   world.Bullets.push(bullet);
 
   // Tests bullet in a high-latency setting to make sure they still collide even at fast velocities
@@ -22,7 +22,7 @@ test('bullet damage test', () => {
     world.TickPhysics(0.1);
   }
 
-  expect(sheep.HP).toBe(sheep.MaxHP - 5); // Bullet damage
+  expect(sheep.HP).toBe(sheep.MaxHP - 7.5); // Bullet damage
   expect(sheep.LastHitBy).toBe(sheep2.getOwnerID());
 });
 
@@ -31,7 +31,7 @@ test('bullet miss owner test', () => {
   const sheep2 = new Sheep(2, new Vector(0, 20, 0));
   const bullet2 = new BBullet(new Vector(10, 20, 0), new Vector(-1, 0, 0), sheep2);
 
-  world.Fighters.push(sheep2);
+  world.registerFighters(sheep2);
   world.Bullets.push(bullet2);
 
   for (let i = 0; i < 50; i++) {
@@ -54,7 +54,7 @@ test('bullet timeout test', () => {
 
   for (let i = 0; i < 31; i++) {
     world.TickPhysics(0.1);
-    if (i === 14) expect(bullet3.getLifePercentage()).toBeCloseTo(0.5);
+    if (i === 14) expect(bullet3.getLifePercentage()).toBeCloseTo(0.75);
   }
 
   expect(world.Bullets.indexOf(bullet3)).toBe(-1); // Bullet timing out
@@ -65,41 +65,47 @@ test('bullet jump-dodge test', () => {
   const world = new World(new Map(MapPreset.None, 20, 20, 10));
 
   const deer = new Deer(1, new Vector(5, 0, 0));
+  const flam = new Flamingo(2, new Vector(8.5, 0, 0));
+  world.registerFighters(deer, flam);
+
   deer.aim(new Vector(1, 0, 0));
   deer.Firing = true;
-  const flam = new Flamingo(2, new Vector(8.5, 0, 0));
-
-  world.Fighters.push(deer, flam);
 
   for (let i = 0; i < 40; i++) {
-    world.tick(0.1);
+    world.tick(0.01);
 
     if (i === 10) deer.Firing = false;
   }
 
-  expect(flam.HP).toBeLessThan(flam.MaxHP - 5); // Gets hit when no action is taken
+  expect(flam.HP).toBeLessThan(flam.MaxHP); // Gets hit when no action is taken
   const hp = flam.HP;
 
   flam.Jump();
-  deer.Position = new Vector(5, 0, 0);
-  deer.Firing = true;
+  deer.Position = new Vector(5, 0, 0); // Reset knockback applied from bullets, if any
+  flam.Firing = true; // Flamingo can hover for long periods of time while attacking
   for (let i = 0; i < 50; i++) {
     world.tick(0.05);
 
     if (i === 5) {
+      deer.Firing = true;
+    }
+    if (i === 20) {
       deer.Firing = false;
-      expect(world.Bullets.length).toBeGreaterThan(0); // There should at least be some fire to dodge
+      flam.Firing = false;
+      expect(world.Bullets.length).toBeGreaterThan(0); // There should at least be some bullets to dodge
     }
   }
 
   expect(flam.HP).toBe(hp); // Not hit when bullets are leaped over
 });
 
-test('bullet shock latency test', () => {
+// BulletShock is deprecated and replaced with CameraShake events
+// However, this high-latency test structure might be useful for referencing
+/* test('bullet shock latency test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World(new Map(MapPreset.None, 10, 10, 0));
   const flam = new Flamingo(1, new Vector(5, 5, 0));
-  world.Fighters.push(flam);
+  world.registerFighters(flam);
 
   expect(flam.BulletShock).toBe(0);
 
@@ -121,4 +127,4 @@ test('bullet shock latency test', () => {
   world.tick(1, true); // Pretend client recieved a world state packet that took way too long to send
   expect(flam.BulletShock).toBeGreaterThan(0); // Racking up a single extra bullet shock is not bad
   expect(flam.BulletShock).toBeLessThan(1); // But we don't want a large amount stacked up, because the client has not had any time for it to dissipate
-});
+}); */

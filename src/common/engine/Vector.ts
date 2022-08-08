@@ -79,7 +79,10 @@ class Vector { // A structure that holds position data or direction and magnitud
     return new Vector(x / len, y / len, z / len);
   }
   static UnitVectorFromAngle(angle: number): Vector {
-    return this.UnitVectorFromXYZ(Math.cos(angle), Math.sin(angle), 0);
+    return new Vector(Math.cos(angle), Math.sin(angle), 0);
+  }
+  static UnitVectorFromAngleXZ(angle: number): Vector {
+    return new Vector(Math.cos(angle), 0, Math.sin(angle));
   }
 
   // Gets the dot product between two vectors
@@ -117,11 +120,24 @@ class Vector { // A structure that holds position data or direction and magnitud
   }
 
   static AngleFromXY(a: Vector): number {
-    return Math.atan2(-a.y, a.x);
+    if (a.y < 0) {
+      return Math.atan2(a.y, a.x) + TwoPI;
+    }
+    return Math.atan2(a.y, a.x);
   }
   static AngleFromXYZ(a: Vector): number {
-    return Math.atan2(a.z - a.y, a.x);
+    if (a.y < 0) {
+      return Math.atan2(a.z + a.y, a.x) + TwoPI;
+    }
+    return Math.atan2(a.z + a.y, a.x);
   }
+  static RotateXY(a: Vector, angle: number) {
+    const delta = Vector.AngleFromXY(a) + angle;
+    const out = Vector.Multiply(Vector.UnitVectorFromAngle(delta), a.lengthXY());
+    out.z = a.z;
+    return out;
+  }
+
   static ConstrainAngle(angle: number, min: number = 0, max: number = TwoPI): number {
     let a = angle;
     while (a < 0) {
@@ -131,6 +147,10 @@ class Vector { // A structure that holds position data or direction and magnitud
       a -= TwoPI;
     }
     return Math.max(min, Math.min(a, max));
+  }
+
+  static ToString(a: Vector): string {
+    return `(${a.x}, ${a.y}, ${a.z})`;
   }
 }
 

@@ -28,7 +28,7 @@ class Sheep extends Fighter {
   public landingVelocity: number; // Landing velocity of this/last frame (for shockwave particle)
 
   constructor(id: number, position: Vector) {
-    super(200, 200, 7000, 0.6, 1.2, 8, 30, 0, FighterType.Sheep, id, position);
+    super(190, 200, 7000, 0.6, 1.2, 10, 37.5, 0, FighterType.Sheep, id, position);
     // 200 kg, top speed of 35 units per second
 
     this.ranged = false;
@@ -40,16 +40,19 @@ class Sheep extends Fighter {
   public CollideWithFighter(hit: Fighter, momentum: number) {
     super.CollideWithFighter(hit, momentum);
 
-    if (momentum > this.MaxMomentum / 3) { // Stacking passengers adds to max momentum
+    if (momentum > this.MaxMomentum / 3 && !this.attackBlocked()) { // Stacking passengers adds to max momentum
       hit.TakeDamage((momentum / this.MaxMomentum) * 40, this);
     }
   }
 
   public Land(velocity: number = 0) {
     super.Land(velocity);
+    if (this.attackBlocked()) return; // Do nothing if a constraint blocks our attack
     this.landingVelocity = Math.min(Math.max(velocity / 9, 0), 2); // Clamp max radius to 1
 
-    MessageBus.publish('AOE_Blast', new AOEBlast(this.Position, this.landingVelocity, this.landingVelocity * 6, this, this.landingVelocity * 500, true, false));
+    MessageBus.publish('AOE_Blast', new AOEBlast(
+      this.Position, this.landingVelocity * 1.5, this.landingVelocity * 6, this, this.landingVelocity * 500, false, false,
+    ));
     MessageBus.publish(`CameraShake${this.getOwnerID()}`, {
       amnt: velocity,
       max: 10,

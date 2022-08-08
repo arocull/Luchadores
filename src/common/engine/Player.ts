@@ -15,6 +15,7 @@ class Player {
 
   private topicSend: string;
   private topicReceive: string;
+  private joined = false; // Turns true once the player has picked a username and is in-action
 
   constructor(private id: string) {
     this.username = 'Connecting Player';
@@ -38,6 +39,7 @@ class Player {
     if (this.character != null) {
       this.character.DisplayName = newUsername;
     }
+    this.joined = true;
   }
 
   getId() {
@@ -123,6 +125,10 @@ class Player {
 
   getTopicReceive() {
     return this.topicReceive;
+  }
+
+  isReady(): boolean {
+    return this.joined;
   }
 }
 

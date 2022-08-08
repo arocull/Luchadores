@@ -6,14 +6,14 @@ import { FightObserver } from '../../../src/common/engine/combat/FightObserver';
 import ProjectileGroup from '../../../src/common/engine/combat/ProjectileGroup';
 import World from '../../../src/common/engine/World';
 import { MessageBus } from '../../../src/common/messaging/bus';
-import { Map } from '../../../src/common/engine/maps';
+import { MMap } from '../../../src/common/engine/maps';
 
 test('AOE falloff test', () => {
   Random.setSeed(1);
-  const world = new World(new Map());
+  const world = new World(new MMap());
   const flam1 = new Flamingo(1, new Vector(20, 20, 0));
   const flam2 = new Flamingo(2, new Vector(21, 20, 0));
-  world.Fighters.push(flam1, flam2);
+  world.registerFighters(flam1, flam2);
 
   // Generate a new AOE blast
   MessageBus.publish('AOE_Blast', new AOEBlast(
@@ -40,11 +40,11 @@ test('AOE falloff test', () => {
 });
 test('FightObserver fighter threat test', () => {
   Random.setSeed(1);
-  const world = new World(new Map());
+  const world = new World(new MMap());
   const sheep = new Sheep(1, new Vector(5, 20, 0));
   const deer = new Deer(2, new Vector(22, 20, 0));
   const flam = new Flamingo(3, new Vector(20, 20, 0));
-  world.Fighters.push(sheep, deer, flam);
+  world.registerFighters(sheep, deer, flam);
 
   const timeConstant = 0.05; // How many seconds to iterate world by
 
@@ -108,12 +108,12 @@ test('FightObserver fighter threat test', () => {
 });
 test('FightObserver projectile threat test', () => {
   Random.setSeed(1);
-  const world = new World(new Map());
+  const world = new World(new MMap());
   const sheep = new Sheep(1, new Vector(20, 20, 0));
   const deer1 = new Deer(2, new Vector(30, 20, 0));
   const deer2 = new Deer(3, new Vector(30, 21, 0));
   const deer3 = new Deer(4, new Vector(30, 19, 0));
-  world.Fighters.push(sheep, deer1, deer2, deer3);
+  world.registerFighters(sheep, deer1, deer2, deer3);
 
   deer1.aim(new Vector(-1, 0, 0)); // We'll be attacking sheep to determine threat levels
   deer2.aim((new Vector(-1, -0.4, 0)).clamp(1, 1));

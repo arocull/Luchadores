@@ -6,7 +6,18 @@ import { Projectile } from '../common/engine/projectiles';
 import { EntityType } from '../common/engine/Enums';
 import { Timer } from '../common/engine/time/Time';
 import { TypeEnum } from '../common/events';
-import { IWorldState } from '../common/events/events';
+import { IWorldState, IConstraint } from '../common/events/events';
+import { Constraint } from '../common/engine/constraints';
+
+function encodeConstraint(obj: Constraint): IConstraint {
+  return {
+    ownerId: obj.owner,
+    type: obj.type,
+    lifetime: obj.lifetimeTotal,
+    specialA: obj.replicationNumericA,
+    specialB: obj.replicationNumericB,
+  };
+}
 
 function encodeEntity(obj: Entity): any {
   const result: any = {
@@ -25,6 +36,10 @@ function encodeEntity(obj: Entity): any {
     result.cooldown = fight.getBulletCooldown();
     result.specialNumber = fight.getSpecialNumber();
     result.specialBoolean = fight.getSpecialBoolean();
+    result.constraints = [];
+    for (let i = 0; i < fight.constraints.length; i++) {
+      result.constraints.push(encodeConstraint(fight.constraints[i]));
+    }
   } else if (obj.type === EntityType.Projectile) {
     const proj = <Projectile>obj;
     result.ownerId = proj.getOwnerID();

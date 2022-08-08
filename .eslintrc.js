@@ -18,5 +18,6 @@ module.exports = {
     'no-plusplus': 'off',
     'no-underscore-dangle': 'off',
     'object-property-newline': 'error',
+    'no-param-reassign': 'off',
   }
 };

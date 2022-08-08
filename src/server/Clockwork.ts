@@ -18,7 +18,7 @@ import { SubscriberContainer } from '../common/messaging/container';
 import { Topics as PingPongTopics, PingInfo } from '../common/network/pingpong';
 import { ConnectResponseType } from '../common/engine/Enums';
 import { IPlayerConnectResponse } from '../common/events/events';
-import { MapGrassy } from '../common/engine/maps';
+import { MapSandy } from '../common/engine/maps';
 
 interface Action {
   player: Player;
@@ -38,7 +38,7 @@ class Clockwork {
   private lastPublish: number = 0;
 
   constructor() {
-    this.world = new World(new MapGrassy());
+    this.world = new World(new MapSandy());
     this.world.doReaping = true;
 
     this.actions = {};
@@ -129,18 +129,25 @@ class Clockwork {
         type: TypeEnum.PlayerState,
         characterID: conn.getCharacterID(),
         health: conn.getCharacter() ? conn.getCharacter().HP : 0,
+        jumpcooldown: conn.getCharacter() ? conn.getCharacter().jumpcooldown : 0,
       });
     }
   }
-  public updatePlayerList() {
+  /**
+   * @summary Updates the list of players
+   * @returns {number} The number of active players
+   */
+  public updatePlayerList(): number {
     const list = [];
     for (let i = 0; i < this.connections.length; i++) { // Build player list info
-      list.push({
-        ownerId: this.connections[i].getCharacterID(),
-        username: this.connections[i].getUsername(),
-        kills: this.connections[i].getKills(),
-        averagePing: Math.floor(this.connections[i].getPing() + 0.5),
-      });
+      if (this.connections[i].isReady()) {
+        list.push({
+          ownerId: this.connections[i].getCharacterID(),
+          username: this.connections[i].getUsername(),
+          kills: this.connections[i].getKills(),
+          averagePing: Math.floor(this.connections[i].getPing() + 0.5),
+        });
+      }
     }
 
     for (let i = 0; i < this.connections.length; i++) { // Send to each client
@@ -151,7 +158,9 @@ class Clockwork {
       });
     }
 
+    this.world.map.updateMapSize(list.length);
     Logger.debug('Broadcasting player list, %i players left', list.length);
+    return list.length;
   }
 
   /**
@@ -223,7 +232,7 @@ class Clockwork {
     plr.setUsername(message.username);
 
     // Broadcast a state of all player names, scores, IDs, etc; also sends clients their character IDs
-    this.updatePlayerList();
+    const numplrs = this.updatePlayerList();
 
     Logger.debug(`Initializing player with map type ${this.world.map.id}`);
 
@@ -231,6 +240,7 @@ class Clockwork {
     MessageBus.publish(plr.getTopicSend(), {
       type: TypeEnum.WorldNew,
       mapId: this.world.map.id,
+      numplayers: numplrs,
     });
   }
   busPlayerSpawnedHook(plr: Player, message: IPlayerSpawned) { // If they do not have a character, generate one

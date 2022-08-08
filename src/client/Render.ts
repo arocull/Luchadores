@@ -12,7 +12,7 @@ import { UIFrame, UITextBox, UIDeathNotification, UIPlayerInfo } from './ui/inde
 import RenderSettings from './RenderSettings';
 import Camera from './Camera';
 import World from '../common/engine/World';
-import { Map } from '../common/engine/maps';
+import { MMap } from '../common/engine/maps';
 import { MapClient } from './maps/index';
 import { TwoPi } from '../common/engine/math';
 /* eslint-enable object-curly-newline */
@@ -42,7 +42,7 @@ function GetKillMethod(fighter: FighterType): string {
 }
 
 
-function GetArenaBounds(camera: Camera, map: Map, fighters: Fighter[]):Vector[] {
+function GetArenaBounds(camera: Camera, map: MMap, fighters: Fighter[]):Vector[] {
   const corners: Vector[] = [camera.PositionOffset(new Vector(0, 0, 0))]; // camera.PositionOffset(new Vector(0, 0, 0))
 
   const center = camera.GetFocusPosition();
@@ -152,15 +152,21 @@ function drawFighter(a: Fighter, cam: Camera, offsetX: number, offsetY: number) 
   let upscale = 0;
   if (a.Animator) upscale = a.Animator.Upscale;
 
-  // First, draw shadow
+  // First, draw drop shadow
   canvas.fillStyle = '#000000';
   canvas.globalAlpha = 0.3;
-  canvas.fillRect(
-    (-pos.x - a.Radius) * cam.Zoom + offsetX,
-    (pos.y + (pos.z / 2)) * cam.Zoom + offsetY,
-    2 * a.Radius * cam.Zoom,
-    -((a.Height * upscale) * cam.Zoom) / 2,
-  );
+  if (RenderSettings.Quality === RenderQuality.Low) { // Low render settings get squares
+    canvas.fillRect(
+      (-pos.x - a.Radius) * cam.Zoom + offsetX,
+      (pos.y - a.Radius) * cam.Zoom + offsetY,
+      2 * a.Radius * cam.Zoom,
+      2 * a.Radius * cam.Zoom,
+    );
+  } else { // Otherwise, get circles. Yay!
+    canvas.beginPath();
+    canvas.arc(-pos.x * cam.Zoom + offsetX, pos.y * cam.Zoom + offsetY, a.Radius * cam.Zoom, 0, TwoPi);
+    canvas.fill();
+  }
   canvas.globalAlpha = 1;
 
   if (a.Animator && a.Animator.SpriteSheet) { // If we can find an animator for this fighter, use it
@@ -176,7 +182,7 @@ function drawFighter(a: Fighter, cam: Camera, offsetX: number, offsetY: number) 
       b.FrameWidth,
       b.FrameHeight,
       (-pos.x - (a.Height / 2) * b.Upscale) * cam.Zoom + offsetX, // Radius originally used in place of a.Height / 2
-      (pos.y + pos.z) * cam.Zoom + offsetY,
+      (pos.y + pos.z + (a.Radius / 2)) * cam.Zoom + offsetY,
       a.Height * b.Upscale * cam.Zoom, // 2 * Radius originally used in place of a.Height
       -a.Height * b.Upscale * cam.Zoom,
     );

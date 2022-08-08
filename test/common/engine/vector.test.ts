@@ -75,12 +75,18 @@ test('vector angles testing', () => {
   const res2 = Vector.ConstrainAngle(Vector.AngleFromXY(vect2));
   const res3 = Vector.AngleFromXYZ(vect3);
 
-  expect(res1).toBeCloseTo(Math.PI / 2, 3);
+  expect(res1).toBeCloseTo(Math.PI * 1.5, 3);
   expect(res2).toBeCloseTo(Math.PI, 3);
   expect(res3).toBeCloseTo(Math.PI / 2, 3);
 
   const angle = Vector.ConstrainAngle(Math.PI * 7);
   expect(angle).toBe(Math.PI); // Constrain large angle between 0 and 2*pi
+
+  const angledResult = Vector.UnitVectorFromXYZ(1, 0, 1);
+  const angled = Vector.UnitVectorFromAngleXZ(Math.PI / 4); // 45 degrees
+  expect(angled.x).toBeCloseTo(angledResult.x, 4);
+  expect(angled.y).toBeCloseTo(angledResult.y, 4);
+  expect(angled.z).toBeCloseTo(angledResult.z, 4);
 });
 
 test('vector dot product testing', () => {
@@ -105,4 +111,10 @@ test('vector level testing', () => {
 
   expect(vect2.length()).toBe(vect1.lengthXY()); // Should have same XY length
   expect(Vector.UnitVector(vect2).equals(Vector.UnitVectorXY(vect1))).toBe(true); // XY unit vectors should be the same
+});
+
+test('vector debug testing', () => {
+  // Because I like me 100% coverage
+  const vect = new Vector(1, 2, 3);
+  expect(Vector.ToString(vect)).toEqual('(1, 2, 3)');
 });

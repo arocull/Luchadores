@@ -14,6 +14,12 @@ enum FighterType {
   None = -1,
 }
 
+enum ConstraintType {
+  Suplex = 0,
+
+  None = -1,
+}
+
 enum ProjectileType {
   Bullet = 0,
   Fire = 1,
@@ -31,6 +37,9 @@ enum ParticleType {
   MoveDash = 8,
   Shockwave = 9,
   Snowfall = 10,
+  LandingDust = 11,
+  LandingDirt = 11,
+  LandingSnow = 12,
 }
 
 enum ColliderType {
@@ -97,6 +106,7 @@ function fighterTypeToGender(type: FighterType): string {
 export {
   EntityType,
   FighterType,
+  ConstraintType,
   ProjectileType,
   ParticleType,
   ColliderType,

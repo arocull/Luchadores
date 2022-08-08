@@ -1,10 +1,10 @@
-import Map from './Map';
+import MMap from './Map';
 import MapSandy from './MapSandy';
 import MapGrassy from './MapGrassy';
 import MapSnowy from './MapSnowy';
 
 export {
-  Map,
+  MMap,
   MapSandy,
   MapGrassy,
   MapSnowy,

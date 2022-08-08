@@ -1,4 +1,5 @@
 import "Vector.proto";
+import "Constraint.proto";
 
 message EntityFighter {
     required Vector position = 1;
@@ -11,4 +12,5 @@ message EntityFighter {
     required float cooldown = 8;
     required float specialNumber = 9;
     required bool specialBoolean = 10;
+    repeated Constraint constraints = 11;
 }

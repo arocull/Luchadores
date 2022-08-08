@@ -4,10 +4,32 @@ import Random from '../../common/engine/Random';
 import World from '../../common/engine/World';
 import { Fighter, Sheep, Deer, Flamingo } from '../../common/engine/fighters/index';
 import { Projectile, BBullet, BFire } from '../../common/engine/projectiles/index';
-import { FighterType, ProjectileType } from '../../common/engine/Enums';
-import { IWorldState, IEntityFighter, IEntityProjectile } from '../../common/events/events';
+import { ConstraintType, FighterType, ProjectileType } from '../../common/engine/Enums';
+import { IWorldState, IEntityFighter, IEntityProjectile, IConstraint } from '../../common/events/events';
+import { Constraint } from '../../common/engine/constraints';
+import Suplex from '../../common/engine/constraints/Suplex';
 /* eslint-enable object-curly-newline */
 
+function updateConstraint(constraint: Constraint, packet: IConstraint) {
+  constraint.lifetimeTotal = packet.lifetime;
+  constraint.replicationNumericA = packet.specialA;
+  constraint.replicationNumericB = packet.specialB;
+}
+
+function generateConstraint(packet: IConstraint): Constraint {
+  let newConst: Constraint = null;
+  switch (packet.type) {
+    case ConstraintType.Suplex:
+      newConst = new Suplex(packet.ownerId, false);
+      break;
+    default:
+      return null;
+  }
+
+  updateConstraint(newConst, packet);
+
+  return newConst;
+}
 
 /**
  * @function updateFighter
@@ -34,7 +56,7 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
     else if (packet.class === FighterType.Deer) newFighter = new Deer(packet.ownerId, pos);
     else if (packet.class === FighterType.Flamingo) newFighter = new Flamingo(packet.ownerId, pos);
     else throw new Error(`Unknown fighter type: ${packet.class}`);
-    world.Fighters.push(newFighter); // Otherwise, add them to the list
+    world.registerFighter(newFighter); // Otherwise, add them to the list
   } else newFighter.Position = pos;
 
   newFighter.UpdatesMissed = 0; // Reset tracker on fighter so they aren't pruned
@@ -46,6 +68,17 @@ function updateFighter(world: World, packet: IEntityFighter): Fighter {
   newFighter.aim(new Vector(packet.aim.x, packet.aim.y, packet.aim.z));
   newFighter.setBulletCooldown(packet.cooldown);
   newFighter.setSpecialStates(packet.specialNumber, packet.specialBoolean);
+
+  // Finally, update constraints
+  for (let i = 0; i < packet.constraints.length; i++) {
+    const cData = packet.constraints[i];
+    const fetched = newFighter.constraintFetch(cData.type, cData.ownerId);
+    if (fetched) {
+      updateConstraint(fetched, cData);
+    } else {
+      newFighter.constraintAdd(generateConstraint(cData));
+    }
+  }
 
   return newFighter;
 }
