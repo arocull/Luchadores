@@ -9,7 +9,7 @@ test('physics collision test', () => {
   const world = new World(new Map(MapPreset.None, 200, 200, 0));
   const a = new Sheep(1, new Vector(100, 99, 0));
   const b = new Sheep(2, new Vector(100, 101, 0));
-  world.Fighters.push(a, b);
+  world.registerFighters(a, b);
 
   a.Velocity = new Vector(0, 5, 0);
   b.Velocity = new Vector(0, -5, 0);
@@ -27,7 +27,7 @@ test('physics friction and gravity test', () => {
   const world = new World(new Map(MapPreset.None, 200, 200, 0.5));
   const c = new Sheep(3, new Vector(75, 100, 0));
   const d = new Sheep(4, new Vector(125, 50, 0));
-  world.Fighters.push(c, d);
+  world.registerFighters(c, d);
 
   c.Velocity = new Vector(0, 0, 10);
   d.Velocity = new Vector(5, 0, 0);
@@ -105,7 +105,7 @@ test('physics inside-bounding collision test', () => {
   expect(result.collided).toBe(false);
 
   // Check if real thing matches
-  world.Fighters.push(flam);
+  world.registerFighters(flam);
   world.Props.push(prop);
 
   for (let i = 0; i < 20; i++) {

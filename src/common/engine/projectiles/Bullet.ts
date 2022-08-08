@@ -7,7 +7,7 @@ import { MessageBus } from '../../messaging/bus';
 // BFire - Type bullet of variant Fire
 class BBullet extends Projectile {
   constructor(position: Vector, direction: Vector, owner: Fighter) {
-    super(ProjectileType.Bullet, owner, 5, 3, position, Vector.Multiply(direction, 20));
+    super(ProjectileType.Bullet, owner, 7.5, 2, position, Vector.Multiply(direction, 50));
   }
 
   public Hit(hit: Fighter) {

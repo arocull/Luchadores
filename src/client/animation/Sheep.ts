@@ -19,8 +19,9 @@ class AnimSheep extends Animator {
     super.Tick(DeltaTime);
 
     const sheep: Sheep = <Sheep>(this.owner); // Generate shockwave effect upon landing
+    // TODO: Hook up to event bind?
     if (sheep.landingVelocity > 0) {
-      MessageBus.publish('Effect_NewParticle', new PShockwave(Vector.Add(sheep.Position, new Vector(0, 0.1, 0)), sheep.landingVelocity));
+      MessageBus.publish('Effect_NewParticle', new PShockwave(Vector.Add(sheep.Position, new Vector(0, 0.1, 0)), sheep.landingVelocity * 1.5));
       sheep.landingVelocity = 0;
     }
   }

@@ -159,7 +159,9 @@ class Client {
                 if (this.world) { // Deconstruct previous world
                   this.world.deconstruct();
                 }
+
                 this.world = new World(mapFromID(msg.mapId));
+                this.world.map.updateMapSize(msg.numplayers);
                 MessageBus.publish('WorldNew', this.world);
                 break;
               case TypeEnum.WorldState: // Apply world state to current world
@@ -266,6 +268,8 @@ class Client {
         i--;
       }
     }
+
+    this.world.map.updateMapSize(msg.players.length);
   }
   // Returns player for the corresponding character ID
   private getPlayerFromCharacterID(characterID: number): Player {
@@ -432,7 +436,10 @@ class Client {
       this.character.MarkedForCleanup = true;
     }
 
-    if (this.character) this.character.HP = msg.health;
+    if (this.character) {
+      this.character.HP = msg.health;
+      this.character.jumpcooldown = msg.jumpcooldown;
+    }
   }
 
 

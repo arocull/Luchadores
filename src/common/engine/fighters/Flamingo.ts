@@ -33,8 +33,8 @@ class Flamingo extends Fighter {
   private breathing: boolean;
 
   constructor(id: number, position: Vector) {
-    super(80, 50, 875, 0.4, 2, 20, 35, 0.7, FighterType.Flamingo, id, position);
-    // 50 kilograms, top speed of 17.5 units per second
+    super(80, 50, 950, 0.4, 2, 20, 40, 0.7, FighterType.Flamingo, id, position);
+    // 50 kilograms, top speed of 19 units per second
 
     // Breath limits player from spewing too much fire at a time
     this.maxBreath = 50;
@@ -51,15 +51,20 @@ class Flamingo extends Fighter {
 
     this.breath = this.maxBreath; // Refill breath meter upon earning a kill
     this.breathing = false;
+    this.boostTimer += 2;
   }
 
   public canFirebullet() {
     return (super.canFirebullet() && this.breath >= 1 && !this.breathing);
   }
   public fireBullet(): BFire {
-    this.BulletShock += 0.6;
-    this.BulletCooldown += 0.05;
-    this.breath -= 1;
+    if (this.boostTimer > 0) {
+      this.breath -= 0.25;
+      this.BulletCooldown += 0.025;
+    } else {
+      this.BulletCooldown += 0.05;
+      this.breath -= 1;
+    }
 
     // If flamingo runs out of breath, halt all fire-breathing
     if (this.breath < 1) this.breathing = true;
@@ -86,7 +91,10 @@ class Flamingo extends Fighter {
       // Fire should shoot straight down, we'll leave it positioned at the base of Flamingo
 
       // Apply a strong recoil downward
-      this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(dir, 2.15));
+      const veloZ = this.Velocity.z;
+      if (veloZ <= 0) {
+        this.Velocity = Vector.Subtract(this.Velocity, Vector.Multiply(dir, Math.min(Math.abs(veloZ), 3)));
+      }
     } else { // Otherwise, act as normal
       fireVelo = Vector.Clone(this.Velocity); // Take sample now to ignore recoil
 

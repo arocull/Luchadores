@@ -11,7 +11,7 @@ test('fighter collision test', () => {
 
   const a = new Sheep(1, new Vector(0, 1, 0));
   const b = new Deer(2, new Vector(50, 1, 5));
-  world.Fighters.push(a, b);
+  world.registerFighters(a, b);
 
   let hasHit = false;
 
@@ -42,7 +42,7 @@ test('fighter riding test', () => {
   const a = new Sheep(1, new Vector(10, 10, 0));
   const b = new Deer(2, new Vector(10, 10, a.Height + 2));
   const c = new Flamingo(3, new Vector(10, 10, a.Height + b.Height + 4));
-  world.Fighters.push(c, a, b); // Order should not matter (was an issue before)
+  world.registerFighters(c, a, b); // Order should not matter (was an issue before)
 
   for (let i = 0; i < 30; i++) {
     world.tick(0.05);
@@ -93,7 +93,7 @@ test('sheep landing-shockwave test', () => {
   const world = new World(new Map());
   const sheep = new Sheep(1, new Vector(20, 20, 0));
   const flam = new Flamingo(2, new Vector(30, 30, 0));
-  world.Fighters.push(sheep, flam);
+  world.registerFighters(sheep, flam);
 
 
   expect(world.aoeAttacks.length).toBe(0); // There should be no AOE attacks in existence currently
@@ -128,7 +128,7 @@ test('flamingo jetpack test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World(new Map());
   const flam = new Flamingo(1, new Vector(20, 20, 0));
-  world.Fighters.push(flam);
+  world.registerFighters(flam);
 
   let maxHeightA = 0;
   let maxHeightB = 0;
@@ -154,7 +154,39 @@ test('flamingo jetpack test', () => {
   }
 
   expect(maxHeightA).toBeGreaterThan(0);
-  expect(maxHeightB).toBeGreaterThan(maxHeightA); // Flamingo should have used jump boost to gain extra height
+  expect(maxHeightB).toBeGreaterThanOrEqual(maxHeightA); // Flamingo should have used jump boost to maintain height
+});
+
+test('deer suplex test', () => {
+  Random.setSeed(1);
+  // Make sure world is extremely wide so sheep doesn't bounce off the wall and hit deer, interfering with our test
+  const world = new World(new Map(MapPreset.None, 1000, 20, 0, 0));
+  const deer = new Deer(1, new Vector(0, 0, 0));
+  const sheep = new Sheep(2, new Vector(1, 0, 0));
+  sheep.Position.x = deer.Radius + sheep.Radius + 0.05;
+  world.registerFighters(deer, sheep);
+
+  for (let i = 0; i < 10; i++) {
+    world.tick(0.1);
+  }
+  // Nothing happens if neither fighter does anything
+  expect(sheep.HP).toEqual(sheep.MaxHP);
+  expect(sheep.constraints.length).toEqual(0);
+
+  deer.Jump(false, world.Fighters); // Deer jumps
+  expect(sheep.constraints.length).toEqual(1); // Sheep gets exactly one constraint
+  expect(sheep.HP).toEqual(sheep.MaxHP); // Sheep takes no damage until she lands
+  expect(deer.Velocity.z).toBeGreaterThan(17); // Deer should jump higher than normal
+  expect(sheep.Position.x).toBeGreaterThan(0); // Sheep should still be on right side of character
+
+  for (let i = 0; i < 30; i++) {
+    world.tick(0.05);
+  }
+
+  expect(sheep.HP).toBeLessThan(sheep.MaxHP); // Sheep took damage from the fall
+  expect(deer.HP).toEqual(deer.MaxHP); // Sheep's AOE attack was disabled, however
+  expect(sheep.Position.x).toBeLessThan(0); // Sheep was placed on other side of deer
+  expect(sheep.constraints.length).toEqual(0); // Sheep should no longer have suplex constraint
 });
 
 // Kill effect tests
@@ -164,16 +196,16 @@ test('sheep kill-effect test', () => {
   world.Map = new Map(MapPreset.None, 500, 50, 23, 0);
   const sheep1 = new Sheep(1, new Vector(1, 20, 0));
   const sheep2 = new Sheep(2, new Vector(1, 40, 0));
-  world.Fighters.push(sheep1, sheep2);
+  world.registerFighters(sheep1, sheep2);
 
   // Race sheep
   sheep1.Move(new Vector(1, 0, 0));
   sheep2.Move(new Vector(1, 0, 0));
 
   sheep2.TakeDamage(100, sheep1);
-  expect(sheep2.HP).toBe(100); // 200 HP - 100 HP
+  expect(sheep2.HP).toBe(90); // 190 HP - 100 HP
   sheep2.EarnKill(); // Apply kill effect after move direction has already been set to test updating
-  expect(sheep2.HP).toBe(150); // 100 HP + 25% of max HP (200 * 0.25)
+  expect(sheep2.HP).toBe(137.5); // 90 HP + 25% of max HP (190 * 0.25)
 
   world.tick(0.1);
   expect(sheep2.Velocity.x).toBeGreaterThan(sheep1.Velocity.x); // Sheep 2 should accelerate faster
@@ -192,7 +224,7 @@ test('deer kill-effect test', () => {
   const deer1 = new Deer(1, new Vector(1, 20, 0));
   const deer2 = new Deer(2, new Vector(1, 40, 3));
   const sheep = new Sheep(3, new Vector(1, 40, 0));
-  world.Fighters.push(deer1, deer2, sheep);
+  world.registerFighters(deer1, deer2, sheep);
 
   // Race sheep
   deer1.aim(new Vector(-1, 0, 0));
@@ -236,7 +268,7 @@ test('flamingo kill-effect test', () => {
   Random.setSeed(1); // Set the random seed so it is always the same for this unit test
   const world = new World(new Map(MapPreset.None, 500, 50, 23, 0));
   const flam = new Flamingo(1, new Vector(1, 20, 0));
-  world.Fighters.push(flam);
+  world.registerFighters(flam);
 
   flam.aim(new Vector(-1, 0, 0));
   flam.Firing = true;
@@ -245,8 +277,16 @@ test('flamingo kill-effect test', () => {
     world.tick(0.1);
   }
   expect(flam.getSpecialNumber()).toBeLessThan(50); // Flamingo running low on breath
+  const numBullets: number = world.Bullets.length;
+
+  world.Bullets = []; // Reset bullet objects
 
   flam.EarnKill();
 
   expect(flam.getSpecialNumber()).toBe(50); // Earning a kill refills breath meter
+  for (let i = 0; i < 25; i++) {
+    world.tick(0.1);
+  }
+  // Flamingo should fire more bullets while in kill-effect
+  expect(world.Bullets.length).toBeGreaterThan(numBullets);
 });

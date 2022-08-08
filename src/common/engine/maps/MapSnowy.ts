@@ -3,7 +3,7 @@ import Map from './Map';
 
 class MapSnowy extends Map {
   constructor() {
-    super(MapPreset.Snowy, 40, 40);
+    super(MapPreset.Snowy);
   }
 }
 

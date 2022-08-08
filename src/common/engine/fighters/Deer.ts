@@ -4,6 +4,7 @@ import { FighterType } from '../Enums';
 import BBullet from '../projectiles/Bullet';
 import { MessageBus } from '../../messaging/bus';
 import Random from '../Random';
+import { CSuplex } from '../constraints';
 
 const PIOverTwo = Math.PI / 2;
 
@@ -36,17 +37,23 @@ class Deer extends Fighter {
 
   private bulletIndex: number; // Used for tracking which side of deer the bullet should be fired from
   private bulletDisparity: number; // Difference in gun nozzle positions
+  private grabDistance: number;
+  private suplexJumpBoost: number;
+  private suplexJumpBoostBase: number;
 
   constructor(id: number, position: Vector) {
-    super(100, 100, 2000, 0.45, 1.05, 17, 40, 0.2, FighterType.Deer, id, position);
+    super(100, 100, 2000, 0.55, 1.05, 17, 40, 0.2, FighterType.Deer, id, position);
     // 100 kg, top speed of 20 units per second
 
-    this.bulletCooldownBase = 0.08;
+    this.bulletCooldownBase = 0.14;
     this.bulletCooldownTime = this.bulletCooldownBase;
 
     this.baseMaxMomentum = this.MaxMomentum;
     this.bulletIndex = 0;
     this.bulletDisparity = 0.6 * this.Radius;
+    this.grabDistance = this.Radius * 2.2;
+    this.suplexJumpBoostBase = 1.5; // Base multiplier to jump velocity when suplexing
+    this.suplexJumpBoost = 1; // Additional multiplier, applied when in kill effect
 
     this.getSpecialNumber = this.getBulletIndex;
   }
@@ -54,8 +61,40 @@ class Deer extends Fighter {
   public EarnKill() {
     super.EarnKill();
 
-    this.bulletCooldownTime = 0.03;
+    this.bulletCooldownTime = 0.055;
+    this.suplexJumpBoost = 2;
     this.boostTimer += 2;
+  }
+
+  protected jumpInternal(jumpVelocity: number, fighters: Fighter[]): void {
+    if (fighters.length > 0) {
+      let nearest: Fighter = null;
+      let nearestDist: number = 1000000.0;
+
+      for (let i = 0; i < fighters.length; i++) {
+        const candidate = fighters[i];
+        // Cannot grab falling fighters, ourself, or fighters we are riding
+        if (!candidate.isFalling() && candidate !== this && candidate !== this.riding) {
+          const dist = Vector.Distance(this.Position, candidate.Position) - candidate.Radius;
+          if (dist < nearestDist) {
+            nearestDist = dist;
+            nearest = candidate;
+          }
+        }
+      }
+
+      // If we found a valid grab candidate, perform a suplex and suplex jump
+      if (nearest && nearestDist < this.grabDistance) {
+        const suplex = new CSuplex(this.getOwnerID(), nearest.Position.x < this.Position.x);
+        nearest.constraintAdd(suplex);
+        nearest.dismountRider = true;
+        // Jump with some additional velocity boosting
+        super.jumpInternal(jumpVelocity * this.suplexJumpBoost * this.suplexJumpBoostBase, fighters);
+        return;
+      }
+    }
+    // Otherwise, use default jump
+    super.jumpInternal(jumpVelocity, fighters);
   }
 
   public fireBullet(): BBullet {
@@ -83,7 +122,7 @@ class Deer extends Fighter {
       aim.clamp(1, 1);
 
       if (stackBottom) { // Apply recoil to rider to prevent kill reward from dismounting rider
-        stackBottom.Velocity = Vector.Add(stackBottom.Velocity, Vector.Multiply(aim, -this.boostTimer));
+        stackBottom.Velocity = Vector.Add(stackBottom.Velocity, Vector.Multiply(aim, -this.boostTimer * 3));
       } else {
         this.Velocity = Vector.Add(this.Velocity, Vector.Multiply(aim, -this.boostTimer));
       }
@@ -91,7 +130,7 @@ class Deer extends Fighter {
 
     let firePos = Vector.Clone(this.Position);
     firePos.z += this.Height * 0.8;
-    if (this.Flipped === true) firePos.x -= this.Radius;
+    if (this.Flipped === true) firePos.x -= this.Radius / 1.3;
     else firePos.x += this.Radius;
 
     firePos = Vector.Add(
@@ -131,6 +170,7 @@ class Deer extends Fighter {
 
   protected boostEnded() {
     this.bulletCooldownTime = this.bulletCooldownBase;
+    this.suplexJumpBoost = 1.0;
   }
 
   // Special variable getters/setters

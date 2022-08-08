@@ -2,7 +2,7 @@ import Vector from '../../common/engine/Vector';
 import Particle from './Particle';
 import { ParticleType } from '../../common/engine/Enums';
 
-const FifteenDegrees = Math.PI / 6; // 12
+const SpreadAngle = Math.PI / 6; // 12
 
 class PBulletFire extends Particle {
   public points: Vector[];
@@ -12,41 +12,28 @@ class PBulletFire extends Particle {
 
     this.UsePhysics = false;
 
-    const fireAngle = Vector.ConstrainAngle(Math.PI * 2 - Vector.AngleFromXYZ(direction));
+    const fireAngle = Vector.AngleFromXY(direction);
+
+    const distLarge = -intensity / 2;
+    const distSmall = -intensity / 3;
+    const spread = (SpreadAngle * intensity);
+
     this.points = [
-      Vector.Add( // Top corner
-        position,
-        Vector.Multiply(
-          Vector.UnitVectorFromAngle(fireAngle + FifteenDegrees * intensity),
-          -intensity / 2,
-        ),
-      ),
-      Vector.Add( // Mid between top corner and center
-        position,
-        Vector.Multiply(
-          Vector.UnitVectorFromAngle(fireAngle + (FifteenDegrees * intensity) / 2),
-          -intensity / 3,
-        ),
-      ),
-      Vector.Add( // Center
-        position,
-        Vector.Multiply(direction, -intensity / 2),
-      ),
-      Vector.Add( // Mid between bottom corner and center
-        position,
-        Vector.Multiply(
-          Vector.UnitVectorFromAngle(fireAngle - (FifteenDegrees * intensity) / 2),
-          -intensity / 3,
-        ),
-      ),
-      Vector.Add( // Bottom corner
-        position,
-        Vector.Multiply(
-          Vector.UnitVectorFromAngle(fireAngle - FifteenDegrees * intensity),
-          -intensity / 2,
-        ),
-      ),
+      // Top corner
+      Vector.Multiply(Vector.UnitVectorFromAngleXZ(fireAngle - spread), distLarge),
+      // Mid between top corner and center
+      Vector.Multiply(Vector.UnitVectorFromAngleXZ(fireAngle - (spread / 2)), distSmall),
+      // Center
+      Vector.Multiply(direction, distLarge),
+      // Mid between bottom corner and center
+      Vector.Multiply(Vector.UnitVectorFromAngleXZ(fireAngle + (spread / 2)), distSmall),
+      // Bottom corner
+      Vector.Multiply(Vector.UnitVectorFromAngleXZ(fireAngle + spread), distLarge),
     ];
+
+    for (let i = 0; i < this.points.length; i++) {
+      this.points[i] = Vector.Add(position, this.points[i]);
+    }
   }
 }
 

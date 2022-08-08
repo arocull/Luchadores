@@ -2,7 +2,7 @@ import Client from './ClientState';
 import UIManager from './ui/UIManager';
 import Camera from './Camera';
 import {
-  Particle, PRosePetal, PSmashEffect, PConfetti, PMoveDash,
+  Particle, PSmashEffect, PConfetti, PMoveDash,
 } from './particles';
 import Render from './Render';
 import RenderSettings from './RenderSettings';
@@ -34,7 +34,7 @@ class ClientGraphics {
     this.clientState.uiManager = this.uiManager;
 
     this.viewport = <HTMLCanvasElement>document.getElementById('render');
-    this.canvas = this.viewport.getContext('2d');
+    this.canvas = this.viewport.getContext('2d', { alpha: false });
     Render.setContext(this.canvas); // Set drawing context for Render (since it won't be switching)
     this.fpsCounter = [];
 
@@ -65,6 +65,9 @@ class ClientGraphics {
         this.particles.push(new PSmashEffect(msg.pos, msg.moment / 5000));
       }
     });
+    this.subscriptions.attach('Effect_Land', (msg) => {
+      this.mapClient.landParticles(Math.abs(msg.velocity), msg.mass, msg.position, this.particles);
+    });
   }
   public deconstruct() {
     this.subscriptions.detachAll();
@@ -80,7 +83,9 @@ class ClientGraphics {
         else if (a.Animator) {
           a.Animator.Tick(DeltaTime);
           if (a.Animator.killEffectCountdown === 0) { // If a death effect is to occur, execute it
-            PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 100);
+            // Everyone thinks this is a blood mist!
+            // TODO: fix this plz
+            // PRosePetal.Burst(this.particles, a.Position, 0.2, 5, 100);
           }
 
           if (a.Animator.doMoveParticle) {

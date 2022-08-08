@@ -1,9 +1,57 @@
 # Luchadores
-Version 0.0.1 (Alpha)
+Version 0.0.3 (Alpha)
 
 A small game by the O'Cull brothers James, Max, and Alan
 
 ## Changelog
+
+### Version 0.0.3
+- Added physics constraints
+- Slightly decreased zoom when playing ranged characters
+- Maps now resize based on player count, to increase frequency of engagements
+- Tweaked Flamingo animations
+- Completely new Deer animations
+- Removed rose petal particles after earning a kill
+- Added map-specific particle effects when landing
+- Fixed a bug where continued jumping should would cause visual glitches (fixed for low latency environments at least)
+- Fixed a bug where players on username selection screen were counted toward active users
+- Deer rework (part 2):
+  - Deer now has a suplex attack that activates when jumping at close-range
+    - Suplexes give Deer a substantial jump boost
+    - Suplexes disable the opponent for the duration of the attack
+    - Suplexes do damage based on the landing velocity
+  - Bullet position offset is now slightly smaller
+- Sheep balancing:
+  - Increased move acceleration to 37.5 from 30 m/(s^2)
+  - Tweaked shockwave animation to for more visual clarity
+- Flamingo balancing:
+  - Increased move acceleration to 40 from 35 m/(s^2)
+  - Increased top speed to 19 from 17.5 m/s
+
+### Version 0.0.2
+- Small tweaks to luchador rendering
+  - Shadows are now dropshadows, and more accurately represent character collision
+  - Luchadores now render closer to the center of their shadow and actual collision
+- Fixed a physics bug with luchadores being considered "falling" for one frame if another luchador lands on them
+- Fixed a physics bug with luchadores not dismounting passengers when jumping
+- Fixed a bug with camera zoom values becoming negative
+- Sheep balancing:
+  - Jump velocity increased to 10 from 8 m/s
+  - Landing shockwave radius increased to 1.5x landing velocity from 1x
+  - Removed damage/knockback dropoff on landing shockwave
+  - Made landing shockwave visual a little faster for clarity
+- Flamingo refinements:
+  - Using fire breath in air now only propels character upward if character is falling (hover instead of jetpack)
+  - Kill effect now lasts 2 seconds in addition to instantly refilling breath:
+    - Bullet cooldown is halved (0.025 seconds from 0.05)
+    - Bullet cost is quartered (0.25 breath cost from 1)
+- Deer rework (part 1):
+  - Bullet cooldown upped to 0.14 from 0.08 seconds (0.055 from 0.03 seconds while in kill effect)
+  - Bullet damage upped to 7.5 from 5
+  - Bullet speed upped to 50 from 20 m/s
+  - Bullet lifetime decreased to 2 from 3 seconds
+  - Radius increase to 0.55 from 0.45 meters
+  - Bullet recoil during kill effect increased to 3 m/s per bullet from 1 m/s
 
 ### Version 0.0.1
 - Performed another UI pass (redone menus like settings, character info, etc)

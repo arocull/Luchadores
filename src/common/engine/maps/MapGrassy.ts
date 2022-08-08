@@ -3,7 +3,7 @@ import Map from './Map';
 
 class MapGrassy extends Map {
   constructor() {
-    super(MapPreset.Grassy, 40, 40);
+    super(MapPreset.Grassy);
   }
 }
 

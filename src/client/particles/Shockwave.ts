@@ -5,7 +5,7 @@ import { ParticleType } from '../../common/engine/Enums';
 // PShockwave - White circle that extends to intensity units in radius over a short period of time
 class PShockwave extends Particle {
   constructor(position: Vector, private intensity: number) {
-    super(ParticleType.Shockwave, 0.35, '#eeeeff', position, position);
+    super(ParticleType.Shockwave, 0.125, '#eeeeff', position, position);
 
     this.UsePhysics = false;
     this.Width = 0;

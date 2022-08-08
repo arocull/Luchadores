@@ -2,7 +2,7 @@ import MapClient from './MapClient';
 import { MapSnowy } from '../../common/engine/maps';
 import AssetPreloader from '../AssetPreloader';
 import Vector from '../../common/engine/Vector';
-import { Particle, PSnowfall } from '../particles';
+import { Particle, PLandingSnow, PSnowfall } from '../particles';
 
 class MapClientSnowy extends MapSnowy implements MapClient {
   public texture: HTMLImageElement;
@@ -33,6 +33,10 @@ class MapClientSnowy extends MapSnowy implements MapClient {
     PSnowfall.Spawn(particles, this.topLeft, this.bottomRight, Math.floor(this.particleTimer), 1); // Spawn integer amount
 
     this.particleTimer -= Math.floor(this.particleTimer); // Subtract out number of particles spawned
+  }
+
+  public landParticles(landVelocity: number, landMass: number, position: Vector, particles: Particle[]): void {
+    PLandingSnow.Burst(particles, position, landMass, landVelocity);
   }
 }
 

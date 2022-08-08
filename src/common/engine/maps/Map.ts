@@ -41,6 +41,27 @@ class Map {
   }
 
   /**
+   * @summary Scales the map based on the amount of players
+   * @param {number} numPlayers Number of players in-game
+   * @returns {number} New map size, single number
+   */
+  public updateMapSize(numPlayers: number): number {
+    let newSize = 25;
+    if (numPlayers >= 10) {
+      newSize = 40;
+    } else if (numPlayers >= 6) {
+      newSize = 35;
+    } else if (numPlayers >= 3) {
+      newSize = 30;
+    }
+
+    this.mapWidth = newSize;
+    this.mapHeight = newSize;
+
+    return newSize;
+  }
+
+  /**
    * @function getProps
    * @returns {Prop[]} A list of props for the map to load in
    */

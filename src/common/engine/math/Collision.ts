@@ -84,10 +84,17 @@ function CollideFighters(a: Fighter, b: Fighter, info: TraceResult) {
       moment: moment1 + moment2,
     });
 
+    const aGrounded = !a.isFalling();
+    const bGrounded = !b.isFalling();
+
     // Momentum Transfer--should we swap momentums or sum them (essentially, what collision do we want)
     const aVelo = Vector.Multiply(Vector.UnitVector(b.Velocity), moment2 / massA);
     b.Velocity = Vector.Multiply(Vector.UnitVector(a.Velocity), moment1 / massB);
     a.Velocity = aVelo;
+
+    // Prevent fighters being counted as falling if they're on the ground
+    if (aGrounded) a.Velocity.z = Math.max(a.Velocity.z, 0);
+    if (bGrounded) b.Velocity.z = Math.max(b.Velocity.z, 0);
 
     a.lastCollision = b;
     b.lastCollision = a;

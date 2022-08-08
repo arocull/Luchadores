@@ -1,7 +1,8 @@
 import MapClient from './MapClient';
 import { MapGrassy } from '../../common/engine/maps';
 import AssetPreloader from '../AssetPreloader';
-import { Particle } from '../particles';
+import { Particle, PLandingDirt } from '../particles';
+import Vector from '../../common/engine/Vector';
 
 class MapClientGrassy extends MapGrassy implements MapClient {
   public texture: HTMLImageElement;
@@ -19,6 +20,10 @@ class MapClientGrassy extends MapGrassy implements MapClient {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public tickWeather(deltaTime: number, particles: Particle[]): void { }
+
+  public landParticles(landVelocity: number, landMass: number, position: Vector, particles: Particle[]): void {
+    PLandingDirt.Burst(particles, position, landMass, landVelocity);
+  }
 }
 
 export { MapClientGrassy as default };
