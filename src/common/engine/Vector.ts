@@ -15,10 +15,16 @@ class Vector { // A structure that holds position data or direction and magnitud
 
   // Returns length of this vector (or should this be static?)
   public length():number {
-    return Math.sqrt((this.x ** 2) + (this.y ** 2) + (this.z ** 2));
+    return Math.sqrt(this.lengthSquared());
   }
   public lengthXY():number {
-    return Math.sqrt((this.x ** 2) + (this.y ** 2));
+    return Math.sqrt(this.lengthSquaredXY());
+  }
+  public lengthSquared(): number {
+    return (this.x ** 2) + (this.y ** 2) + (this.z ** 2);
+  }
+  public lengthSquaredXY(): number {
+    return (this.x ** 2) + (this.y ** 2);
   }
 
   // Limits length of this vector to a set field
@@ -45,34 +51,78 @@ class Vector { // A structure that holds position data or direction and magnitud
     return (this.x === compareTo.x && this.y === compareTo.y && this.z === compareTo.z);
   }
 
-  // Static methods--generates new vectors to avoid overriding old properties
+  // Static methods--generates new vectors to avoid overriding old properties //
+
+  /**
+   * @param a Vector A
+   * @param b Vector B
+   * @returns A + B
+   */
   static Add(a: Vector, b: Vector):Vector {
     return new Vector(a.x + b.x, a.y + b.y, a.z + b.z);
   }
+  /**
+   * @param a Vector A
+   * @param b Vector B
+   * @returns A - B
+   */
   static Subtract(a: Vector, b: Vector):Vector {
     return new Vector(a.x - b.x, a.y - b.y, a.z - b.z);
   }
+  /**
+   * @param a Vector A
+   * @param b Scalar B
+   * @returns A * B
+   */
   static Multiply(a: Vector, b: number):Vector { // A is a vector, b should be a scalar number
     return new Vector(a.x * b, a.y * b, a.z * b);
   }
+  /**
+   * @param a Vector A
+   * @param b Scalar B
+   * @returns A / B
+   */
   static Divide(a: Vector, b: number):Vector {
     return new Vector(a.x / b, a.y / b, a.z / b);
   }
+  /**
+   * @param a Vector A
+   * @param b Vector B
+   * @returns A * B
+   */
   static MultiplyVectors(a: Vector, b: Vector):Vector {
     return new Vector(a.x * b.x, a.y * b.y, a.z * b.z);
   }
 
-  // Returns a copy of the given vector with the same direction but a length of one
+  // Returns a copy of the given vector with the same direction but a length of one //
+
+  /**
+   * @summary Returns a normalized version of A
+   * @param a Vector A
+   * @returns {Vector} Normalized vector with a length of 1
+   */
   static UnitVector(a: Vector):Vector {
     const len = a.length();
     if (len <= 0) return new Vector(0, 0, 0);
     return new Vector(a.x / len, a.y / len, a.z / len);
   }
+  /**
+   * @summary Returns A, normalized on the X and Y axii, with Z zeroed
+   * @param a Vector A
+   * @returns {Vector} Normalized vector with a length of 1, with no height
+   */
   static UnitVectorXY(a: Vector):Vector {
     const len = a.lengthXY();
     if (len <= 0) return new Vector(0, 0, 0);
     return new Vector(a.x / len, a.y / len, 0);
   }
+  /**
+   * @summary Generates a normalized vector from the given Vector components
+   * @param x X vector component
+   * @param y Y Vector component
+   * @param z Z vectonr component
+   * @returns {Vector} Normalized vector using the given components
+   */
   static UnitVectorFromXYZ(x: number, y: number, z: number) {
     const len = Math.sqrt((x ** 2) + (y ** 2) + (z ** 2));
     if (len <= 0) return new Vector(0, 0, 0);
@@ -87,6 +137,13 @@ class Vector { // A structure that holds position data or direction and magnitud
 
   // Gets the dot product between two vectors
   // Use normalized vectors for scalar value between -1 and 1
+
+  /**
+   * @summary Performs a dot product between the two vectors
+   * @param a Vector A
+   * @param b Vector B
+   * @returns {number} Ax * Bx + Ay * By + Az * Bz
+   */
   static DotProduct(a: Vector, b: Vector): number {
     return a.x * b.x + a.y * b.y + a.z * b.z;
   }
@@ -151,6 +208,27 @@ class Vector { // A structure that holds position data or direction and magnitud
 
   static ToString(a: Vector): string {
     return `(${a.x}, ${a.y}, ${a.z})`;
+  }
+
+  // Additional Utility //
+
+  static AddMany(...vect: Vector[]): Vector {
+    let x: number = 0;
+    let y: number = 0;
+    let z: number = 0;
+
+    for (let i = 0; i < vect.length; i++) {
+      x += vect[i].x;
+      y += vect[i].y;
+      z += vect[i].z;
+    }
+
+    return new Vector(x, y, z);
+  }
+  static AverageMany(...vect: Vector[]): Vector {
+    const result = this.AddMany(...vect);
+
+    return Vector.Divide(result, vect.length);
   }
 }
 
