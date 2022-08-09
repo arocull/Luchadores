@@ -118,3 +118,47 @@ test('vector debug testing', () => {
   const vect = new Vector(1, 2, 3);
   expect(Vector.ToString(vect)).toEqual('(1, 2, 3)');
 });
+
+test('Vector > AddMany', () => {
+  const cases: Vector[][] = [
+    [],
+    [new Vector(1, 0, 0)],
+    [new Vector(1, 0, 0), new Vector(0, 0, 1)],
+    [new Vector(1, 0, 0), new Vector(2, 1, 0), new Vector(0, 1, 1)],
+  ];
+  const results: Vector[] = [
+    new Vector(0, 0, 0),
+    new Vector(1, 0, 0),
+    new Vector(1, 0, 1),
+    new Vector(3, 2, 1),
+  ];
+
+  for (let i = 0; i < cases.length; i++) {
+    const res = Vector.AddMany(...cases[i]);
+
+    // console.log('Case ', i);
+    expect(res.equals(results[i])).toBe(true);
+  }
+});
+
+test('Vector > AverageMany', () => {
+  const cases: Vector[][] = [
+    [],
+    [new Vector(1, 0, 0)],
+    [new Vector(1, 0, 0), new Vector(0, 0, 1)],
+    [new Vector(2, 0, 0), new Vector(2, 1, 0), new Vector(0, 1, 1)],
+  ];
+  const results: Vector[] = [
+    new Vector(0, 0, 0),
+    new Vector(1, 0, 0),
+    new Vector(0.5, 0, 0.5),
+    new Vector((2 / 3) * 2, 2 / 3, 1 / 3),
+  ];
+
+  for (let i = 0; i < cases.length; i++) {
+    const res = Vector.AverageMany(...cases[i]);
+
+    // console.log('Case ', i);
+    expect(res.equals(results[i])).toBe(true);
+  }
+});

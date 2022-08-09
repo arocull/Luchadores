@@ -19,5 +19,6 @@ module.exports = {
     'no-underscore-dangle': 'off',
     'object-property-newline': 'error',
     'no-param-reassign': 'off',
+    'no-console': 'off',
   }
 };

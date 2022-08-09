@@ -1,4 +1,4 @@
-import { Vector, Ray, TraceResult } from '../../../src/common/engine/math';
+import { Vector, Ray, TraceResult } from '../../../../src/common/engine/math';
 
 test('plane trace test', () => {
   const trace: Ray = new Ray(new Vector(0, 0, 0), new Vector(10, 0, 0));

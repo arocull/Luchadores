@@ -7,7 +7,10 @@ import Vector from '../Vector';
  * and without running into issues like gimbal lock.
  *
  * Reference https://github.com/go-gl/mathgl/blob/master/mgl64/quat.go
- */
+ * @note Luchadores vectors are organized by strafe (+right/-left), depth (+forward/-backward), height (+up/-down)
+ * Thus, Luchadores should an use XZY rotation space, as XZY = pitch, yaw, roll in-engine respectively
+*/
+
 class Quaternion {
   /**
    * @constructor Generates an identity quaternion
@@ -15,6 +18,28 @@ class Quaternion {
    * @param vect Vector properties of quaternion
    */
   constructor(public w: number = 1, private vect: Vector = new Vector(0, 0, 0)) {}
+
+  /**
+   * @constructor Generates a quaternion from the given axis angle
+   * @param theta Angle to rotate quaternion by, in radians
+   * @param axis Axis to rotate quaternion on
+   * @returns A rotated on the given axis by theta
+   */
+  public static FromAxisAngle(theta: number, axis: Vector): Quaternion {
+    return new Quaternion(Math.cos(theta / 2), Vector.Multiply(axis, Math.sin(theta / 2)));
+  }
+
+  /**
+   * @constructor Returns a normalized Quaternion from WXYZ inputs
+   * @param w w component
+   * @param x x component
+   * @param y y component
+   * @param z z component
+   * @returns A normalized quaternion
+  */
+  public static FromWXYZ(w: number, x: number, y: number, z: number): Quaternion {
+    return Quaternion.Normalize(new Quaternion(w, new Vector(x, y, z)));
+  }
 
   // Getters and Setters //
 
@@ -53,6 +78,14 @@ class Quaternion {
 
   public get lengthSquared(): number {
     return (this.w ** 2) + this.vect.lengthSquared();
+  }
+
+  /**
+   * @summary Returns an identity Quaternion
+   * Same as running new Quaternion()
+   */
+  public static get identity(): Quaternion {
+    return new Quaternion();
   }
 
   // Functions //
@@ -164,16 +197,6 @@ class Quaternion {
     }
 
     return Quaternion.Scale(a, 1 / len);
-  }
-
-  /**
-   * @summary Generates a quaternion from the given axis angle
-   * @param theta Angle to rotate quaternion by, in radians
-   * @param axis Axis to rotate quaternion on
-   * @returns A rotated on the given axis by theta
-   */
-  public static FromAxisAngle(theta: number, axis: Vector): Quaternion {
-    return new Quaternion(Math.cos(theta / 2), Vector.Multiply(axis, Math.sin(theta / 2)));
   }
 
   // INTERPOLATION //

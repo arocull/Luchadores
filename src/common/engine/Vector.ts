@@ -228,7 +228,7 @@ class Vector { // A structure that holds position data or direction and magnitud
   static AverageMany(...vect: Vector[]): Vector {
     const result = this.AddMany(...vect);
 
-    return Vector.Divide(result, vect.length);
+    return Vector.Divide(result, Math.max(vect.length, 1));
   }
 }
 
