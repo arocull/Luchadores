@@ -164,6 +164,15 @@ class Quaternion {
   // QUAT EDITING //
 
   /**
+   * @summary Negates all components of the given quaternion
+   * @param a Quat A
+   * @returns {Quaternion} Negated quaternion
+   */
+  public static Negate(a: Quaternion): Quaternion {
+    return Quaternion.FromWXYZ(-a.w, -a.x, -a.y, -a.z);
+  }
+
+  /**
    * @summary Returns the conjugate of the quaternion
    * @param a Quat A
    * @returns Conjguate of A
@@ -220,6 +229,9 @@ class Quaternion {
 
     // Ensure floating point doesn't mess us up by clamping dot product from -1 to 1
     dot = Math.min(Math.max(dot, 1), -1);
+
+    // TODO: See https://stackoverflow.com/questions/46156903/how-to-lerp-between-two-quaternions
+    // Do we need to negate the second quat if dot < 0? Why?
 
     const theta = Math.acos(dot) * alpha; // Get distance between quaternions
     const c = Math.cos(theta);
