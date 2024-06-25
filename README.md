@@ -1,12 +1,17 @@
 # Luchadores
 
-Luchadores is an arena-style combat game with a cast of silly and weird animals that participate in exaggerated "wrestling" matches.
+Luchadores is a top-down multiplayer web game focused on exaggerated "wrestling" with a strange cast of animal characters.
+**[Play it here](https://luchadores.alanocull.com/)**.
 
-You can check out the [Design Document](https://docs.google.com/document/d/1MlaYaygWPhbE7BNI9D7iT2IaouNDpXv2TJxrf_YoSdo/)!
+Luchadores features a fully custom game engine, with 2D graphics and 3D (non-rotational) physics. Feel free to dig or re-use modules as found in here.
+
+**Note: This is a public mirror. Development and management may be handled internally--if development continues.** (Project on hiatus.)
+
+Developed by the O'Cull bros: [James O'Cull](https://github.com/jocull), [Max O'Cull](https://github.com/Maxattax97), and I (Alan O'Cull).
 
 ## Setup
 
-This is a Node v12 (LTS, as of writing) project. If you use Node Version Manager (NVM):
+This is a Node v14 project. If you use Node Version Manager (NVM):
 
 ```
 nvm install --lts
@@ -43,6 +48,11 @@ npm run join            # Opens a link to the server in your browser. DOES conne
 npm run server          # Runs the server without building.
 npm run start           # Builds and runs the server.
 ```
+
+### Configuration
+
+Luchadores servers ping a "Server Browser" while running.
+If you'd like to configure this, update `config/default.json > heartbeat > servers` to ping your desired server.
 
 ## Contributing
 
