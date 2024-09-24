@@ -11,7 +11,7 @@ Developed by the O'Cull bros: [James O'Cull](https://github.com/jocull), [Max O'
 
 ## Setup
 
-This is a Node v14 project. If you use Node Version Manager (NVM):
+This is a Node v22.9.0 project. If you use Node Version Manager (NVM):
 
 ```
 nvm install --lts
