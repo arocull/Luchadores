@@ -8,7 +8,6 @@ module.exports = {
     '@typescript-eslint',
   ],
   extends: [
-    'airbnb-typescript/base'
   ],
   rules: {
     'class-methods-use-this': 'off',
