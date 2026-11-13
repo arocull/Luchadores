@@ -1,6 +1,5 @@
 import Vector from './Vector';
 import Prop from './props/Prop';
-// eslint-disable-next-line object-curly-newline
 import { EntityType, FighterType, ColliderType, ConstraintType } from './Enums';
 import Constraint from './constraints/Constraint';
 import { MessageBus } from '../messaging/bus';
@@ -142,18 +141,15 @@ class Fighter extends Prop {
 
 
   // If this collided with another fighter, set state
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public CollideWithFighter(hit: Fighter, momentum: number) { // Momentum used in subclasses
     this.lastCollision = hit;
   }
 
 
   // Returns a bullet (overriden by subclasses)
-  /* eslint-disable class-methods-use-this */
   public fireBullet(): any {
     return null;
   }
-  /* eslint-enable class-methods-use-this */
 
   // Is this entity able to fire a bullet? Overriden by sublcasses for additional conditions such as reload times
   public canFirebullet(): boolean {
@@ -192,7 +188,6 @@ class Fighter extends Prop {
    * @summary Internal jump code, for overriding
    * @param {Fighter[]} fighters Array of fighters for internal character use
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected jumpInternal(jumpVelo: number, fighters: Fighter[]) {
     this.Velocity.z += jumpVelo;
     this.dismountRider = true;
@@ -205,7 +200,6 @@ class Fighter extends Prop {
   }
 
   // Called when the fighter has just landed after spending time in the air, can be overriden for special functionality
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public Land(landVelocity: number = 0) {
     this.JustLanded = true;
     if (!this.riding) {
@@ -291,7 +285,6 @@ class Fighter extends Prop {
     this.jumpTimer = input;
   }
 
-  /* eslint-disable class-methods-use-this */
   // Methods used in WorldState for sending/recieving special properties; overridden by subclasses
   public getSpecialNumber(): number {
     return 0;
@@ -299,17 +292,13 @@ class Fighter extends Prop {
   public getSpecialBoolean(): boolean {
     return false;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public setSpecialStates(num: number, bool: boolean) { }
-  /* eslint-enable class-methods-use-this */
 
   public inKillEffect(): boolean { // Returns true if fighter is in a kill effect
     return (this.boostTimer > 0);
   }
-  /* eslint-disable class-methods-use-this */
   // Called when a kill effect / boost ends; Overridden by subclasses
   protected boostEnded() { }
-  /* eslint-enable class-methods-use-this */
 
   // Returns the fighter at the bottom of a stack of players
   public getBottomOfStack(stackTop: boolean = true): Fighter {

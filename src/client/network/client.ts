@@ -111,7 +111,6 @@ class NetworkClient {
     return this.pingPongHandler;
   }
 
-  /* eslint-disable no-console */
   private onOpen(openEvent: Event) {
     console.log('Opened web socket', openEvent);
 
@@ -168,7 +167,6 @@ class NetworkClient {
         this.close();
       });
   }
-  /* eslint-enable no-console */
 
   private send(message: any) {
     if (this.isConnected()) {

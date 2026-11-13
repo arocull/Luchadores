@@ -86,7 +86,6 @@ class UISettingsMenu {
     this.update();
   }
 
-  /* eslint-disable no-param-reassign */
   private SetSelection(button: HTMLElement, selected: boolean) {
     if (selected) {
       button.className = 'selected';
@@ -94,7 +93,6 @@ class UISettingsMenu {
       button.className = '';
     }
   }
-  /* eslint-enable no-param-reassign */
 
   public update() {
     switch (RenderSettings.Quality) {
@@ -149,10 +147,8 @@ class UISettingsMenu {
    */
   private updateOnCondition(updateButton: HTMLElement, enable: boolean) {
     if (enable) {
-      // eslint-disable-next-line no-param-reassign
       updateButton.innerText = 'Enabled';
     } else {
-      // eslint-disable-next-line no-param-reassign
       updateButton.innerText = 'Disabled';
     }
 

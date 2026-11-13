@@ -104,7 +104,6 @@ class ClientAudioInit {
     let pos: Vector = sfx.position; // Use last position of audio
     if (sfx.owner && sfx.owner instanceof Entity) { // Update it to the owner's position if present
       pos = sfx.owner.Position;
-      // eslint-disable-next-line no-param-reassign
       sfx.position = pos;
     }
 
@@ -116,7 +115,6 @@ class ClientAudioInit {
       return;
     }
 
-    // eslint-disable-next-line no-param-reassign
     sfx.src.volume = this.attenuate(dist, sfx.volume);
   }
   /**

@@ -1,5 +1,4 @@
 // Client only -- Renders stuff to the screen
-/* eslint-disable object-curly-newline */
 import Vector from '../common/engine/Vector';
 import { EntityType, ParticleType, ProjectileType, UIFrameType, FighterType, RenderQuality, ColliderType } from '../common/engine/Enums';
 import Entity from '../common/engine/Entity';
@@ -15,7 +14,6 @@ import World from '../common/engine/World';
 import { MMap } from '../common/engine/maps';
 import { MapClient } from './maps/index';
 import { TwoPi } from '../common/engine/math';
-/* eslint-enable object-curly-newline */
 
 let ArenaBoundFrontPassIndex: number = 0;
 let canvas: CanvasRenderingContext2D = null;
@@ -302,7 +300,6 @@ class Renderer {
     canvas = context;
   }
 
-  /* eslint-disable no-param-reassign */
   public static DrawScreen(
     camera: Camera,
     world: World,
@@ -732,7 +729,6 @@ class Renderer {
 
     canvas.fillText(`${str} FPS`, 5 + 0.03 * Math.min(cam.Width, cam.Height), 5, cam.Width);
   }
-  /* eslint-enable no-param-reassign */
 }
 
 export { Renderer as default };

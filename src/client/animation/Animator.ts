@@ -97,13 +97,9 @@ class Animator {
     }
   }
 
-  /* eslint-disable class-methods-use-this */
-  /* eslint-disable @typescript-eslint/no-unused-vars */
   protected tickUniqueIdle() {} // Tick special effects for when entity is in their unique idle state; overridden by subclasses
   protected tickAttacking(DeltaTime: number) {} // Tick special effects for when entity is attacking; overriden by subclasses
   public destruct() {} // Removes bullet listeners
-  /* eslint-enable @typescript-eslint/no-unused-vars */
-  /* eslint-enable class-methods-use-this */
 
   protected bindAnimEvent(eventName: string, consumer: Consumer) {
     this.animEvents.attach(`${eventName}${this.owner.getOwnerID()}`, consumer);

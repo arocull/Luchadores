@@ -1,9 +1,6 @@
-/* eslint-disable no-console */
 const _ = require('lodash');
-// eslint-disable-next-line
 const webpack = require('webpack');
 const path = require('path');
-// eslint-disable-next-line
 const nodeExternals = require('webpack-node-externals');
 const childProcess = require('child_process');
 

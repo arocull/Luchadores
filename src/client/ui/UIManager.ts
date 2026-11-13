@@ -1,4 +1,3 @@
-// eslint-disable-next-line object-curly-newline
 import { UIFrame, UITextBox, UIClassSelect, UIUsernameSelect, UISettingsMenu, UIHealthbar } from './index';
 import Camera from '../Camera';
 import Renderer from '../Render';

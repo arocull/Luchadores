@@ -1,5 +1,4 @@
 const _ = require('lodash');
-// eslint-disable-next-line
 const webpackMerge = require('webpack-merge');
 const development = require('./development');
 

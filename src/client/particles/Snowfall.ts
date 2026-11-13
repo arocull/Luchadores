@@ -47,7 +47,6 @@ class PSnowfall extends Particle {
   static Spawn(particleList: Particle[], topLeft: Vector, bottomRight: Vector, snowflakes: number, intensity: number = 0.5, size: number = 0.07) {
     const wind = Vector.Multiply(Vector.UnitVectorFromXYZ(1, 0, 0.025), intensity); // Get wind velocity
 
-    // eslint-disable-next-line no-param-reassign
     snowflakes *= RenderSettings.getParticleRatio(); // Alter number of particles based off of render settings
 
     for (let i = 0; i < snowflakes; i++) {

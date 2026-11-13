@@ -18,7 +18,6 @@ class MapClientGrassy extends MapGrassy implements MapClient {
     return '#0d542f';
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public tickWeather(deltaTime: number, particles: Particle[]): void { }
 
   public landParticles(landVelocity: number, landMass: number, position: Vector, particles: Particle[]): void {

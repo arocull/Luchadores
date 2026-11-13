@@ -6,7 +6,6 @@ import Fighter from '../Fighter';
 import { MessageBus } from '../../messaging/bus';
 
 // Internal Functions //
-/* eslint-disable no-param-reassign */
 
 /**
  * @function CollisionTrace
@@ -110,6 +109,5 @@ function CollideFighters(a: Fighter, b: Fighter, info: TraceResult) {
     a.CollideWithProp(info, b, false);
   }
 }
-/* eslint-enable no-param-reassign */
 
 export { CollisionTrace, CollisionTraceBullet, CollideFighters };

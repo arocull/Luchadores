@@ -224,7 +224,6 @@ class SoundManagerInit {
   public tick(deltaTime: number) {
     Object.entries(this.lib).forEach(([, sfxList]) => {
       sfxList.forEach((sfx) => {
-        // eslint-disable-next-line no-param-reassign
         sfx.time += deltaTime;
       });
     });
@@ -250,7 +249,6 @@ class SoundManagerInit {
 
     const sfxList = this.lib[sfxName]; // Get list of audio (multiple variants)
     if (!sfxList) {
-      // eslint-disable-next-line no-console
       console.error('Sound effect ', sfxName, ' not found!');
       return null;
     }

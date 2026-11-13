@@ -63,7 +63,6 @@ class AnimFlamingo extends Animator {
       MessageBus.publish('Effect_NewParticle', fire);
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected tickAttacking(DeltaTime: number) { // Flamingo - Fire on back and smoke breathing
     if (this.timerTick % 3 === 1 && RenderSettings.nextParticle()) {
       MessageBus.publish('Effect_NewParticle', new PFire(

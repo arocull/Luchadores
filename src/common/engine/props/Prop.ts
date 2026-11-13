@@ -137,7 +137,6 @@ class Prop extends Entity {
     }
 
     // Boost length of ray just by fighter's radius (fighter may collide with surface without position being in it)
-    // eslint-disable-next-line no-param-reassign
     ray.length += radiusBoost;
 
     const rightTrace = ray.tracePlane(this.getRightPlaneCenter(), normalRight);
@@ -245,7 +244,6 @@ class Prop extends Entity {
   }
 
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public Land(velocity: number = 0) {}
 
 

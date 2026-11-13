@@ -44,7 +44,6 @@ class PConfetti extends Particle {
 
   // Creates X many petals
   static Burst(particleList: Particle[], position: Vector, petalSize: number, intensity: number, strands: number) {
-    // eslint-disable-next-line no-param-reassign
     strands *= RenderSettings.getParticleRatio(); // Alter number of particles based off of render settings
     for (let i = 0; i < strands; i++) {
       particleList.push(new PConfetti(position, petalSize, intensity));

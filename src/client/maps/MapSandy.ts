@@ -18,7 +18,6 @@ class MapClientSandy extends MapSandy implements MapClient {
     return '#e3a324';
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public tickWeather(deltaTime: number, particles: Particle[]): void { }
 
   public landParticles(landVelocity: number, landMass: number, position: Vector, particles: Particle[]): void {

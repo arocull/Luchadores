@@ -47,7 +47,7 @@ class Wristwatch {
     let sleepTime = 100;
     while (pingInfos.length < 20) {
       try {
-        const info = await pingPongHandler.ping(); // eslint-disable-line no-await-in-loop
+        const info = await pingPongHandler.ping();  
         pingInfos.push(info);
       } catch (err) {
         console.error('Error during wristwatch sync:', err);
@@ -55,7 +55,7 @@ class Wristwatch {
         if (failures.length > 3) {
           throw err;
         }
-        await sleep(sleepTime); // eslint-disable-line no-await-in-loop
+        await sleep(sleepTime);  
         sleepTime *= 2; // Back off on next attempt
       }
     }

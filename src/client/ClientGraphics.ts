@@ -50,13 +50,11 @@ class ClientGraphics {
     });
     this.subscriptions.attach('LoadAsset_Prop', (msg) => {
       AssetPreloader.getImage(msg.texture).then((img) => {
-        // eslint-disable-next-line no-param-reassign
         msg.prop.texture = img;
       });
     });
     this.subscriptions.attach('LoadAsset_Map', (msg) => {
       AssetPreloader.getImage(msg.texture).then((img) => {
-        // eslint-disable-next-line no-param-reassign
         msg.map.Texture = img;
       });
     });

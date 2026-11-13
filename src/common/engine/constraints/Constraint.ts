@@ -41,7 +41,6 @@ class Constraint {
    * @param {Entity} victim Victim of the constraint
    * @param {Entity} owner Owner of the constraint
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public tick(deltaTime: number, victim: Entity, owner: Entity) {
     if (!this.infinite) {
       this.lifetime -= deltaTime;
@@ -72,7 +71,6 @@ class Constraint {
    * @param {Entity} vict Victim of constraint
    * @param {Entity} owner Owner of constraint
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public finish(victim: Entity, owner: Entity) {
     this.finished = true;
   }
@@ -93,14 +91,12 @@ class Constraint {
     return 0.0;
   }
   // To be overridden by subclasses
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   public set replicationNumericA(inp: number) {}
 
   public get replicationNumericB(): number {
     return 0.0;
   }
   // To be overridden by subclasses
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   public set replicationNumericB(inp: number) {}
 }
 

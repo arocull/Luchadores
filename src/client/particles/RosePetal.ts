@@ -45,7 +45,6 @@ class PRosePetal extends Particle {
     const pos = Vector.Clone(position);
     pos.z += 1;
 
-    // eslint-disable-next-line no-param-reassign
     petals *= RenderSettings.getParticleRatio(); // Alter number of particles based off of render settings
 
     for (let i = 0; i < petals; i++) {

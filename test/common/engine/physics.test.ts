@@ -65,7 +65,7 @@ test('physics prop collision tests', () => {
   const box = new Prop(new Vector(20, 20, 0), ColliderType.Prism, 0.5, 5); // Box for other collision testing
 
   const sheep3 = new Sheep(4, new Vector(100, 30, 0)); // Top of sheep should hit box
-  const box2 = new Prop(new Vector(100, 20, 0.5), 0.5, 2);
+  const box2 = new Prop(new Vector(100, 20, 0.5), ColliderType.Prism, 0.5, 2);
 
   world.Fighters = [sheep, sheep2, sheep3, flam];
   world.Props = [cylinder, box, box2];

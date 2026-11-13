@@ -1,5 +1,5 @@
 // "serde" is shorthand for "serializer / deserializer"
-import * as Long from 'long';
+import Long from 'long';
 
 import { IEvent, TypeEnum } from '../events'; // The public interface types
 import * as events from '../events/events'; // The private Protobuf classes

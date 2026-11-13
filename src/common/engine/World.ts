@@ -92,7 +92,6 @@ class World {
   // Network Interaction //
 
   // Apply player inputs to player's character
-  /* eslint-disable class-methods-use-this */
   public applyAction(player: Player, action: IPlayerInputState) {
     const char = player.getCharacter();
     if (!char || char.HP <= 0) return; // If the player's character is currently dead or missing, do not apply inputs
@@ -105,7 +104,6 @@ class World {
       char.Jump(false, this.Fighters); // Jump
     }
   }
-  /* eslint-enable class-methods-use-this */
 
 
   public spawnFighter(player: Player, characterType: FighterType): Fighter {
@@ -288,7 +286,6 @@ class World {
 
       // If they attempted to move faster than their max momentum, clamp their movement (but don't clamp vertical component)
       if (deltaX.lengthXY() > maxSpeed * DeltaTime) {
-        // eslint-disable-next-line prefer-destructuring
         const z = deltaX.z;
         deltaX = Vector.Multiply(Vector.UnitVectorXY(deltaX), maxSpeed * DeltaTime);
         deltaX.z = z;
@@ -301,7 +298,6 @@ class World {
 
       // Terminal velocity (don't clamp vertical component)
       if (obj.Velocity.lengthXY() > maxSpeed) {
-        // eslint-disable-next-line prefer-destructuring
         const z = obj.Velocity.z;
         obj.Velocity = Vector.Multiply(Vector.UnitVectorXY(obj.Velocity), maxSpeed);
         obj.Velocity.z = z;
@@ -328,7 +324,6 @@ class World {
 
     // Tick fighter constraints
     for (let x = 0; x < this.Fighters.length; x++) {
-      // eslint-disable-next-line prefer-destructuring
       const constraints = this.Fighters[x].constraints;
       for (let y = 0; y < constraints.length; y++) {
         const bind = constraints[y];

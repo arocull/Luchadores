@@ -1,5 +1,3 @@
-/* eslint-disable object-curly-newline */
-/* eslint-disable padded-blocks */
 import { sampleInputs, PlayerInput, Topics as InputTopics, KeyboardButtonInput } from './controls/playerinput';
 import NetworkClient from './network/client';
 import { MessageBus, Topics as BusTopics } from '../common/messaging/bus';
@@ -20,7 +18,6 @@ import { Vector } from '../common/engine/math';
 import InputState from './controls/InputState';
 import Wristwatch from '../common/engine/time/Wristwatch';
 import { MapClientSandy, mapFromID } from './maps';
-/* eslint-enable object-curly-newline */
 
 
 // Client State - Main data handler for clients
@@ -561,6 +558,5 @@ class Client {
     return this.uiDeathNotifs;
   }
 }
-/* eslint-enable padded-blocks */
 
 export { Client as default };

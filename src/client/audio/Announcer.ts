@@ -117,7 +117,6 @@ class Announcer {
         this.queue[i].staleTimer -= deltaTime; // Count down stale timer
         if (this.queue[i].staleTimer <= 0) { // If the item is stale, don't play it
           this.queue.splice(i, 1);
-          // eslint-disable-next-line no-continue
           continue;
         }
 
@@ -200,7 +199,6 @@ class Announcer {
     this.playing.src.volume = 0.6;
     const dur = this.playing.src.duration; // Get duration of audio
 
-    // eslint-disable-next-line no-restricted-globals
     if (isNaN(dur) && isFinite(dur)) { // Make sure the audio doesn't last forever
       this.timer = this.playing.src.duration;
     } else { // Otherwise, default to 3 seconds as a safety measure

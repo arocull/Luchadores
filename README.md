@@ -11,10 +11,11 @@ Developed by the O'Cull bros: [James O'Cull](https://github.com/jocull), [Max O'
 
 ## Setup
 
-This is a Node v14 project. If you use Node Version Manager (NVM):
+This is a Node v22 project (see `.nvmrc`). If you use Node Version Manager (NVM):
 
 ```
-nvm install --lts
+nvm install
+nvm use
 ```
 
 Then install the packages. It should automatically trigger a build afterward:

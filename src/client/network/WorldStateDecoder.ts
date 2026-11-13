@@ -1,4 +1,3 @@
-/* eslint-disable object-curly-newline */
 import Vector from '../../common/engine/Vector';
 import Random from '../../common/engine/Random';
 import World from '../../common/engine/World';
@@ -8,7 +7,6 @@ import { ConstraintType, FighterType, ProjectileType } from '../../common/engine
 import { IWorldState, IEntityFighter, IEntityProjectile, IConstraint } from '../../common/events/events';
 import { Constraint } from '../../common/engine/constraints';
 import Suplex from '../../common/engine/constraints/Suplex';
-/* eslint-enable object-curly-newline */
 
 function updateConstraint(constraint: Constraint, packet: IConstraint) {
   constraint.lifetimeTotal = packet.lifetime;
@@ -114,7 +112,6 @@ function generateProjectile(world: World, packet: IEntityProjectile): Projectile
 
 
 // Decode world-state--hand it a WorldState event and then a world instance to apply the changes to
-/* eslint-disable no-param-reassign */
 function decodeWorldState(state: IWorldState, world: World) {
   Random.setSeed(state.randomSeed);
   Random.setIndex(state.randomIndex);
@@ -128,6 +125,5 @@ function decodeWorldState(state: IWorldState, world: World) {
     world.Bullets.push(generateProjectile(world, state.projectiles[i] as IEntityProjectile));
   }
 }
-/* eslint-enable no-param-reassign */
 
 export { decodeWorldState as default };

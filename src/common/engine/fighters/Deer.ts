@@ -180,7 +180,6 @@ class Deer extends Fighter {
   public setBulletIndex(newIndex: number) {
     this.bulletIndex = newIndex;
   }
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public setSpecialStates(num: number, bool: boolean) {
     this.bulletIndex = num;
   }

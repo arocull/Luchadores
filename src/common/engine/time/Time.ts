@@ -1,7 +1,7 @@
 // Level out differences between browser and Node.js
 export const performance: Performance = (function getPerformance() {
   if (typeof window === 'undefined' || typeof window.performance === 'undefined') {
-    return require('perf_hooks').performance; // eslint-disable-line global-require
+    return require('perf_hooks').performance;  
   }
   return window.performance;
 }());
