@@ -42,12 +42,16 @@ npm run lint            # Just shows you the warnings/errors.
 npm run fix             # Will try it's best to fix all warnings/errors.
 ```
 
-Start the server and watch your browser:
+Start the server and join via your browser:
 ```
 npm run web             # Opens index.html in your browser. Does not connect to a server.
 npm run join            # Opens a link to the server in your browser. DOES connect to the locally hosted server.
 npm run server          # Runs the server without building.
 npm run start           # Builds and runs the server.
+
+# Configure the default port:
+PORT=8080 npm run start   # Runs the server on port 8080
+export PORT=8080 && npm run start  # Sets PORT for the current session
 ```
 
 ### Configuration
